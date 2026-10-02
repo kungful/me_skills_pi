@@ -1,6 +1,6 @@
 ---
 name: courseware-factory
-description: 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台 + 课件实物照片联网搜索下载。**作用域仅限「少儿美术课件生产」，不是通用找图/做图工具。** 用于：做新课件（“做课件/新课题/出一套 XX 岁课件/范画/教学课件”）；改已有课件的图片/版式/文案/品牌名；导出 PDF/PPTX/单张图；**给课件找/换实物照片（“给课件找张竹子的真照片 / 换掉课件里那张实物图 / 课件这张图能商用吗”）**。仅需生成普通图片、不动课件结构时用 grsai-image-2-5。
+description: 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台 + 多课件工作台。**作用域仅限「少儿美术课件生产」，不是通用找图/做图工具。** 用于：做新课件（“做课件/新课题/出一套 XX 岁课件/范画/教学课件”）；改已有课件的图片/版式/文案/品牌名；导出 PDF/PPTX/单张图/打包下载。仅需生成普通图片、不动课件结构时用 grsai-image-2-5。
 ---
 
 # 课件工厂 · 少儿美术课件生产线
@@ -9,7 +9,7 @@ description: 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付�
 
 **本 skill 只服务「少儿美术课件」生产，不是通用找图 / 做图 / 排版工具。**
 
-产出物：**26 页教学链条 + 6 张 AI 范画链 + 10 张网搜真照片 + PPTX 源文件 + PDF 交付物 + 单张图/打包图导出**。
+产出物：**26 页教学链条 + 16 张 AI 配图（6 张范画链 + 10 张实物/素材图）+ PPTX 源文件 + PDF 交付物 + 单张图/打包图导出**。
 
 - 用户只是要一张普通图片、不涉及课件 → 别用本 skill，用 `grsai-image-2-5` / `grsai-nano-banana`。
 - 用户只是想“随便找张照片”（跟课件无关）→ 也别用本 skill。
@@ -27,7 +27,7 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 │   ├── engine.py       版式引擎（顶栏/章节标签/页码/标题条/主题色）
 │   ├── renderers.py    18 种页型渲染器
 │   ├── pipeline.py     出图流水线（模型路由 + 参考图链 + 别名机制 + 照片分支）
-│   ├── photos.py       ★ 实物照片联网搜索/下载 + **视觉复核** + 授权闸门
+│   ├── photos.py       可选：联网搜图 + 视觉复核（**默认不用**，见下节）
 │   ├── builder.py      装配 pptx
 │   ├── exporter.py     pptx → pdf + 逐页 PNG 预览
 │   ├── server.py       审图台后端
@@ -35,10 +35,8 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 │   └── new_project.py  新建课件脚手架
 ├── 项目/<课题>-<年龄>/   ← 每套课件一个目录
 │   ├── project.json    唯一真源：内容 + 版式 + 出图参数
-│   ├── img/            高清 PNG 存档（AI 出图 + 网搜主图）
-│   ├── img_alt/        网搜备选图 JPEG + <slot>.credits.json 版权 sidecar
+│   ├── img/            高清 PNG 存档（AI 出图）
 │   ├── img_sell/       压缩 JPG 供货版
-│   ├── 图片版权.json    全套图片出处/授权台账（上架前必过）
 │   └── out/            pptx / pdf / preview/
 └── 模板/                母版参考（《跳伞的小浣熊》= 版式母版）
 ```
@@ -50,7 +48,7 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 | 用户要什么 | 跳去哪 |
 |---|---|
 | 做一套新课件 | 「标准流程」 |
-| **给课件找/换实物照片** | 「实物照片：先联网搜真图」 |
+
 | **课件里的图能不能商用** | 「⚠️ 卖钱课件的版权底线」 |
 | 步骤图和成品不像 | 「参考图链」（八成要「重跑整条链」） |
 | 线条不好看 | 「线条风格：干净实线」 |
@@ -91,7 +89,7 @@ C:\Users\hua\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe
 - 默认：`gpt-image-2.5` / quality `high` / aspect `1536x1024`（横版）
 - 封面方形：`1024x1024`
 - 整套约 16 图 ≈ **¥0.5**；跑整条链 6 张 ≈ **¥0.15**
-- **`source: "search"` 的槽位走网搜 → ¥0，不占用出图预算**（大熊猫那套 10 个槽位全走网搜，只剩 6 张范画要钱 ≈ ¥0.18）
+- **全部槽位都是 AI 生成，没有免费槽位**（曾试过网搜真照片，已废弃，见下节）
 - `python 工厂/pipeline.py --models` 列全部 15 个模型与价格
 
 ## 标准流程（做一套新课件）
@@ -105,17 +103,14 @@ python 工厂/new_project.py "小兔子吃萝卜" --age 4-6岁
 # 2. 改 project.json
 #    - meta.brand  ← 换成用户品牌名（必须！见下方红线）
 #    - 每页 title/text/tips
-#    - images[].prompt  ← 写这一步画什么（网搜槽位也要写，搜不到时当 AI 回退）
+#    - images[].prompt  ← 写这一步画什么（**每个槽位都要写**）
 #    - common.stroke    ← 线条语言（全套共用）
-
-# 2b. 实物/素材槽位加网搜（省钱 + 真照片，详见下下节）
-#    "source": "search", "query": ["中文词", "english words"],
-#    "subject": "这张图应该是什么（视觉复核的判据，必填）"
+#    ⚠️ 不要加 "source": "search" —— 图片一律 AI 生成，详见下节
 
 # 3. 出图（先报参数！）
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --list
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch chain
-python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch real   # 网搜，¥0
+python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch real   # 实物/素材 10 张
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch photo  # 网搜，¥0
 
 # 4. 装配 pptx
@@ -191,9 +186,7 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 - `batch`（批次）：`chain` 范画链 / `real` 实物观察 / `photo` 素材 / `style` 风格
 - `refs`：显式参考图槽位；`ref_prev`：自动加链上前一张
 - `block.uses` 是「本页用到哪些槽位」，`/api/status` 靠它查缺图
-- **`source: "search"` + `query: ["中文词", "english"]` + `subject: "应该是什么"`**：
-  该槽位先**联网搜真照片 → 视觉复核 → 授权闸门**，都不行才回退 AI 生成（见下节）
-- **`meta.photo_policy`**：`"cc0"`（默认，只留可商用）/ `"any"`（也收 Bing/百度，需人工核对）
+- **不要写 `source` 字段** —— 加了就变网搜槽位。图片一律 AI 生成（见下节）
 
 ### 18 种页型（`renderers.py`）
 
@@ -203,165 +196,44 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 
 **实物观察页（P8/P9）是差异化卖点**——真东西的照片，别的模板没有，别砍。
 
-## 实物照片：搜 → **视觉复核** → 授权闸门 → 回退 AI
+## 图片一律 AI 生成（**不要联网搜图**）
 
-> 仅用于**课件里的实物观察页 / 参考素材页**。与课件无关的找图需求不归本 skill 管。
+### 铁律
 
-**为什么**：实物观察页要的是「真东西的照片」。AI 画出来的是**假照片**，还慢（约 90s）还花钱（¥0.03）；
-联网搜 40 秒、免费、而且是真照片。
+**所有图片槽位统一用 AI 生成**（`gpt-image-2.5` / quality `high` / `1536x1024`，封面 `1024x1024`）。
+**不要**给槽位加 `"source": "search"`。成本 ¥0.03/张，16 张 ≈ ¥0.5/套 —— 不用省这点钱。
 
-> ### ⚠️ 血泪教训：光靠关键词搜 = 抓到啥算啥
->
-> 第一版只做了「搜 + 关键词过滤 + 域名黑名单」，没有看图能力。结果**两套课件共 20 张网搜图，
-> 视觉复核后发现 20 张全错**：
->
-> | 槽位 | 应该是什么 | 实际抓到 |
-> |---|---|---|
-> | 实物_竹子 | 竹子 | 穿婚纱的新娘 |
-> | 实物_竹笋 | 竹笋 | 紫色钟形花 |
-> | 实物_材料工具 | 儿童画材 | 钢琴键盘和乐谱 |
-> | 素材_爬树 | 熊猫爬树 | 一只金毛犬 |
-> | 素材_老鼠 | 老鼠 | 镂空圣诞挂球 |
-> | 素材_吃胡萝卜 | 兔子吃胡萝卜 | 公鸡头部特写 |
->
-> **根因**：`pixnio.com/?s=<词>` 搜不到时会返回**随机图池**（垃圾词也能出 48 张），
-> 而代码把「授权最安全」的 pixnio 排在第一优先级 → 随机垃圾把所有好图挤掉。
-> 更根本的是：**关键词、域名、尺寸，永远无法回答「这张图里到底是什么」**。
-> 而 pixnio 的图片 URL 是日期编号，连描述 slug 都没有，从 URL 也无从验证。
->
-> **解法 = 让视觉模型逐张看一眼**（见下下节「视觉复核」）。
+### 为什么（实测教训，别再试一遍）
 
-用法：给槽位加 `"source": "search"` + `"query"`（中英双语关键词，前面命中率高）
-+ **`"subject"`（这张图「应该是什么」，视觉复核的依据，必须写）**：
+早期版本认真做过「联网搜实物照片 → 视觉复核 → 授权闸门 → 回退 AI」，**结论是废弃**：
 
-```jsonc
-{ "slot": "实物_竹笋", "batch": "real", "source": "search",
-  "query": ["竹笋 新鲜 实物", "bamboo shoot fresh", "bamboo shoots edible"],
-  "subject": "新鲜竹笋（褐色笋壳包着的笋）",   // ← 视觉复核拿它当判据
-  "prompt": "（这是 AI 回退用的 prompt，搜不到才会用）" }
-```
+| 问题 | 实测 |
+|---|---|
+| **图文不符** | 搜索引擎不知道图里是什么。视觉模型复核搜来的 20 张 → **20/20 全错**（搜「熊猫爬树」给金毛犬；搜「大熊猫面部特写」给花丛里的女性肖像；搜「竹子」给穿婚纱的新娘） |
+| **授权不可信** | Bing「可商用筛选」把**摄图网**标成公版；百度/360 无授权字段；pixnio 搜不到就返回**随机图池** |
+| **干净源被墙** | Wikimedia Commons（真 CC）SSL 握手超时；pixabay/openverse 403/超时 |
+| **命中率极低** | CC0 闸门几乎总是全挡 → 最终还是回退 AI，白等 12 分钟 |
 
-完整流程（`photos.grab()`）：
+**判定准则**：关键词、域名、尺寸、`alt` 文本**永远无法回答「图里画的是什么」**。唯一可靠的是视觉模型看图，而它给出的结论也不便宜/不稳定。
 
-```
-搜（多源并行） → 下载（按授权等级轮转取名额） → 视觉复核（不对题当场淘汰）
-   → 授权闸门（photo_policy=cc0 时只留 CC0） → 都不行就回退 AI 生成
-```
+### 保留的可选工具：`工厂/photos.py`
 
-排序键是 `(信任等级, 是否白名单, -面积)`，但**下载名额分层轮转**
-（`_tier_mix`），否则 pixnio 的随机池会独占前 13 个名额、把 Bing/百度的好图全挤掉。
-
-| 信任等级 | 来源 | 商用安全性 |
-|---|---|---|
-| `免费图库·可商用` | pixnio（CC0）等白名单域名 | ✅ 可直接用 |
-| `Bing筛选·待核对` | Bing `&qft=filterui:license-L1/L2_L3_L4` | ⚠️ **不可全信**（实测把 699pic 摄图网也标成公版），要人工看一眼 |
-| `授权未知·慎用` | 360 / 百度 | ⚠️ 无授权信息，商用前必须自查 |
-
-**`photo_policy`（项目级，写在 `meta` 里）**：
-
-| 值 | 行为 | 什么时候用 |
-|---|---|---|
-| `"cc0"`（**默认**） | 网搜只接受「**CC0 + 视觉复核通过**」的图；一张都没有就**回退 AI 生成** | **要卖的课件**——保证每张图都能商用 |
-| `"any"` | 也接受 Bing/百度（授权需人工核对） | 自用/内部课件，图更真实但版权自负 |
-
-> 在本机实测环境里，最终结果几乎总是「**CC0 闸门挡住 → 回退 AI**」：
-> 每槽 7~8 个候选里只有 1~3 张是对的，而这 1~3 张**几乎从不是 CC0**（pixnio 那几张恰好都是假货）。
-> 所以真实成本 ≈ **¥0.03/槽**（AI 生成），两套课件 20 槽 ≈ **¥0.6**。
-> 这钱花得值：换来的是**每张图都对题 + 每张图都能商用**。
-
-自动产出：`img/<slot>.png`（主图，真 PNG）、`img_alt/<slot>_NN.jpg`（备选 5 张，**JPEG**）、
-`img_alt/<slot>.credits.json`（单槽版权）、`图片版权.json`（全套汇总台账）。
+**默认不用**，但代码保留（自用/不卖钱时可调用），自带视觉复核：
 
 ```bash
-python 工厂/photos.py "bamboo shoot" -o out.png --alt img_alt -n 5   # 单测
-python 工厂/photos.py "竹笋" --list                                  # 只看候选不下载
+python 工厂/photos.py "大熊猫 坐着 实拍" "giant panda sitting" -o out.png --alt alt_dir -n 5
+python 工厂/photos.py "竹子" --list
 ```
-
-### 视觉复核（"看图"能力）——根治「牛头不对马嘴」
-
-本会话的模型**读不了图**，但可以**调外部视觉模型代看**。`photos.vcheck(png_bytes, subject)`：
 
 ```python
 import photos
-ok, seen = photos.vcheck(open('img/素材_竹林.png','rb').read(), '成片的竹林')
-# ok=True  → 对题，"成片高耸竹林与林间小路"
-# ok=False → 不对题（如 "穿拖鞋的女人"）→ 淘汰
-# ok=None  → 复核不可用 → **放行**（绝不能把好图误杀）
+ok, seen = photos.vcheck(open('x.png','rb').read(), '真实的竹子（竹竿和竹叶）')
+# True=对题 / False=不对题淘汰 / None=复核不可用→**必须放行**（别把失败当不匹配误杀）
 ```
 
-**配置来源（自动探测，不用手配）**：`~/.pi/agent/models.json` 里找第一个
-`models[].input` 含 `"image"` 的 provider（本机是 `new-provider` / `deepseek/deepseek-v4-flash`）。
-可用环境变量覆盖：`VISION_BASE` / `VISION_KEY` / `VISION_MODEL`。
+配方（若要修它）：`POST {BASE}/chat/completions`，OpenAI 格式带 `image_url`（data:image/jpeg;base64），**`max_tokens` 给足 2400**（推理模型会烧光 token 返回空正文），**必须带浏览器 User-Agent**（否则 Cloudflare 1010 403），图片压到 640px JPEG q78。
 
-**成本**：单张图约 **~¥0.0014**（640px 缩图 + ~500 token），60 张约 ¥0.08 —— 比一张 AI 图还便宜。
-
-**四个必须知道的实现细节（都是踩过的坑）**：
-
-1. **必须带浏览器 `User-Agent`**，否则 Cloudflare 直接 `403 error code: 1010`。
-2. **模型是推理模型，会先把 token 烧在思考上**。`max_tokens` 给低了（如 200/900）会
-   `finish_reason=length` + **正文空**。所以：`max_tokens=2400`，且
-   **空响应必须当「结论不明 → 放行」，绝不能当「不匹配」**（否则好图被误杀）。
-3. **`_vcfg()` 并发有竞态**：曾经把 `_VCFG = False` 当哨兵值，多线程同时调时后到的线程
-   读到非 None 就以为「没配置」，随机几个槽位报 `no-vision`。已改成**双重检查 + 锁**。
-4. **复核失败 ≠ 图不对**。看的是「图里主要的东西」，特写/组合图容易被误判（
-   如「兔子抱胡萝卜的画 + 旁边有马克笔」被答成「兔子图画」）。所以复核只能当**过滤器**，
-   不能当唯一真相；用户仍可一键换图。
-
-### 图源实测结论（2025-10 实测，别再重复踩）
-
-**先看命中率**（查询词 `white rabbit sitting`，期望「一只兔子」）：
-
-| 图源 | 搜到 | 下载 | **视觉复核命中** | 耗时 | 结论 |
-|---|---|---|---|---|---|
-| **Bing** `cn.bing.com/images/async` | 34 | 10 | **10/10** ✅ | 57s | 抓得准，但**授权不可信** |
-| **Bing 公版筛选** | 34 | 10 | **10/10** ✅ | 44s | 准度不降，但筛选结果依然不可全信 |
-| **百度图片** | 12 | 11 | **11/11** ✅ | 59s | 抓得准，**无授权信息** |
-| **360 图片** | 24 | 4 | 2/4 ⚠️ | 33s | 下载成功率低，准度一般 |
-| **pixnio.com** | **1** | 1 | 1/1 ✅ | 24s | **搜不到就返回随机图池**，不可依赖 |
-
-> **重要更正**：之前写「pixnio ✅ 唯一能用」是**只看「能不能下载」、没看「内容对不对」**得出的错结论。
-> pixnio 只能当「**偶尔能捡到 CC0 真图**」的彩票，不能当主力；主力应该是 **Bing + 百度**。
-
-| 图源 | 结论 |
-|---|---|
-| **pixnio.com** | ⚠️ CC0 可商用，但 **`?s=` 搜不到时返回随机图池**（垃圾词也能出 48 张），命中率极低。`https://pixnio.com/?s=<词>`，抓 `free-images/...jpg`，取最大尺寸变体。**只吃英文词** |
-| **Bing** `cn.bing.com/images/async` | ✅ **命中率最高**；授权筛选参数能用但**结果不可信**（需人工核对） |
-| **360 图片** `image.so.com/j` | ⚠️ 可达，`img` 字段是**原图**（尺寸与声明一致）；但下载成功率低（24 搜到只下成 4）；授信未知 |
-| **百度图片** `acjson` | ✅ **命中率最高**；**必须先访问 `image.baidu.com` 拿 Cookie**（否则 `antiFlag`）；`middleURL` 被限宽 500-800px；授信未知 |
-| pixabay / publicdomainpictures / stocksnap / freeimages / freerangestock | ❌ 403 |
-| **Wikimedia Commons**（本来最理想：真 CC + 可查元数据） | ❌ **SSL 握手超时**（被墙，实测两次都失败） |
-| Google / DuckDuckGo / geograph / Openverse / Flickr feed | ❌ 超时或被重置（被墙） |
-| 搜狗图片 napi | ❌ 返回 0 条 |
-
-### 五个必踩的坑
-
-1. **pixnio 搜不到就返回随机图池**：实测垃圾词 `zzzqqqxxyy` 也能出 48 张，中文词同理。
-   → 代码里 **pixnio 只接 ASCII 词**（`if not query.isascii(): return []`）。
-   **但这只是减少浪费，根本解法是视觉复核**（ASCII 词照样会中招）。
-2. **Bing 的 `site:` 在图片接口被忽略**：`site:pixabay.com` 会返回 cookipedia/cgtn。别指望它定向。
-3. **百度网页能过 ≠ 图能下**：`middleURL` 声明 4000x3000 实下 667x500（`?w=800` 限宽，去参数/改 w=1600 都无效）。
-   所以 360 优先（360 的 `img` 才是原图）。
-4. **不要让「授权优先级」直接决定下载顺序**：pixnio 排第一时，它的随机垃圾会吃掉
-   全部 13 个下载名额，Bing/百度的好图根本进不了复核环节。必须 `_tier_mix()` 分层轮转。
-5. **视觉复核的空响应**：推理模型 token 烧光时 `content` 为空串，
-   `'匹配：是' in ''` = False → 会把好图判成不对题。必须显式判 `'匹配' not in t → None`。
-
-### 性能
-
-搜索、下载、**视觉复核**都**并行**（`ThreadPoolExecutor`，搜索 6 / 下载 6 / 复核 6 线程）：
-一个槽位约 **60-90 秒**（搜 + 下 + 复核）。10 个槽位约 12 分钟 + 回退 AI 的约 90s/张。
-
-### ⚠️ 卖钱课件的版权底线
-
-- 项目 `meta.photo_policy` 设成 **`"cc0"`**（默认）——这是**唯一能让每张图都敢商用**的配置。
-- 只用 `免费图库·可商用` 的可以放心卖；其余一律回退 AI。
-- `Bing筛选·待核对` / `授权未知·慎用` 的图**要么人工核对来源，要么换掉**
-  （想用就显式改 `photo_policy: "any"`，风险自负）。
-- 别用带水印的付费图库小样（alamy / freepik / 699pic / 摄图网 / tuchong …，已在 `STOCK_HOSTS` 黑名单）。
-- 电商主图（1688 / alicdn / taobao / jd / amazon …）也在黑名单——又带水印又不适合当范画。
-- 上架前把 `图片版权.json` 过一遍。
-- **AI 生成的图是本项目的兜底**：对题 + 可商用 + 风格统一，¥0.03/张。别嫌它不「真」——
-  一份卖 ¥9.9~29.9 的课件，花 ¥0.6 把 20 张图全搞定，是最划算的一笔。
+**但：要卖钱的课件，一张都不要用。**
 
 ## 审图台（WebUI）闭环
 
@@ -388,9 +260,9 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 
 ### 表格要完整：完整 API 清单
 
-`GET`：`/api/status`（含 `chain_order`/`anchor`/每 slot 的 `alias`/`eff_refs`/`source`/`query`/`alts`）、`/api/report`、`/api/models`、`/api/outputs`、`/api/projects`（课件列表）、`/api/thumb?p=<目录名>`、`/api/full_prompt?slot=&p=`、`/api/job?id=`、`/img?slot=&mode=hd|sell[&dl=1]`、`/zip_images`、`/preview/NN.png`、`/download?f=pdf|pptx`、**`/api/alt?slot=`**（某槽的备选图列表）、**`/api/altimg?slot=&f=`**（备选图字节）
+`GET`：`/api/status`（含 `chain_order`/`anchor`/每 slot 的 `alias`/`eff_refs`/`batch`）、`/api/report`、`/api/models`、`/api/outputs`、`/api/projects`（课件列表）、`/api/thumb?p=<目录名>`、`/api/full_prompt?slot=&p=`、`/api/job?id=`、`/img?slot=&mode=hd|sell[&dl=1]`、`/zip_images`、`/preview/NN.png`、`/download?f=pdf|pptx`、`/api/alt?slot=`（无备选图时返回 404）
 
-`POST`：`/api/switch{project}`（切换当前课件）、`/api/batch{projects,op,value,rebuild}`（批量操作）、`/api/review`、`/api/prompt`、`/api/regen{slots,prompts,model,forced,size}`、`/api/regen_chain{model,force}`、`/api/build`、`/api/export`、`/api/openfolder`、**`/api/pick_alt{slot,f}`**（备选图升为主图，真交换）、**`/api/search_photo{slot,queries}`**（改关键词重搜）
+`POST`：`/api/switch{project}`（切换当前课件）、`/api/batch{projects,op,value,rebuild}`（批量操作）、`/api/review`、`/api/prompt`、`/api/regen{slots,prompts,model,forced,size}`、`/api/regen_chain{model,force}`、`/api/build`、`/api/export`、`/api/openfolder`、`/api/pick_alt{slot,f}`、`/api/search_photo{slot,queries}`（网搜已废弃，保留入口）
 
 ### UI 设计约束（重要）
 
@@ -414,7 +286,7 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 | **`curl \| python` 报 JSON 错** | 走 GBK 解码 | 测试用 `python -c` + `urllib`，别用 curl 管道 |
 | **视觉复核随机几个槽报 `no-vision`** | `_vcfg()` 把 `False` 当哨兵值，多线程读到中间态 | 已修：双重检查 + `threading.Lock()` |
 | **视觉复核把好图判成「不对题」** | 推理模型 token 烧光 → `content=''` → `'匹配：是' in ''` = False | 已修：`max_tokens=2400`；`'匹配' not in t` 一律返回 `None`（放行） |
-| **网搜图“牛头不对马嘴”** | pixnio 搜不到时返回**随机图池**，但优先级把它排第一 → 吃掉全部下载名额 | 已修：`_tier_mix()` 分层轮转 + `vcheck()` 视觉复核 + `photo_policy=cc0` 授权闸门 |
+| **网搜图“牛头不对马嘴”** | 搜索引擎按关键词返回，**不知道图里是什么**；pixnio 搜不到就返回随机图池 | **已彻底废弃网搜**：全部改 AI 生成。详见上节「图片一律 AI 生成」 |
 | **Windows 下 `printf` 吞 `\h`** | 转义 | 少用 printf |
 | **Python `-c` 嵌套引号崩** | 引号地狱 | 改用 heredoc 或写临时脚本 |
 | **已存在图片不重跑** | grsai 脚本自动 `[skip]` | 是特性（断点续跑）；要重跑加 `--force` |
@@ -423,8 +295,6 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 | **PPTX 体积过大** | 高清 PNG 直塞 | `img/` 高清 + `img_sell/` 压缩 JPG（≤1600px, q88），builder `--mode sell` |
 | **重出了图但 PDF 里还是老图** | 只跑了 `builder.py`，没先压缩 → `img_sell/` 还是旧的 | 已修：`builder.py` CLI 现在默认先 `compress()`（`--no-compress` 可关） |
 | **网搜图重跑后"图变了"** | `--only` 隐含 force，会重新下载并可能选中不同图 | 审好的图别再用 `--only` 碰；要保底就先备份 `img/` |
-| **图片出处追不回来** | 版权清单只在 `run()` 末尾写，中途崩就丢 | 已修：每槽写 `img_alt/<slot>.credits.json` sidecar，`run()` 会合并 sidecar 自愈重建 |
-| **备选图撑爆磁盘** | 备选图也存 2400px PNG → 50 张 116MB | 已改：备选图存 **JPEG 1600px**（15MB）；被选中时 `pick_alt` 会转回真 PNG 当主图 |
 | **重启了服务但界面/接口还是老样子** | Windows 的 `SO_REUSEADDR` 允许**重复绑定同一端口**，旧进程继续响应 | 已修：`serve()` 先探 `/api/status`，已有实例就提示不叠加；换端口也会自动找空位。**排查时先 `netstat -ano \| grep 8777`** |
 | **pixnio 搜中文出乱图** | pixnio 搜不到会返回随机图池（垃圾词也能出 48 张） | 代码里 pixnio **只接 ASCII 词**；中文词交给 Bing/360/百度 |
 | **Bing 图片接口的 `site:` 无效** | 被忽略 | 别指望 `site:pixabay.com` 定向，会返回 cookipedia/cgtn |
@@ -434,9 +304,8 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 
 - `img/` = 高清 PNG 存档（AI 出图 + 网搜主图，cap 2400px）
 - `img_sell/` = JPEG 压缩（≤1600px, q88）→ 约 4.8MB，**供货版**
-- `img_alt/` = 备选图 JPEG（≤1600px）→ 约 15MB（存 PNG 要 116MB，别改回去）
 - `builder.py --mode sell`（默认，CLI 会自动先 `compress()`）用压缩版装 pptx
-- 实测：PPTX ~4.7-4.9MB / PDF ~2.0-2.1MB（真照片比 AI 图更省），26 页，960×540pt
+- 实测：PPTX ~4.3-4.7MB / PDF ~2.8-3.1MB（全 AI 图），26 页，960×540pt
 
 ## 双通道模型路由（别搞混）
 
@@ -455,12 +324,10 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 - [ ] `out/《课题》X-Y岁课件.pptx` ← 可编辑源文件
 - [ ] `meta.brand` 已换成用户品牌名（**不是「创享美育」**）
 - [ ] PDF 里无缺图占位框（`/api/status` 报"无缺图"）
-- [ ] 实物观察页有真实照片（`source: "search"`，不是 AI 画的假照片）
-- [ ] **`图片版权.json` 已人工过一遍**；非「免费图库·可商用」的图都核对过或换掉了
+- [ ] 实物观察页的图**对题**（AI 生成的一定对题；若混用了网搜图，必须过视觉复核）
+- [ ] 全部图片均为 AI 生成，无第三方版权风险
 - [ ] 步骤 1→5 逐级递进、最后一步 = 成品（alias）
 - [ ] 线条是「干净实线」
-- [ ] 实物观察页有**对题**的图（网搜图片必须过了视觉复核，或明说是 AI 兜底）
-- [ ] 项目 `meta.photo_policy` = `"cc0"`（要卖钱就必须）
 - [ ] 附：教案 Word / 家长话术 / 小红书商品页文案（可选增值）
 
 ## 视觉判断必须交给用户
