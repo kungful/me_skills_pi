@@ -9,11 +9,6 @@ metadata:
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
-> **要的是「真照片」而不是 AI 图？**（实物观察图、参考素材、商品实物图）
-> 别用本 skill 画 —— AI 画出来的是**假照片**。用 `courseware-factory` 里的
-> **`工厂/photos.py`**（联网搜 pixnio CC0 免费可商用图，¥0、更快、是真照片）：
-> `python 工厂/photos.py "bamboo shoot" -o out.png --alt img_alt -n 5`
-> 本 skill 只在**搜不到 / 需要特定构图的插画**时才用。
 
 # grsai Nano Banana (legacy API)
 
