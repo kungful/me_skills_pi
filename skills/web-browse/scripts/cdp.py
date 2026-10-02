@@ -370,7 +370,20 @@ class Browser:
                 os.remove(p)
             except OSError:
                 pass
-        shutil.rmtree(self.profile, ignore_errors=True)
+        # wait for the OS to release file handles, then retry the profile delete
+        for _ in range(12):
+            shutil.rmtree(self.profile, ignore_errors=True)
+            if not os.path.exists(self.profile):
+                break
+            time.sleep(0.5)
+        if os.path.exists(self.profile):
+            # leave it for the OS temp cleaner rather than failing the command
+            import re as _re
+            try:
+                stamp = _re.sub(r"[^0-9]", "", str(int(time.time())))
+                os.rename(self.profile, self.profile + ".stale-" + stamp)
+            except OSError:
+                pass
 
     # -- pages ----------------------------------------------------------
     def open(self, url: str, label: str = "main", wait: float = 3.0) -> str:

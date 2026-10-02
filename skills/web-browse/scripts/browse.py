@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import cdp  # noqa: E402
-from webbrowse import html_to_markdown, page_meta, extract_links  # noqa: E402
+from webbrowse import html_to_markdown, page_meta, extract_links, split_selectors  # noqa: E402
 
 # ------------------------------------------------------------------ JS
 
@@ -170,7 +170,7 @@ def page_body(b, sid, max_chars, out=None, bare=False, drop=""):
     raw = b.html(sid)
     meta = page_meta(raw, b.eval(sid, "location.href") or "")
     body = html_to_markdown(
-        raw, meta.get("url", ""), drop_selectors=tuple(s.strip() for s in drop.split(",") if s.strip()))
+        raw, meta.get("url", ""), drop_selectors=split_selectors(drop))
     if bare:
         text = body
     else:
@@ -461,7 +461,7 @@ def main():
         p.add_argument("--max-chars", type=int, default=chars)
         p.add_argument("--out")
         p.add_argument("--bare", action="store_true")
-        p.add_argument("--drop", default="")
+        p.add_argument("--drop", default="", help="xpaths to remove, separated by ';'")
 
     def target_opts(p):
         p.add_argument("index", type=int, nargs="?", help="element index from `probe`")

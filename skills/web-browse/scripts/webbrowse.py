@@ -317,6 +317,21 @@ def _txt(node) -> str:
     return re.sub(r"\s+", " ", "".join(node.itertext())).strip()
 
 
+def split_selectors(spec: str) -> tuple[str, ...]:
+    """Split a --drop spec into xpath expressions.
+
+    Primary separator is ';' or newline. A bare comma is only treated as a separator when the
+    spec has no parentheses/brackets, so that contains(@class,'x') survives intact.
+    """
+    spec = (spec or "").strip()
+    if not spec:
+        return ()
+    parts = [p.strip() for chunk in re.split(r"[;\n\r]+", spec) for p in [chunk] if p.strip()]
+    if len(parts) == 1 and "," in parts[0] and "(" not in parts[0] and "[" not in parts[0]:
+        parts = [p.strip() for p in parts[0].split(",") if p.strip()]
+    return tuple(parts)
+
+
 def html_to_markdown(raw_html: str, base_url: str = "", keep_links: bool = True,
                      drop_selectors: tuple[str, ...] = ()) -> str:
     if lxml_html is None:
@@ -327,8 +342,11 @@ def html_to_markdown(raw_html: str, base_url: str = "", keep_links: bool = True,
     for bad in doc.xpath("//comment()"):
         bad.getparent().remove(bad)
     for xp in drop_selectors:
-        for el in doc.xpath(xp):
-            _drop(el)
+        try:
+            for el in doc.xpath(xp):
+                _drop(el)
+        except Exception as e:  # noqa: BLE001 - a bad xpath must not kill the fetch
+            sys.stderr.write(f"[warn] bad drop xpath {xp!r}: {e}\n")
     for el in list(doc.iter()):
         tag = el.tag if isinstance(el.tag, str) else ""
         if tag.lower() in DROP_TAGS:
@@ -749,8 +767,8 @@ def cmd_fetch(args):
         for text, href in extract_links(raw, final, args.same_host, args.limit):
             print(f"{text}\t{href}")
         return
-    drop = tuple(s.strip() for s in args.drop.split(",") if s.strip()) if args.drop else ()
-    body = html_to_markdown(raw, final, keep_links=not args.no_links, drop_selectors=drop)
+    body = html_to_markdown(raw, final, keep_links=not args.no_links,
+                            drop_selectors=split_selectors(args.drop))
     desc = meta.get("description", "")
     if len(desc) > 300:
         desc = desc[:300] + "..."
@@ -825,7 +843,8 @@ def main():
     f.add_argument("--out")
     f.add_argument("--same-host", action="store_true", help="links: keep only this host")
     f.add_argument("--no-links", action="store_true", help="strip link targets, keep anchor text")
-    f.add_argument("--drop", help="comma-separated lxml xpaths to remove, e.g. '//div[@class=\"ad\"]'")
+    f.add_argument("--drop", help="lxml xpaths to remove, separated by ';' or newline, "
+                                  "e.g. '//div[@class=\"ad\"]; //footer'")
     f.add_argument("--bare", action="store_true", help="no title/URL header")
     f.add_argument("--limit", type=int, default=200, help="links: max count")
     f.set_defaults(func=cmd_fetch)
