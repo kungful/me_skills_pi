@@ -19,26 +19,36 @@ description: 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 
 | `scripts/sync.py` | 同步引擎（本技能的核心） |
 | `scripts/install-autostart.ps1` | 可选：注册 Windows 计划任务，Pi 没开也定时同步 |
 
+## 当前已配置状态（本机）
+
+| 项 | 值 |
+|---|---|
+| 远端 | `https://github.com/kungful/me_skills_pi.git` |
+| 分支 | `main` |
+| 源 | `~/.pi/agent/skills` + `~/.agents/skills`（共 8 个 skill） |
+| 鉴权 | 走 Git Credential Manager（已存 GitHub 凭据），无需 token |
+| 仓库文件 | `skills/<名字>/...` + `README.md` + `index.json` |
+| 实时自动上传 | ✓ 扩展 `skills-autosync.ts` 已生效 |
+| 定时自动上传 | ✓ 计划任务 `PiSkillsGitHubSync`（每 30 分钟 + 登录时） |
+
 ## 三个问题先问清楚
 
 1. **远端**：仓库地址 `https://github.com/<owner>/<repo>.git`（是否想让脚本自动创建？）
-2. **token**：GitHub PAT（classic，勾 `repo`）——只用于 push 和建仓库，不落盘到 git config；也可用环境变量 `GITHUB_TOKEN`
+2. **鉴权**：优先用已有的 GitHub 凭据（Git Credential Manager / `git credential fill` 能取到就不用 token）；
+   否则给 GitHub PAT（classic，勾 `repo`）。token 不落盘到 git config，也可用环境变量 `GITHUB_TOKEN`
 3. **源**：默认 `~/.pi/agent/skills` + `~/.agents/skills`，要不要加减？
 
 ## 第一次配置（一次性）
 
 ```bash
-# 方式 A：脚本自动建远端仓库（需要 token）
+# 有 token 时可用 --token（还能自动建远端仓库）；
+# 没有 token 但本机已存 GitHub 凭据时，直接跑即可：
 python ~/.pi/agent/skills/skills-github-sync/scripts/sync.py \
-  --init --repo <owner>/<repo> --token <PAT>
-
-# 方式 B：GitHub 上先手动建好空仓库，然后
-python ~/.pi/agent/skills/skills-github-sync/scripts/sync.py \
-  --init --repo <owner>/<repo> --token <PAT>
+  --init --repo <owner>/<repo> [--token <PAT>]
 ```
 
-`--init` 会：写配置 → `git init` → 镜像 skills → 首次提交 → 推送。
-之后配置里会保存 remote（token 默认**不**写进配置，靠 `GITHUB_TOKEN` 环境变量或每次 `--token`）。
+`--init` 会：写配置 → `git init` → **对齐远端已有历史**（避免首次推送 non-fast-forward）
+→ 镜像 skills → 首次提交 → 推送。
 
 ## 日常使用
 
@@ -68,7 +78,8 @@ state ∈ `pushed` / `committed` / `no-change` / `busy` / `dry-run` / `no-skills
 - Pi/pi-web 会话启动后 12 秒做一次对账同步（补齐上次没传上去的改动）；
 - 递归监听源目录，**新增/修改/删除 skill 后 8 秒**自动同步（防抖 + 文件锁 + 锁排队）。
 
-生效方式：**重启 pi-web**（或 pi TUI 里 `/reload`）。装之后什么都不用管。
+生效方式：新建的 pi-web 会话自动加载（实测：本会话内改 skill，~9 秒后就出现在 GitHub 上）。
+若旧会话没加载，**重启 pi-web**（或 pi TUI 里 `/reload`）。
 手动触发：`/skills-sync`；只看状态：`/skills-sync status`。
 
 > 没有配置远端时扩展会静默跳过，不会每次启动都弹错。
@@ -84,6 +95,8 @@ powershell -ExecutionPolicy Bypass -File `
 卸载：加 `-Uninstall`。立即跑：`Start-ScheduledTask -TaskName PiSkillsGitHubSync`。
 脚本会自动找 Python：`py.exe` 启动器 → `LOCALAPPDATA\Programs\Python\Python3*\pythonw.exe` → PATH。
 也可用 `-PythonExe` 手动指定。
+
+> 注意：`New-ScheduledTaskTrigger -AtLogOn` 必须带 `-User`，否则需要管理员权限（Access denied）。
 
 ## 镜像规则（重要）
 
@@ -102,6 +115,8 @@ powershell -ExecutionPolicy Bypass -File `
 或远端地址是 HTTPS 但本机代理不通（本机 git 已配 `http.https://github.com.proxy`）。
 
 **non-fast-forward** → `sync.py` 会自动 `pull --rebase --autostash` 再重试一次；
+`--init` 时如果远端已有历史（比如 GitHub 建仓时生成的 `Initial commit`），
+会先 `git fetch` + `git reset --mixed origin/<branch>` 对齐，不会冲突。
 仍失败就手动 `git -C ~/.pi/skills-repo pull --rebase origin main`。
 
 **不想让某个 skill 上传** → 在该 skill 目录放一个名为 `.nosync` 的空文件（脚本会跳过，并在日志里提示）。
