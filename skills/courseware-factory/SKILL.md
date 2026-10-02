@@ -57,7 +57,22 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 | 导出 PDF / 单张图 | 「审图台」→ 导出入口 |
 | 一次改好几套课件 | 「审图台」→ 多课件工作台 + 批量操作 |
 | 报错了 | 「常见坑」（先查 `netstat` 看是不是僵尸服务） |
+| **改完引擎/想确认没搞坏** | `python selftest.py`（全链路自检，不花钱） |
 | **跟课件无关的找图/做图** | ❌ 不归本 skill，转 `grsai-image-2-5` |
+
+## 自检（改完引擎先跑这个）
+
+```bash
+python selftest.py               # 全跑：数据层 → CLI → 照片搜索 → API → 交付物（约 2 分钟）
+python selftest.py --no-mutate   # 只读版，不碰任何文件
+```
+
+覆盖 40+ 项：页数/槽位/缺图、**步骤5==成品 的 md5**、版权台账授权分布、
+`--list`/`--models`/`photos --list`、`/api/status`/`/api/alt`/`/api/altimg`/`/api/full_prompt`、
+`/img` 两种模式、**路径穿越防护**、`pick_alt` 真·交换 + **可逆性**（像素差应为 0）、
+PDF 页数/尺寸/体积、PPTX 内嵌媒体。
+
+**不花钱**：不调任何绘图模型。`pick_alt` 那节会自动换回原图。
 
 ## Python 环境（Windows 关键坑）
 
