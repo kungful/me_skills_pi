@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-02 18:45:05",
-  "count": 9,
+  "generatedAt": "2026-10-02 18:46:16",
+  "count": 8,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -40,11 +40,6 @@
     {
       "name": "skills-github-sync",
       "description": "把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说\"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一下\"，或需要初始化一个 skills 仓库、配置自动上传、排查同步失败时使用。",
-      "source": "C:/Users/hua/.pi/agent/skills"
-    },
-    {
-      "name": "zz-e2e",
-      "description": "端到端测试，稍后删除",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
