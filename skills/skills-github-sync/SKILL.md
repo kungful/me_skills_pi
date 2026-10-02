@@ -25,7 +25,7 @@ description: 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 
 |---|---|
 | 远端 | `https://github.com/kungful/me_skills_pi.git` |
 | 分支 | `main` |
-| 源 | `~/.pi/agent/skills` + `~/.agents/skills`（共 8 个 skill） |
+| 源 | `~/.pi/agent/skills` + `~/.agents/skills`（当前 10 个 skill） |
 | 鉴权 | 走 Git Credential Manager（已存 GitHub 凭据），无需 token |
 | 仓库文件 | `skills/<名字>/...` + `README.md` + `index.json` |
 | 实时自动上传 | ✓ 扩展 `skills-autosync.ts` 已生效 |
@@ -81,6 +81,41 @@ state ∈ `pushed` / `committed` / `no-change` / `busy` / `dry-run` / `no-skills
 | ③ 启动对账 | 会话启动后 **12 秒** | 补齐上次没传上去的改动 |
 | ④ Windows 计划任务 | 每 30 分钟 | pi-web 完全没开也在传 |
 
+①②③ 都在**扩展模块加载时**就启动（不等 `session_start`），所以 reload 后没有空窗期。
+
+### 为什么不用 `pi.exec` —— 更狠的一个坑
+
+**扩展里所有同步动作都走 `node:child_process.spawn` 直接跑 Python，绝不经过 `pi.exec`。**
+
+原因：扩展拿到的 `pi` / `ctx` 对象在**会话被替换或重载**之后就作废了
+（`ctx.newSession()` / `ctx.fork()` / `ctx.switchSession()` / `ctx.reload()`）。
+再用它就会抛：
+
+```
+This extension ctx is stale after session replacement or reload.
+Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(),
+ctx.switchSession(), or ctx.reload().
+```
+
+实测中连续出现 **18 次**这个异常 —— 扩展看起来在跑（日志里 `sync start` 照常打印），
+**实际每一次同步都在第一步就失败**，新 skill 完全传不上去，只能等 30 分钟的计划任务兜底。
+这是最隐蔽的一类故障：不提示用户，只在日志里留一行。
+
+改用 `spawn` 之后，同步进程与 pi 的会话生命周期彻底解耦，
+session 怎么换、怎么 reload 都不影响它。需要 `ctx` 的只剩 `ui.notify`（纯提示），
+包在 `try/catch` 里，失败也不影响同步。
+
+### 同一时刻只允许一个实例活着
+
+pi 每次 reload 都会**重新加载模块**，旧模块的监听器却还在跑
+（日志里会看到一串 `extension module loaded`）。结果就是 N 份监听器同时触发同步。
+
+解决：在 `globalThis` 上放一个"所有权令牌"。
+
+- 新实例加载时先调上一个实例的 `teardown()`，把它的监听器和定时器全部拆掉；
+- 新实例立刻接管并安装监听器（不依赖 `session_start`，所以中间没有空窗期）；
+- 旧实例再次被触发时先自检 `isOwner()`，不是主人就自杀，不会再抛异常。
+
 ### 为什么需要② —— 实测踩过的坑
 
 Windows 的 `fs.watch`（底层 `ReadDirectoryChangesW`）**会静默丢事件**：
@@ -107,9 +142,14 @@ Windows 的 `fs.watch`（底层 `ReadDirectoryChangesW`）**会静默丢事件**
 - **诊断日志**：`~/.pi/agent/skills-autosync.log`（上限 256KB，超了截断重来）。
 - 调试用环境变量 `PI_SKILLS_SYNC_POLL_MS` 可临时缩短轮询间隔。
 
-生效方式：**新建的 pi-web 会话会自动加载**；但 pi-web **不会热重载**已加载的扩展，
-所以改完扩展后要**重启 pi-web** 才生效。
+生效方式：**新建的 pi-web 会话会自动加载**。
+改完扩展后在 pi / pi-web 里执行 **`/reload`** 就能让新代码生效
+（重新加载模块并自动接管），不必重启整个 pi-web。
+
 手动触发：`/skills-sync`；只看状态：`/skills-sync status`。
+
+排查用 `~/.pi/agent/skills-autosync.log`：能看到是哪条链路触发的，
+以及 `ownership claimed (gen N)` 是否随 reload 递增。
 
 > 没有配置远端时扩展会静默跳过，不会每次启动都弹错。
 
@@ -117,7 +157,7 @@ Windows 的 `fs.watch`（底层 `ReadDirectoryChangesW`）**会静默丢事件**
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File `
-  "$HOME\.pigent\skills\skills-github-sync\scripts\install-autostart.ps1" -EveryMinutes 30
+  "$HOME\.pi\agent\skills\skills-github-sync\scripts\install-autostart.ps1" -EveryMinutes 30
 ```
 
 注册一个"每 30 分钟 + 每次登录"运行 `sync.py` 的计划任务（用 `pyw.exe -3` 无窗口跑）。

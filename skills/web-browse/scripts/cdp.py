@@ -356,7 +356,8 @@ class Browser:
         if self.pid and pid_alive(self.pid):
             try:
                 if os.name == "nt":
-                    subprocess.run(["taskkill", "/F", "/PID", str(self.pid)],
+                    # /T = kill the whole process tree (renderer/utility children)
+                    subprocess.run(["taskkill", "/F", "/T", "/PID", str(self.pid)],
                                    capture_output=True)
                 else:
                     os.kill(self.pid, 9)

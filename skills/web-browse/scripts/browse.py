@@ -431,12 +431,15 @@ def cmd_pages(args):
 def cmd_close(args):
     if args.all:
         import glob
-        root = os.path.join(os.sys_temp if hasattr(os, "sys_temp") else
-                            __import__("tempfile").gettempdir(), "webbrowse-browse")
+        import tempfile
+        root = os.path.join(tempfile.gettempdir(), "webbrowse-browse")
         for f in glob.glob(os.path.join(root, "*.json")):
             name = os.path.splitext(os.path.basename(f))[0]
-            cdp.Browser(name).cleanup()
+            b = cdp.Browser(name)
+            b.start()
+            b.cleanup()
             print(f"closed session {name}")
+        print("(profiles removed)")
         return
     b = cdp.Browser(args.session)
     b.start()
