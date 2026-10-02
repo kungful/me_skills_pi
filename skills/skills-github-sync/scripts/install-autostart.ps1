@@ -100,7 +100,10 @@ $repeat   = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
     -RepetitionInterval $interval -RepetitionDuration ([TimeSpan]::FromDays(3650))
 
 $triggers = @()
-if (-not $NoLogonTrigger) { $triggers += (New-ScheduledTaskTrigger -AtLogOn) }
+if (-not $NoLogonTrigger) {
+    # 必须带 -User，否则创建"任意用户"登录触发器需要管理员权限（Access denied）
+    $triggers += (New-ScheduledTaskTrigger -AtLogOn -User "$env:USERNAME")
+}
 $triggers += $repeat
 
 $settings = New-ScheduledTaskSettingsSet `
