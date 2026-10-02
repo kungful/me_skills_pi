@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02 17:27:50",
+  "generatedAt": "2026-10-02 17:28:48",
   "count": 9,
   "skills": [
     {
@@ -43,8 +43,8 @@
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
-      "name": "zz-task-test",
-      "description": "验证计划任务自动上传（待删除）",
+      "name": "zz-live-test",
+      "description": "验证实时自动上传（待删除）",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
