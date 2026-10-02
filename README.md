@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-02 22:58:28**
+最后同步：**2026-10-03 05:13:57**
 
-共 **9** 个 skill。
+共 **10** 个 skill。
 
 ## 安装
 
@@ -26,3 +26,4 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`grsai-nano-banana`](skills/grsai-nano-banana/) | Generate or edit images through the grsai legacy Nano Banana API (/v1/draw/nano-banana, /v1/draw/result) or the Gemini-compatible route (/v1beta/models/<mode... | pi |
 | [`kicad`](skills/kicad/) | Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, trace... | pi |
 | [`skills-github-sync`](skills/skills-github-sync/) | 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一... | pi |
+| [`web-browse`](skills/web-browse/) | Browse and read the live web - fetch pages as clean markdown, search Google/Bing/360, extract links and metadata, and take screenshots that the model can act... | pi |

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-02 22:58:28",
-  "count": 9,
+  "generatedAt": "2026-10-03 05:13:57",
+  "count": 10,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -45,6 +45,11 @@
     {
       "name": "skills-github-sync",
       "description": "把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说\"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一下\"，或需要初始化一个 skills 仓库、配置自动上传、排查同步失败时使用。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "web-browse",
+      "description": "Browse and read the live web - fetch pages as clean markdown, search Google/Bing/360, extract links and metadata, and take screenshots that the model can actually look at. Use when the user asks to look up / 查 / 搜 / 看看某个网页, read a URL or article, summarize a page, follow documentation links, verify a fact online, check a site's news/pricing/docs, or when any answer requires current information from the internet.",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
