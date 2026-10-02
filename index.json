@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-02 18:12:19",
-  "count": 10,
+  "generatedAt": "2026-10-02 18:15:39",
+  "count": 9,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -45,11 +45,6 @@
     {
       "name": "zz-autotest",
       "description": "证明自动触发用的临时 skill",
-      "source": "C:/Users/hua/.pi/agent/skills"
-    },
-    {
-      "name": "zz-diag",
-      "description": "d",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
