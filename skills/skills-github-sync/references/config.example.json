@@ -1,0 +1,17 @@
+{
+  "remote": "https://github.com/<你的用户名>/pi-skills.git",
+  "branch": "main",
+  "repoDir": "C:/Users/hua/.pi/skills-repo",
+
+  "sources": [
+    "C:/Users/hua/.pi/agent/skills",
+    "C:/Users/hua/.agents/skills"
+  ],
+
+  "token": "",
+  "tokenEnv": "GITHUB_TOKEN",
+  "proxy": "",
+
+  "commitPrefix": "skills",
+  "autoCreateRemote": true
+}

@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-10-02 17:24:40",
+  "count": 8,
+  "skills": [
+    {
+      "name": "blender-motion-state-inspection",
+      "description": "Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where screenshots alone are not enough.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "courseware-factory",
+      "description": "生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台。用当用户要做新课件（\"做课件/新课题/出一套 XX 岁课件/范画/教学课件\"），或要改已有课件的图片、版式、文案、品牌名，或要导出 PDF/PPTX/单张图片时。仅需生成普通图片、不动课件结构时用 grsai-image-2-5。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "design-and-review-circuit",
+      "description": "Design, audit, or correct an electronic circuit from a product brief, native schematic, netlist, block diagram, or circuit description. Use for architecture and component-function review, power and logic-domain checks, reset and boot sequencing, bus ownership, ratings, timing, protection, safe states, component suitability, circuit bugs, or layout-facing electrical constraints.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "easyeda-agent",
+      "description": "通过本地 easyeda CLI、daemon 和连接器操作嘉立创EDA专业版（EasyEDA Pro）：用可迁移样例和参数化数据构建或修复原理图、布局布线 PCB，并回读连接、几何、DRC 与保存结果。适用于已有工程操作及数据驱动电路设计。",
+      "source": "C:/Users/hua/.agents/skills"
+    },
+    {
+      "name": "grsai-image-2-5",
+      "description": "Generate or restyle images through the grsai API (gpt-image-2 / 2.5 family; text-to-image, image-to-image with base64 or URL references, transparent background, up to 3840x2160). Use when the user asks to 出图/生成/渲染/换风格 an image, turn a photo or 3D view into photoreal architecture or product art, or handle /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "grsai-nano-banana",
+      "description": "Generate or edit images through the grsai legacy Nano Banana API (/v1/draw/nano-banana, /v1/draw/result) or the Gemini-compatible route (/v1beta/models/<model>:generateContent). Use when the user asks to 出图/生成/绘画 with Nano Banana / gemini-2.5-flash-image / nano-banana-pro, needs 1K/2K/4K output, extreme aspect ratios (1:4, 8:1), reference-image editing, webhook or polling results, or grsai task ids from a Nano Banana job. Read the Hard Rules before any paid call.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "kicad",
+      "description": "Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, traces nets, cross-references schematic to PCB, extracts BOM data, checks DRC/ERC, DFM, power trees, and regulator circuits. Every finding carries a confidence label and evidence source with trust_summary rollup. Analyzes PDF schematics from dev boards, reference designs, eval kits, and datasheets. Supports KiCad 5–10. Use whenever the user mentions .kicad_sch, .kicad_pcb, .kicad_pro, PCB design review, schematic analysis, PDF schematics, reference designs, Gerber files, DRC/ERC, netlist issues, BOM extraction, signal tracing, power budget, DFM, or wants to understand, debug, compare, or review any hardware design. Also for \"check my board\", \"review before fab\", \"what's wrong with my schematic\", \"is this ready to order\", \"check my power supply\", \"verify this circuit\", OSHWA certification readiness, or any electronics/PCB design question.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "skills-github-sync",
+      "description": "把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说\"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一下\"，或需要初始化一个 skills 仓库、配置自动上传、排查同步失败时使用。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    }
+  ]
+}
