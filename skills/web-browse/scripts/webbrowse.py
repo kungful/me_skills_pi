@@ -274,6 +274,44 @@ DROP_TAGS = {"script", "style", "noscript", "svg", "canvas", "iframe", "template
 BLOCK_TAGS = {"p", "div", "section", "article", "main", "header", "ul", "ol", "dl",
               "table", "tr", "blockquote", "pre", "figure", "hr"}
 
+# tags that must start on a new line even when nested inside a <p>/<span>/<label>
+BLOCKISH = BLOCK_TAGS | {"li", "dt", "dd", "label", "form", "fieldset", "footer", "aside",
+                         "nav", "figcaption", "caption", "address", "details", "summary",
+                         "tbody", "thead", "tfoot", "h1", "h2", "h3", "h4", "h5", "h6"}
+
+
+def _cells(tr):
+    """Return the direct cell texts of a table row."""
+    out = []
+    for cell in tr:
+        if not isinstance(cell.tag, str):
+            continue
+        if cell.tag.lower() in ("td", "th"):
+            t = re.sub(r"\s*\n\s*", " ", _inline(cell, "", False)).strip()
+            out.append(t)
+    return out
+
+
+def _table_to_md(table, base_url, keep_links) -> list[str]:
+    rows = []
+    for tr in table.xpath(".//tr"):
+        cells = _cells(tr)
+        if cells:
+            rows.append(cells)
+    if not rows:
+        return []
+    width = max(len(r) for r in rows)
+    rows = [r + [""] * (width - len(r)) for r in rows]
+    has_header = bool(table.xpath(".//th"))
+    lines = ["| " + " | ".join(rows[0]) + " |",
+             "|" + "|".join([" --- "] * width) + "|"]
+    body = rows[1:] if has_header else rows
+    if not has_header:
+        lines = ["| " + " | ".join([""] * width) + " |", "|" + "|".join([" --- "] * width) + "|"]
+    for r in body:
+        lines.append("| " + " | ".join(c.replace("|", "\\|") for c in r) + " |")
+    return ["\n"] + lines + [""]
+
 
 def _txt(node) -> str:
     return re.sub(r"\s+", " ", "".join(node.itertext())).strip()
@@ -358,6 +396,12 @@ def _walk(el, out, base_url, keep_links, depth):
                 out.append("- " + re.sub(r"\s*\n\s*", " ", t))
             continue
         if tag in ("pre",):
+            # docs sites sometimes wrap real markup (tables, divs) in <pre>; only emit a
+            # code fence when the pre holds genuine text
+            nested_blocks = child.xpath(".//table|.//ul|.//ol|.//div|.//p")
+            if nested_blocks:
+                _walk(child, out, base_url, keep_links, depth)
+                continue
             out.append("\n```\n" + child.text_content().strip("\n") + "\n```\n")
             continue
         if tag == "code" and el.getparent() is not None and \
@@ -367,15 +411,14 @@ def _walk(el, out, base_url, keep_links, depth):
         if tag in ("td", "th"):
             out.append(_inline(child, base_url, keep_links).strip() + " | ")
             continue
-        if tag == "tr":
-            out.append("\n")
-            _walk(child, out, base_url, keep_links, depth + 1)
+        if tag in ("tr",):
             out.append("\n")
             continue
         if tag in ("table",):
-            out.append("\n")
+            out += _table_to_md(child, base_url, keep_links)
+            continue
+        if tag in ("tbody", "thead", "tfoot"):
             _walk(child, out, base_url, keep_links, depth)
-            out.append("")
             continue
         if tag in ("ul", "ol", "dl"):
             _walk(child, out, base_url, keep_links, depth)
@@ -385,10 +428,11 @@ def _walk(el, out, base_url, keep_links, depth):
             _walk(child, out, base_url, keep_links, depth + 1)
             out.append("")
             continue
-        # inline-ish unknown tag
+        # unknown tag: keep its text but do not let siblings glue together
+        before = len(out)
         _walk(child, out, base_url, keep_links, depth)
-        if depth == 0:
-            out.append("")
+        if len(out) > before and out[-1] not in ("", "\n"):
+            out.append("\n" if tag in BLOCKISH else " ")
 
 
 def _inline(el, base_url, keep_links):
@@ -417,6 +461,8 @@ def _inline(el, base_url, keep_links):
                 parts.append(sub)
         else:
             sub = _inline(child, base_url, keep_links)
+            if tag in BLOCKISH:
+                sub = sub.rstrip() + "\n"
             if tag in ("strong", "b") and sub.strip():
                 sub = f"**{sub.strip()}**"
             elif tag in ("em", "i") and sub.strip():
