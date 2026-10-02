@@ -143,6 +143,7 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 - `batch`（批次）：`chain` 范画链 / `real` 实物观察 / `photo` 素材 / `style` 风格
 - `refs`：显式参考图槽位；`ref_prev`：自动加链上前一张
 - `block.uses` 是「本页用到哪些槽位」，`/api/status` 靠它查缺图
+- **`source: "search"` + `query: ["中文词", "english"]`**：该槽位先**联网搜真照片**，搜不到才回退 AI 生成（见下节）
 
 ### 18 种页型（`renderers.py`）
 
@@ -151,6 +152,69 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 **26 页标准链条**：P1 封面 / P2 课程介绍 / P3 我们今天可以知道 / P4 考一考 / P5-7 主题知识 / P8 实物观察(真竹子+竹笋) / P9 实物观察(材料工具) / P10 外形观察 / P11 形体拆解 / P12 姿态观察 / P13 联想创想 / P14 同类色 / P15 黑白对比与留白 / P16-18 参考素材 / P19 工具介绍 / P20-24 步骤1-5 / P25 范画成品 / P26 分享表达+课后总结
 
 **实物观察页（P8/P9）是差异化卖点**——真东西的照片，别的模板没有，别砍。
+
+## 实物照片：先联网搜真图，搜不到才 AI 生成
+
+**为什么**：实物观察页要的是「真东西的照片」。AI 画出来的是**假照片**，还慢（约 90s）还花钱（¥0.03）；
+联网搜 40 秒、免费、而且是真照片。
+
+用法：给槽位加 `"source": "search"` + `"query"`（中英双语关键词，前面命中率高）：
+
+```jsonc
+{ "slot": "实物_竹笋", "batch": "real", "source": "search",
+  "query": ["竹笋 新鲜 实物", "bamboo shoot fresh", "bamboo shoots edible"],
+  "prompt": "（这是 AI 回退用的 prompt，搜不到才会用）" }
+```
+
+搜索优先级（`photos.py`）：**pixnio（CC0 可商用） → Bing 授权筛选 → 360 → 百度**，
+排序键是 `(信任等级, 是否白名单, -面积)`。
+
+| 信任等级 | 来源 | 商用安全性 |
+|---|---|---|
+| `免费图库·可商用` | pixnio（CC0）等白名单域名 | ✅ 可直接用 |
+| `Bing筛选·待核对` | Bing `&qft=filterui:license-L1/L2_L3_L4` | ⚠️ **不可全信**（实测把 699pic 摄图网也标成公版），要人工看一眼 |
+| `授权未知·慎用` | 360 / 百度 | ⚠️ 无授权信息，商用前必须自查 |
+
+自动产出：`img/<slot>.png`（主图）、`img_alt/<slot>_NN.png`（备选 5 张）、
+`img_alt/<slot>.credits.json`（单槽版权）、`图片版权.json`（全套汇总台账）。
+
+```bash
+python 工厂/photos.py "bamboo shoot" -o out.png --alt img_alt -n 5   # 单测
+python 工厂/photos.py "竹笋" --list                                  # 只看候选不下载
+```
+
+### 图源实测结论（2025-10 实测，别再重复踩）
+
+| 图源 | 结论 |
+|---|---|
+| **pixnio.com** | ✅ **唯一能直抓的外网免费图库**，CC0 可商用。`https://pixnio.com/?s=<词>`，抓 `free-images/...jpg`，取最大尺寸变体。**只吃英文词** |
+| **Bing** `cn.bing.com/images/async` | ✅ 可达，授权筛选参数能用但**结果不可信**（需人工核对） |
+| **360 图片** `image.so.com/j` | ✅ 可达，`img` 字段是**原图**（尺寸与声明一致）；授信未知 |
+| **百度图片** `acjson` | ✅ 可达，**必须先访问 `image.baidu.com` 拿 Cookie**（否则 `antiFlag`）；`middleURL` 被限宽 500-800px；授信未知 |
+| pixabay / publicdomainpictures / stocksnap / freeimages / freerangestock | ❌ 403 |
+| **Wikimedia / Google / DuckDuckGo / geograph / Openverse / Flickr feed** | ❌ 超时或被重置（被墙） |
+| 搜狗图片 napi | ❌ 返回 0 条 |
+
+### 三个必踩的坑
+
+1. **pixnio 搜不到就返回随机图池**：实测垃圾词 `zzzqqqxxyy` 也能出 48 张，中文词同理。
+   → 代码里 **pixnio 只接 ASCII 词**（`if not query.isascii(): return []`）。改回中文会静默出错图。
+2. **Bing 的 `site:` 在图片接口被忽略**：`site:pixabay.com` 会返回 cookipedia/cgtn。别指望它定向。
+3. **百度网页能过 ≠ 图能下**：`middleURL` 声明 4000x3000 实下 667x500（`?w=800` 限宽，去参数/改 w=1600 都无效）。
+   所以 360 优先（360 的 `img` 才是原图）。
+
+### 性能
+
+搜索和下载都**并行**（`ThreadPoolExecutor`，搜索 6 线程 / 下载 6 线程）：
+一个槽位约 **40-70 秒**（串行要 100-120 秒）。10 个槽位约 10 分钟、**¥0**。
+
+### ⚠️ 卖钱课件的版权底线
+
+- 只用 `免费图库·可商用` 的可以放心卖。
+- `Bing筛选·待核对` / `授权未知·慎用` 的图**要么人工核对来源，要么换掉**。
+- 别用带水印的付费图库小样（alamy / freepik / 699pic / 摄图网 / tuchong …，已在 `STOCK_HOSTS` 黑名单）。
+- 电商主图（1688 / alicdn / taobao / jd / amazon …）也在黑名单——又带水印又不适合当范画。
+- 上架前把 `图片版权.json` 过一遍。
 
 ## 审图台（WebUI）闭环
 
