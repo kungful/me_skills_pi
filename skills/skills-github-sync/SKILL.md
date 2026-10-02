@@ -70,25 +70,54 @@ state ∈ `pushed` / `committed` / `no-change` / `busy` / `dry-run` / `no-skills
 
 **重复跑不会产生空提交**：skills 内容没变时既不重写 README 也不 commit。
 
-## 自动触发（两套，可同时开）
+## 自动触发（四条链路，互为兜底）
 
-### 1. Pi / pi-web 扩展（实时，推荐）
+`~/.pi/agent/extensions/skills-autosync.ts` 已经装好，它同时跑四条链路：
 
-`~/.pi/agent/extensions/skills-autosync.ts` 已经装好。它会在：
-- Pi/pi-web 会话启动后 12 秒做一次对账同步（补齐上次没传上去的改动）；
-- 递归监听源目录，**新增/修改/删除 skill 后 8 秒**自动同步（防抖 + 文件锁 + 锁排队）。
+| 链路 | 间隔 | 作用 |
+|---|---|---|
+| ① fs.watch 实时 | 变化后 **8 秒** | 快。递归监听源目录整棵子树 |
+| ② 指纹轮询兜底 | 每 **45 秒** | 稳。同时负责重新安装挂掉的监听器 |
+| ③ 启动对账 | 会话启动后 **12 秒** | 补齐上次没传上去的改动 |
+| ④ Windows 计划任务 | 每 30 分钟 | pi-web 完全没开也在传 |
 
-生效方式：新建的 pi-web 会话自动加载（实测：本会话内改 skill，~9 秒后就出现在 GitHub 上）。
-若旧会话没加载，**重启 pi-web**（或 pi TUI 里 `/reload`）。
+### 为什么需要② —— 实测踩过的坑
+
+Windows 的 `fs.watch`（底层 `ReadDirectoryChangesW`）**会静默丢事件**：
+缓冲区溢出或句柄失效时不报错，就是再也不触发。实测中真实发生过：
+
+```
+18:06:26  创建 skills/zz-autotest/SKILL.md   →  等 30 秒，没反应 ✗
+18:12:07  创建 skills/zz-diag/SKILL.md       →  10 秒后同步成功 ✓
+```
+
+所以**绝不能只靠 fs.watch**。第②条轮询用指纹（路径 + 大小 + mtime）对比，
+即使监听器完全死掉，最大延迟也只有 45 秒。指纹只读本地磁盘（约 200 个文件），开销可忽略。
+
+### 会话结束不关监听器
+
+`session_shutdown` 里**故意不调 `stopWatchers()`**。pi / pi-web 是按会话触发事件的，
+会话结束不等于用户不用了；早期版本在这里关掉了监听器，结果下一个会话到来前完全不自动同步。
+
+### 其他细节
+
+- **去重**：watch 和轮询可能对同一处改动各发一次，靠指纹比对去重（实测：只触发 1 次）。
+- **失败自动重试**：推送失败时**不更新指纹**，轮询会持续重试；但同样的报错 10 分钟内不重复弹通知。
+- **不阻塞 UI**：同步在后台子进程里跑，文件锁保证同一时刻只有一个。
+- **诊断日志**：`~/.pi/agent/skills-autosync.log`（上限 256KB，超了截断重来）。
+- 调试用环境变量 `PI_SKILLS_SYNC_POLL_MS` 可临时缩短轮询间隔。
+
+生效方式：**新建的 pi-web 会话会自动加载**；但 pi-web **不会热重载**已加载的扩展，
+所以改完扩展后要**重启 pi-web** 才生效。
 手动触发：`/skills-sync`；只看状态：`/skills-sync status`。
 
 > 没有配置远端时扩展会静默跳过，不会每次启动都弹错。
 
-### 2. Windows 计划任务（Pi 没开也在跑）
+### Windows 计划任务（④，pi-web 没开也在跑）
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File `
-  "$HOME\.pi\agent\skills\skills-github-sync\scripts\install-autostart.ps1" -EveryMinutes 30
+  "$HOME\.pigent\skills\skills-github-sync\scripts\install-autostart.ps1" -EveryMinutes 30
 ```
 
 注册一个"每 30 分钟 + 每次登录"运行 `sync.py` 的计划任务（用 `pyw.exe -3` 无窗口跑）。
