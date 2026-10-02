@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-02 22:28:33",
-  "count": 8,
+  "generatedAt": "2026-10-02 22:58:28",
+  "count": 9,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -21,6 +21,11 @@
       "name": "easyeda-agent",
       "description": "通过本地 easyeda CLI、daemon 和连接器操作嘉立创EDA专业版（EasyEDA Pro）：用可迁移样例和参数化数据构建或修复原理图、布局布线 PCB，并回读连接、几何、DRC 与保存结果。适用于已有工程操作及数据驱动电路设计。",
       "source": "C:/Users/hua/.agents/skills"
+    },
+    {
+      "name": "ecom-detail-factory",
+      "description": "生产电商商品详情页（长图 + 分屏 + 主图 + PPTX + PDF + ZIP），含 WebUI 精修台。**作用域仅限「电商详情页生产」，不是通用做图/排版工具。** 用于：做商品详情页（“做个详情页/详情页长图/宝贝详情/主图+详情图”）；改已有详情页的文案/版式/配色/顺序；出白底主图、场景图、卖点配图；按淘宝/拼多多/抖音/京东/小红书/亚马逊规格导出。仅需生成一张普通图片、不排详情页时用 grsai-image-2-5。",
+      "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
       "name": "grsai-image-2-5",
