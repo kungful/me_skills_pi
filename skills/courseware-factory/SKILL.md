@@ -175,7 +175,7 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 | `Bing筛选·待核对` | Bing `&qft=filterui:license-L1/L2_L3_L4` | ⚠️ **不可全信**（实测把 699pic 摄图网也标成公版），要人工看一眼 |
 | `授权未知·慎用` | 360 / 百度 | ⚠️ 无授权信息，商用前必须自查 |
 
-自动产出：`img/<slot>.png`（主图）、`img_alt/<slot>_NN.png`（备选 5 张）、
+自动产出：`img/<slot>.png`（主图，真 PNG）、`img_alt/<slot>_NN.jpg`（备选 5 张，**JPEG**）、
 `img_alt/<slot>.credits.json`（单槽版权）、`图片版权.json`（全套汇总台账）。
 
 ```bash
@@ -274,6 +274,8 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 | **重出了图但 PDF 里还是老图** | 只跑了 `builder.py`，没先压缩 → `img_sell/` 还是旧的 | 已修：`builder.py` CLI 现在默认先 `compress()`（`--no-compress` 可关） |
 | **网搜图重跑后"图变了"** | `--only` 隐含 force，会重新下载并可能选中不同图 | 审好的图别再用 `--only` 碰；要保底就先备份 `img/` |
 | **图片出处追不回来** | 版权清单只在 `run()` 末尾写，中途崩就丢 | 已修：每槽写 `img_alt/<slot>.credits.json` sidecar，`run()` 会合并 sidecar 自愈重建 |
+| **备选图撑爆磁盘** | 备选图也存 2400px PNG → 50 张 116MB | 已改：备选图存 **JPEG 1600px**（15MB）；被选中时 `pick_alt` 会转回真 PNG 当主图 |
+| **重启了服务但界面/接口还是老样子** | Windows 的 `SO_REUSEADDR` 允许**重复绑定同一端口**，旧进程继续响应 | 已修：`serve()` 先探 `/api/status`，已有实例就提示不叠加；换端口也会自动找空位。**排查时先 `netstat -ano \| grep 8777`** |
 | **pixnio 搜中文出乱图** | pixnio 搜不到会返回随机图池（垃圾词也能出 48 张） | 代码里 pixnio **只接 ASCII 词**；中文词交给 Bing/360/百度 |
 | **Bing 图片接口的 `site:` 无效** | 被忽略 | 别指望 `site:pixabay.com` 定向，会返回 cookipedia/cgtn |
 | **百度图下载比声明小** | `middleURL` 被 `?w=800` 限宽 | 优先用 360 的 `img`（原图）；或接受 800px |
