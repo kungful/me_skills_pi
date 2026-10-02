@@ -70,8 +70,38 @@ function cssPath(el){
 }
 """
 
+JS_CLICKABLE = r"""
+function hasReactClick(el){
+  for (const k of Object.keys(el)) {
+    if (/^__reactProps\$|__reactEventHandlers\$/.test(k)) {
+      const p = el[k];
+      if (p && (typeof p.onClick === 'function' || typeof p.onMouseDown === 'function' ||
+                typeof p.onMouseUp === 'function' || typeof p.onPointerDown === 'function'))
+        return true;
+    }
+  }
+  return false;
+}
+function looksClickable(el){
+  if (hasReactClick(el)) return true;
+  const cs = getComputedStyle(el);
+  if (cs.cursor === 'pointer') return true;
+  if (el.tagName === 'SUMMARY' || el.tagName === 'BUTTON' || el.tagName === 'A') return true;
+  if (el.hasAttribute('onclick')) return true;
+  return false;
+}
+function isLeafLabel(el){
+  for (const c of el.children) {
+    if (c.nodeType !== 1) continue;
+    if ((c.innerText || '').trim().length > 45) return false;
+  }
+  return true;
+}
+"""
+
 JS_PROBE = r"""
 (() => {
+  %s
   %s
   const SEL = 'a[href], button, [role=tab], [role=button], [role=menuitem], [role=option], ' +
     '[onclick], summary, label[for], select, input[type=submit], input[type=button], ' +
@@ -79,32 +109,39 @@ JS_PROBE = r"""
     '[class*=dropdown], [class*=Dropdown], [class*=collapse], [class*=Collapse], ' +
     '[class*=accordion], [class*=step], [class*=switch], [class*=toggle], ' +
     '[data-testid], [data-index], [aria-controls], .ant-tabs-tab, .el-tabs__item, .ant-menu-item';
-  const out = [];
-  const seen = new Set();
-  for (const el of document.querySelectorAll(SEL)) {
-    if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') continue;
+  const out = [], seen = new Set();
+  function add(el, tag) {
+    if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') return;
     const r = el.getBoundingClientRect();
-    if (r.width < 4 || r.height < 4) continue;
+    if (r.width < 4 || r.height < 4) return;
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.opacity === '0' || cs.pointerEvents === 'none') continue;
+    if (cs.visibility === 'hidden' || cs.opacity === '0' || cs.pointerEvents === 'none') return;
     const text = (el.innerText || el.value || el.getAttribute('aria-label') ||
                   el.getAttribute('title') || el.getAttribute('placeholder') || '')
                  .replace(/\s+/g, ' ').trim().slice(0, 90);
     const href = el.tagName === 'A' ? (el.getAttribute('href') || '') : '';
-    if (!text && !href) continue;
+    if (!text && !href) return;
     const key = cssPath(el);
-    if (seen.has(key)) continue;
+    if (seen.has(key)) return;
     seen.add(key);
-    out.push({ sel: key, text, tag: el.tagName.toLowerCase(),
-               role: el.getAttribute('role') || '',
+    out.push({ sel: key, text, tag, role: el.getAttribute('role') || '',
                href: href.slice(0, 200),
-               on: el.getAttribute('aria-selected') || '',
+               on: el.getAttribute('aria-selected') || el.getAttribute('aria-expanded') || '',
                y: Math.round(r.top + window.scrollY), x: Math.round(r.left) });
   }
+  for (const el of document.querySelectorAll(SEL)) add(el, el.tagName.toLowerCase());
+  // second pass: framework-rendered tabs / divs / spans with click handlers or pointer cursor
+  for (const el of document.querySelectorAll('div, span, li, p, td, th, label, a, span[class*=item]')) {
+    if (seen.has(el)) continue;
+    const text = (el.innerText || '').replace(/\s+/g, ' ').trim();
+    if (!text || text.length > 60 || !isLeafLabel(el) || !looksClickable(el)) continue;
+    add(el, el.tagName.toLowerCase());
+  }
+  out.sort((a, b) => (a.y - b.y) || (a.x - b.x));
   // drop containers that merely wrap another listed element
   return out.filter(e => !out.some(o => o !== e && o.sel.startsWith(e.sel + ' > ')));
 })()
-""" % JS_CSS_PATH
+""" % (JS_CSS_PATH, JS_CLICKABLE)
 
 JS_RECT = r"""
 (() => { const el = document.querySelector(%s);
