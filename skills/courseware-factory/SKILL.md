@@ -1,11 +1,11 @@
 ---
 name: courseware-factory
-description: 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台。用当用户要做新课件（"做课件/新课题/出一套 XX 岁课件/范画/教学课件"），或要改已有课件的图片、版式、文案、品牌名，或要导出 PDF/PPTX/单张图片时。仅需生成普通图片、不动课件结构时用 grsai-image-2-5。
+description: 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台 + 实物照片联网搜索下载。用于：做新课件（“做课件/新课题/出一套 XX 岁课件/范画/教学课件”）；改已有课件的图片/版式/文案/品牌名；导出 PDF/PPTX/单张图；**找/换实物照片（“找真照片 / 联网搜图 / 实物观察图 / 换张图 / 版权能不能用”）**。仅需生成普通图片、不动课件结构时用 grsai-image-2-5。
 ---
 
 # 课件工厂 · 少儿美术课件生产线
 
-把「课题名 + 年龄段」变成一套可上架销售的课件：**26 页教学链条 + 16~18 张 AI 范画 + PPTX 源文件 + PDF 交付物 + 单张图/打包图导出**。
+把「课题名 + 年龄段」变成一套可上架销售的课件：**26 页教学链条 + 6 张 AI 范画链 + 10 张网搜真照片 + PPTX 源文件 + PDF 交付物 + 单张图/打包图导出**。
 
 ## 第一件事：确认工作根目录
 
@@ -17,7 +17,8 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 │   ├── project.py      Project 类：读 project.json，解析图片路径
 │   ├── engine.py       版式引擎（顶栏/章节标签/页码/标题条/主题色）
 │   ├── renderers.py    18 种页型渲染器
-│   ├── pipeline.py     出图流水线（模型路由 + 参考图链 + 别名机制）
+│   ├── pipeline.py     出图流水线（模型路由 + 参考图链 + 别名机制 + 照片分支）
+│   ├── photos.py       ★ 实物照片联网搜索/下载（pixnio CC0 → Bing → 360 → 百度）
 │   ├── builder.py      装配 pptx
 │   ├── exporter.py     pptx → pdf + 逐页 PNG 预览
 │   ├── server.py       审图台后端
@@ -25,13 +26,28 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 │   └── new_project.py  新建课件脚手架
 ├── 项目/<课题>-<年龄>/   ← 每套课件一个目录
 │   ├── project.json    唯一真源：内容 + 版式 + 出图参数
-│   ├── img/            高清 PNG 存档
+│   ├── img/            高清 PNG 存档（AI 出图 + 网搜主图）
+│   ├── img_alt/        网搜备选图 JPEG + <slot>.credits.json 版权 sidecar
 │   ├── img_sell/       压缩 JPG 供货版
+│   ├── 图片版权.json    全套图片出处/授权台账（上架前必过）
 │   └── out/            pptx / pdf / preview/
 └── 模板/                母版参考（《跳伞的小浣熊》= 版式母版）
 ```
 
 **仓库路径若变了，改这里**，并把 `工厂/*.py` 里的相对引用一起核对。
+
+## 常见任务速查（先定位再动手）
+
+| 用户要什么 | 跳去哪 |
+|---|---|
+| 做一套新课件 | 「标准流程」 |
+| **找/换实物照片** | 「实物照片：先联网搜真图」 |
+| **照片版权能不能商用** | 「⚠️ 卖钱课件的版权底线」 |
+| 步骤图和成品不像 | 「参考图链」（八成要「重跑整条链」） |
+| 线条不好看 | 「线条风格：干净实线」 |
+| 导出 PDF / 单张图 | 「审图台」→ 导出入口 |
+| 一次改好几套课件 | 「审图台」→ 多课件工作台 + 批量操作 |
+| 报错了 | 「常见坑」（先查 `netstat` 看是不是僵尸服务） |
 
 ## Python 环境（Windows 关键坑）
 
@@ -50,6 +66,7 @@ C:\Users\hua\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe
 - 默认：`gpt-image-2.5` / quality `high` / aspect `1536x1024`（横版）
 - 封面方形：`1024x1024`
 - 整套约 16 图 ≈ **¥0.5**；跑整条链 6 张 ≈ **¥0.15**
+- **`source: "search"` 的槽位走网搜 → ¥0，不占用出图预算**（大熊猫那套 10 个槽位全走网搜，只剩 6 张范画要钱 ≈ ¥0.18）
 - `python 工厂/pipeline.py --models` 列全部 15 个模型与价格
 
 ## 标准流程（做一套新课件）
@@ -63,12 +80,17 @@ python 工厂/new_project.py "小兔子吃萝卜" --age 4-6岁
 # 2. 改 project.json
 #    - meta.brand  ← 换成用户品牌名（必须！见下方红线）
 #    - 每页 title/text/tips
-#    - images[].prompt  ← 写这一步画什么
+#    - images[].prompt  ← 写这一步画什么（网搜槽位也要写，搜不到时当 AI 回退）
 #    - common.stroke    ← 线条语言（全套共用）
+
+# 2b. 实物/素材槽位加网搜（省钱 + 真照片，详见下下节）
+#    "source": "search", "query": ["中文词", "english words"]
 
 # 3. 出图（先报参数！）
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --list
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch chain
+python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch real   # 网搜，¥0
+python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch photo  # 网搜，¥0
 
 # 4. 装配 pptx
 python 工厂/builder.py 项目/小兔子吃萝卜-4-6岁/project.json
@@ -282,10 +304,11 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 
 ## 图片压缩与体积
 
-- `img/` = 高清 PNG 存档（~43MB）
+- `img/` = 高清 PNG 存档（AI 出图 + 网搜主图，cap 2400px）
 - `img_sell/` = JPEG 压缩（≤1600px, q88）→ 约 4.8MB，**供货版**
-- `builder.py --mode sell`（默认）用压缩版装 pptx
-- 实测：PPTX ~4.6-5.3MB / PDF ~3.0-3.3MB，26 页，960×540pt
+- `img_alt/` = 备选图 JPEG（≤1600px）→ 约 15MB（存 PNG 要 116MB，别改回去）
+- `builder.py --mode sell`（默认，CLI 会自动先 `compress()`）用压缩版装 pptx
+- 实测：PPTX ~4.7-4.9MB / PDF ~2.0-2.1MB（真照片比 AI 图更省），26 页，960×540pt
 
 ## 双通道模型路由（别搞混）
 
@@ -304,7 +327,8 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 - [ ] `out/《课题》X-Y岁课件.pptx` ← 可编辑源文件
 - [ ] `meta.brand` 已换成用户品牌名（**不是「创享美育」**）
 - [ ] PDF 里无缺图占位框（`/api/status` 报"无缺图"）
-- [ ] 实物观察页有真实照片
+- [ ] 实物观察页有真实照片（`source: "search"`，不是 AI 画的假照片）
+- [ ] **`图片版权.json` 已人工过一遍**；非「免费图库·可商用」的图都核对过或换掉了
 - [ ] 步骤 1→5 逐级递进、最后一步 = 成品（alias）
 - [ ] 线条是「干净实线」
 - [ ] 附：教案 Word / 家长话术 / 小红书商品页文案（可选增值）

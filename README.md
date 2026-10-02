@@ -1,7 +1,7 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-02 18:08:20**
+最后同步：**2026-10-02 18:11:52**
 
 共 **9** 个 skill。
 
@@ -18,7 +18,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | Skill | 说明 | 源 |
 |---|---|---|
 | [`blender-motion-state-inspection`](skills/blender-motion-state-inspection/) | Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where s... | pi |
-| [`courseware-factory`](skills/courseware-factory/) | 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台。用当用户要做新课件（"做课件/新课题/出一套 XX 岁课件/范画/教学课件"），或要改已有课件的图片、版式、文案、品牌名，或要导出 PDF/PPTX/单张图片时。仅需生成普通图片、不动课件结构时用 grsai-image-2-5。 | pi |
+| [`courseware-factory`](skills/courseware-factory/) | 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台 + 实物照片联网搜索下载。用于：做新课件（“做课件/新课题/出一套 XX 岁课件/范画/教学课件”）；改已有课件的图片/版式/文案/品牌名；导出 PDF/PPTX/单张图；**找/换实物照片（“找真照片 / 联网搜图 / 实物观... | pi |
 | [`design-and-review-circuit`](skills/design-and-review-circuit/) | Design, audit, or correct an electronic circuit from a product brief, native schematic, netlist, block diagram, or circuit description. Use for architecture ... | pi |
 | [`easyeda-agent`](skills/easyeda-agent/) | 通过本地 easyeda CLI、daemon 和连接器操作嘉立创EDA专业版（EasyEDA Pro）：用可迁移样例和参数化数据构建或修复原理图、布局布线 PCB，并回读连接、几何、DRC 与保存结果。适用于已有工程操作及数据驱动电路设计。 | agents |
 | [`grsai-image-2-5`](skills/grsai-image-2-5/) | Generate or restyle images through the grsai API (gpt-image-2 / 2.5 family; text-to-image, image-to-image with base64 or URL references, transparent backgrou... | pi |
