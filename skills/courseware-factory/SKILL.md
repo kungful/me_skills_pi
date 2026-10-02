@@ -111,7 +111,7 @@ python 工厂/new_project.py "小兔子吃萝卜" --age 4-6岁
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --list
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch chain
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch real   # 实物/素材 10 张
-python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch photo  # 网搜，¥0
+python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch photo
 
 # 4. 装配 pptx
 python 工厂/builder.py 项目/小兔子吃萝卜-4-6岁/project.json
@@ -120,7 +120,24 @@ python 工厂/builder.py 项目/小兔子吃萝卜-4-6岁/project.json
 python 工厂/exporter.py 项目/小兔子吃萝卜-4-6岁/project.json
 ```
 
-**推荐用审图台做 2~5 步**（可视化、可单张重跑、自动重装配导出）：
+### ★ 跑完自动弹审图台（已内置，不要跳过）
+
+**`pipeline.py` / `builder.py` 跑完会自动启动审图台并打开浏览器**，并**自动切到刚跑完的那套课件**。
+出图只是第一步，真正的“精细化修改”（换 prompt 重跑单张、改文案、调版式）要在界面里做 ——
+所以**不要跑完就完事，不要叫用户自己去双击 `启动审图台.bat`**（这就是用户提的痛点）。
+
+| 情况 | 行为 |
+|---|---|
+| 服务没在跑 | 后台拉起 `工厂/server.py`（独立控制台窗口），端口就绪后开浏览器 |
+| 服务已在跑 | **不另起**（否则端口冲突 + 两份数据不同步），只切到目标课件 + 把浏览器顶到前台 |
+| 想静默 | `--no-ui`，或环境变量 `DECKUI_NO_UI=1`（selftest 与批量脚本必须加） |
+| 换端口 | `--ui-port 8888` 或 `DECKUI_PORT` |
+
+> **坑（已踩）**：服务只有一份进程。你刚给「小兔子」出完图，界面却停在上一次的「大熊猫」上
+> —— **看起来就像“跑完了但图没变”**。所以 `ui.open_ui()` 会先 POST `/api/switch` 切课件。
+> 另一个坑：判端口是否占用时要用 `connect_ex` 探，**不能看进程名**（同名 python 进程一大把）。
+
+**推荐直接全程在审图台里做 2~5 步**（可视化、可单张重跑、自动重装配导出）：
 
 ```bash
 python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
@@ -133,6 +150,7 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 2. **一节链条里的图必须锁同一个模型**，否则画风不统一（成品和步骤像两套画）。
 3. **改内容后必须重跑「装配 + 导出」**，pptx/pdf 不会自动更新。
 4. **`.bat` 文件必须纯 ASCII**——里面写中文 + `chcp` 会让 cmd 解析崩溃。中文提示放 `run_ui.py`。
+5. **脚本调用 `pipeline.py`/`builder.py` 必须加 `--no-ui`**——否则会不断弹浏览器（也污染自动化输出）。
 
 ## 参考图链（一致性核心机制）
 
