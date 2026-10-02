@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03 05:18:00",
+  "generatedAt": "2026-10-03 05:21:06",
   "count": 10,
   "skills": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "name": "web-browse",
-      "description": "Browse and read the live web - fetch pages as clean markdown, search Google/Bing/360, extract links and metadata, and take screenshots that the model can actually look at. Use when the user asks to look up / 查 / 搜 / 看看某个网页, read a URL or article, summarize a page, follow documentation links, verify a fact online, check a site's news/pricing/docs, or when any answer requires current information from the internet.",
+      "description": "Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metadata, and take screenshots the model can actually look at. Use when the user asks to 看看/查/搜/预览某个网页或子页面/子标签, read a URL or article, click through a docs site or SPA to reach a sub-page, use a site search box, summarize a page, verify a fact online, or when any answer requires current internet information.",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
