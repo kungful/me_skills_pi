@@ -271,6 +271,12 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 | **汇报批量进度不能拿 `j.done` 判断** | 任务完成字段是 `state: done|error`，不是布尔 `done` | 轮询用 `st.get('state') in ('done','error')` |
 | **批量改完界面还是旧数据** | 批量用独立 `Project` 实例，全局 `PROJ` 没刷新 | `job_batch` 结尾判断当前课件是否在列表里，是则 `set_current()` 重载 |
 | **PPTX 体积过大** | 高清 PNG 直塞 | `img/` 高清 + `img_sell/` 压缩 JPG（≤1600px, q88），builder `--mode sell` |
+| **重出了图但 PDF 里还是老图** | 只跑了 `builder.py`，没先压缩 → `img_sell/` 还是旧的 | 已修：`builder.py` CLI 现在默认先 `compress()`（`--no-compress` 可关） |
+| **网搜图重跑后"图变了"** | `--only` 隐含 force，会重新下载并可能选中不同图 | 审好的图别再用 `--only` 碰；要保底就先备份 `img/` |
+| **图片出处追不回来** | 版权清单只在 `run()` 末尾写，中途崩就丢 | 已修：每槽写 `img_alt/<slot>.credits.json` sidecar，`run()` 会合并 sidecar 自愈重建 |
+| **pixnio 搜中文出乱图** | pixnio 搜不到会返回随机图池（垃圾词也能出 48 张） | 代码里 pixnio **只接 ASCII 词**；中文词交给 Bing/360/百度 |
+| **Bing 图片接口的 `site:` 无效** | 被忽略 | 别指望 `site:pixabay.com` 定向，会返回 cookipedia/cgtn |
+| **百度图下载比声明小** | `middleURL` 被 `?w=800` 限宽 | 优先用 360 的 `img`（原图）；或接受 800px |
 
 ## 图片压缩与体积
 
