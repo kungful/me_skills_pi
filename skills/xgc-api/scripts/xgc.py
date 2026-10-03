@@ -34,6 +34,15 @@ TOKEN_FILES = [os.path.expanduser(p) for p in
 HISTORY = os.path.expanduser("~/.xgc_history.jsonl")
 DOC_URL = "https://api-playground.xiangongyun.com/instance/3"
 
+# ---------------------------------------------------------------------------
+# IMAGE DELETION IS OFF LIMITS. Images may only be deleted by the user, by hand,
+# in the web console. This denylist is enforced inside api() itself, so no flag
+# and no hand-edited call can get past it. Never remove entries from this list.
+# ---------------------------------------------------------------------------
+IMAGE_DENYLIST = ("/open/image/destroy", "/open/image/delete",
+                  "/open/image/remove", "/open/images/destroy")
+IMAGE_CONSOLE = "https://www.xiangongyun.com/console/user/image"
+
 WRITE_CMDS = {"deploy", "destroy", "shutdown", "boot", "saveimage", "saveimage_destroy",
               "recharge", "image_destroy"}
 
@@ -63,7 +72,23 @@ def fingerprint(tok: str) -> str:
     return f"{tok[:4]}...{tok[-4:]}" if len(tok) > 10 else "***"
 
 
+def refuse_image_deletion(path, method):
+    """Standing rule: this client must never delete an image."""
+    p = path.split("?")[0].rstrip("/")
+    if method.upper() in ("DELETE", "POST", "PUT", "PATCH") and any(
+            p.endswith(d) for d in IMAGE_DENYLIST):
+        print("\n[REFUSED] image deletion is disabled by the user's standing instruction."
+              "\n\n    This client never deletes an image. Images may only be deleted by the"
+              "\n    user, by hand, in the console:\n"
+              "        " + IMAGE_CONSOLE +
+              "\n\n    Destroying a container INSTANCE is a different thing and is still"
+              "\n    allowed; it does not touch images. If an image really must go, ask the"
+              "\n    user to delete it themselves and stop here.", file=sys.stderr)
+        sys.exit(3)
+
+
 def api(path: str, method: str = "GET", body: dict | None = None, timeout: int = 40) -> dict:
+    refuse_image_deletion(path, method)
     url = BASE + path if path.startswith("/") else path
     data = json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url, data=data, method=method)
@@ -344,6 +369,22 @@ def cmd_recharge(args):
              {"amount": args.amount, "payment": args.payment}), "recharge", args)
 
 
+def cmd_policy(args):
+    """Print the standing safety policy (image deletion is blocked)."""
+    print("image deletion: FORBIDDEN for this client, always")
+    print("  denied endpoints:", ", ".join(IMAGE_DENYLIST))
+    print("  delete images here instead:", IMAGE_CONSOLE)
+    print("")
+    print("write commands need --yes and print their payload first:")
+    print("  deploy, destroy, shutdown, boot, saveimage, recharge")
+    print("")
+    print("read-only commands (no approval needed):")
+    print("  whoami, balance, instances, instance, images, docs-images, url, policy, history")
+    print("")
+    print("token: read from ~/.xgc_token or $XGC_TOKEN, never printed in full")
+    print("write log: " + HISTORY)
+
+
 def cmd_history(args):
     if not os.path.exists(HISTORY):
         print("no local history yet")
@@ -436,6 +477,7 @@ def main():
     wr(rc)
     rc.set_defaults(func=cmd_recharge)
 
+    sub.add_parser("policy", help="print the standing safety policy").set_defaults(func=cmd_policy)
     sub.add_parser("history", help="local log of every write this tool sent").set_defaults(
         func=cmd_history)
 

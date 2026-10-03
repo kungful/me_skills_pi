@@ -20,6 +20,15 @@ Docs UI https://api-playground.xiangongyun.com
 
 ## Hard Rules
 
+0. **NEVER DELETE AN IMAGE. Ever. The user deletes images by hand, in the console, or not at
+   all.** This is a standing instruction from the user and it is enforced in code: `api()` refuses
+   any request to `/open/image/destroy` (and `/open/image/delete`, `/open/image/remove`,
+   `/open/images/destroy`) before it leaves the process, exit code 3. Do not add a flag for it, do
+   not bypass it, do not "helpfully" clean up images to save storage quota. If an image really has
+   to go, tell the user to delete it themselves at
+   https://www.xiangongyun.com/console/user/image and stop. Images cost nothing to keep.
+   *Destroying a container instance is a different operation and is still allowed - it does not
+   touch any image.* `python "$X" policy` prints this policy.
 1. **Money. Deploy/destroy/recharge always need explicit approval in the current turn.**
    The script enforces this twice: it refuses to send the request without `--yes`, and it prints
    the exact JSON body first. Never add `--yes` on your own initiative - show the user the payload
@@ -71,6 +80,9 @@ python "$X" history                 # local log of every write this tool sent
 
 Add `--json` to any of them for raw output.
 
+`images` / `image <id>` **list** images only. There is deliberately no way to delete one from this
+tool (see Hard Rule 0); `python "$X" policy` shows the blocklist.
+
 ## Write commands (need `--yes`)
 
 ```bash
@@ -89,6 +101,8 @@ python "$X" destroy <id> --yes                  # delete; data is gone
 python "$X" saveimage <id> --name my-img --yes
 python "$X" recharge <amount> alipay --yes       # real money
 ```
+
+There is **no** image-delete command and none may be added (Hard Rule 0).
 
 `deploy` flags: `--gpu` (`NVIDIA GeForce RTX 4090` / `... 4090 D` / `... 4090 D 48G`),
 `--count` 0-8, `--datacenter` (default 1), `--image`, `--image-type public|community|private`,
