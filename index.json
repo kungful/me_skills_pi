@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-03 05:28:28",
-  "count": 10,
+  "generatedAt": "2026-10-03 10:28:28",
+  "count": 11,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -50,6 +50,11 @@
     {
       "name": "web-browse",
       "description": "Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metadata, and take screenshots the model can actually look at. Use when the user asks to 看看/查/搜/预览某个网页或子页面/子标签, read a URL or article, click through a docs site or SPA to reach a sub-page, use a site search box, summarize a page, verify a fact online, or when any answer requires current internet information.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "xgc-api",
+      "description": "Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down / boot / destroy it, look up images, order recharge. Use when the user mentions 仙宫云 / Xiangongyun / XGC, asks to 开一台机子/租GPU/部署实例/跑图容器/销毁实例/查余额, or wants to automate anything on api.xiangongyun.com. Every money-spending or destructive command requires explicit user approval.",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
