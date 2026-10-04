@@ -1,6 +1,6 @@
 ---
 name: xgc-api
-description: Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down / boot / destroy it, look up images, order recharge. Use when the user mentions 仙宫云 / Xiangongyun / XGC, asks to 开一台机子/租GPU/部署实例/跑图容器/销毁实例/查余额, or wants to automate anything on api.xiangongyun.com. Every money-spending or destructive command requires explicit user approval.
+description: Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down / boot / destroy it, look up images, order recharge. Use when the user mentions 仙宫云 / Xiangongyun / XGC, asks to 开一台机子/租GPU/部署实例/跑图容器/销毁实例/查余额, or wants to automate anything on api.xiangongyun.com. Every money-spending or destructive command requires explicit user approval. **For the end-to-end 跑图 flow (开机→出图→拉图→销毁) use the companion skill `xgc-image-run`; this skill records the canonical image id, GPU and other defaults it depends on, so read the 跑图一条龙 section below before changing anything.**
 license: MIT
 compatibility: Python 3.9+ (standard library only); outbound HTTPS to api.xiangongyun.com; headless Chrome optional (only for scraping the public image table).
 allowed-tools: Bash, Read, Grep
@@ -122,6 +122,43 @@ python "$X" url <id> 8188              # 6. ComfyUI -> https://<id>-8188.contain
 # ... user runs their work ...
 python "$X" destroy <id> --yes         # 7. ALWAYS finish: stop the meter
 ```
+
+## 跑图一条龙（默认参数 / canonical defaults）
+
+用户要跑图（出图、生图、用 ComfyUI / Krea2 / 本地模型出图）时，**不要手搓上面这套流程** ——
+用配套技能 **`xgc-image-run`**，它把「开机 → 连进容器 → 出图 → 拉回本地 → 立刻销毁」
+封成一条命令，`try/finally` 保证异常也销毁：
+
+```bash
+S=~/.pi/agent/skills/xgc-image-run/scripts/xgc_run_image.py
+python "$S" --status                       # 先看有没有在烧钱
+python "$S" --prompt "..." --dry-run       # 演练
+python "$S" --prompt "..." --yes           # 真跑
+```
+
+**这套默认值是本技能的权威来源，改动请改这里**（同时同步 `~/.xgc_defaults.json`）。
+`xgc-image-run` 的脚本读 `~/.xgc_defaults.json`，读不到就用自己内置的兜底值：
+
+| 项 | 值 | 备注 |
+|---|---|---|
+| 跑图镜像 | `f0cbf8c7-96c7-4010-a645-1898927c33ea` | 名字「agent调用此镜像跑图」。49.1 GB。用户手工维护的**唯一**跑图镜像，见下方警告 |
+| 默认 GPU | `NVIDIA GeForce RTX 4090 D` | ¥1.59/时 |
+| SSH 私钥 | `~/.ssh/piwebui.pem` | 公钥已塞进上面那张镜像的 `authorized_keys`；不通时脚本回退容器密码 |
+| ComfyUI 端口 | `8188` | 已公网暴露 |
+| 文生图工作流 | `/root/ComfyUI/user/default/workflows/Krea2_Turbo_文生图.json` | 同目录还有 `Krea2_Turbo_图生图.json`、`Krea2_Turbo_参考图生成.json` |
+| 模型栈 | Krea2 Turbo fp8 + qwen3vl_4b(type=krea2) + qwen_image_vae | steps 8 / cfg 1.0，**不要**加 FluxGuidance |
+| 一张图耗时 | 1024² 约 16 秒；1536×1024 约 30~60 秒 | 加开机+模型加载，整个流程 2~4 分钟 < ¥0.1 |
+
+**为什么强调「立刻销毁」**：按秒计费，跑一张不到一毛钱，但忘记销毁挂一晚上是 **¥38**。
+所以 `xgc-image-run` 把销毁放在 `finally` 里，不是放在流程末尾。
+
+**镜像卫生（重要）**：用户会自己在控制台整理镜像 —— 他曾经把新存的镜像内容**覆盖回**
+`f0cbf8c7` 并删掉中间产物。所以：
+
+- `f0cbf8c7` 是**可变的**，内容会随用户维护而变，不要假设它等同于某个历史快照；
+- 任何写死镜像 ID 的地方都可能过期。镜像不存在时不要猜，先 `xgc.py images` 列出来问用户；
+- **永远不要删镜像**（Hard Rule 0）。用户手工删了一个临时镜像，那是平台自己的生命周期，
+  不构成「可以删镜像」的先例。
 
 ## Reaching the app inside the container
 

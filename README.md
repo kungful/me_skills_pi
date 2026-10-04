@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-04 09:35:19**
+最后同步：**2026-10-05 06:27:31**
 
-共 **12** 个 skill。
+共 **13** 个 skill。
 
 ## 安装
 
@@ -29,3 +29,4 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`skills-github-sync`](skills/skills-github-sync/) | 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一... | pi |
 | [`web-browse`](skills/web-browse/) | Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metad... | pi |
 | [`xgc-api`](skills/xgc-api/) | Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down... | pi |
+| [`xgc-image-run`](skills/xgc-image-run/) | 仙宫云 GPU 跑图一条龙 —— 自动开机 → 自动连进容器 → 跑 ComfyUI 出图 → 把图拉回本地 → 立刻销毁实例。当用户说"跑图/出图/生图/生成一张图/用仙宫云跑/用 ComfyUI 出图/用 Krea2 跑/拿我的 4090 跑一张/跑完就销毁/省钱的跑图方式"，或者要用**本地部署的模型**（... | pi |
