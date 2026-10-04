@@ -33,10 +33,28 @@ Docs UI https://api-playground.xiangongyun.com
    The script enforces this twice: it refuses to send the request without `--yes`, and it prints
    the exact JSON body first. Never add `--yes` on your own initiative - show the user the payload
    and wait. If the user said "开一台" earlier in the session but changed the plan, re-confirm.
-2. **Billing is per second and unforgiving.** Billing starts when the instance reaches `运行中`
-   and stops only when it is destroyed. `shutdown` keeps billing; `shutdown_release_gpu` stops GPU
-   billing but the system disk keeps billing ¥0.00003/GB/h. Balance is charged *after* use: going
-   negative auto-destroys the container, unrecoverably.
+2. **Billing is per second - but only while `运行中`. Everything before that is FREE.**
+   The meter starts the moment the instance reaches `运行中` and stops only when it is destroyed.
+   **Provisioning, image copying, container boot: all free.** Measured 2025-10-05 on image
+   `f0cbf8c7` (49 GB): the very first deploy sat in provisioning for 141s wall clock and billed
+   **CNY 0.0075** (≈17s); the same image already cached billed 56s out of 68s wall clock.
+   Four consequences you must act on:
+
+   - **Never estimate cost from wall clock.** It overstates by ~20% or more. To get the real
+     number, diff `GET /open/balance` across the run. Reference rate: RTX 4090 D =
+     **CNY 1.59/h = CNY 0.000442/s**.
+   - **Never abort a slow deploy to "save money".** Waiting costs nothing. A first deploy of an
+     uncached image legitimately takes minutes; that is patience, not waste.
+   - **Never keep an instance warm between jobs to "avoid boot cost".** Boot is already free,
+     so an idle running instance is pure loss at full GPU rate. Destroy it; deploy again next
+     time. Waiting is cheaper than idling.
+   - **Only the window from `运行中` to destroyed is worth optimising.** That is where every
+     real saving lives - and it is dominated by fixed overhead (SSH ready, app ready, destroy),
+     not by the actual compute.
+
+   `shutdown` keeps billing; `shutdown_release_gpu` stops GPU billing but the system disk keeps
+   billing ¥0.00003/GB/h. Balance is charged *after* use: going negative auto-destroys the
+   container, unrecoverably.
 3. **Start every session with `instances --running`.** Anything running is billing right now.
    Report it to the user before doing anything else, and offer to destroy leftovers.
 4. **Always finish what you start.** If you deploy, you owe the user a `destroy` afterwards
@@ -143,13 +161,17 @@ python "$S" --prompt "..." --yes           # 真跑
 |---|---|---|
 | 跑图镜像 | `f0cbf8c7-96c7-4010-a645-1898927c33ea` | 名字「agent调用此镜像跑图」。49.1 GB。用户手工维护的**唯一**跑图镜像，见下方警告 |
 | 默认 GPU | `NVIDIA GeForce RTX 4090 D` | ¥1.59/时 |
-| SSH 私钥 | `~/.ssh/piwebui.pem` | 公钥已塞进上面那张镜像的 `authorized_keys`；不通时脚本回退容器密码 |
+| SSH 私钥 | `~/.ssh/piwebui.pem` | **实测这张镜像里并不带这把公钥** —— 容器开机时似乎会用平台的 `ssh_key` 配置重置 `authorized_keys`，手工写进去的不保留。脚本实际是靠容器密码回退进去的（能正常工作）。真要密钥登录，得在 `deploy` 时带 `--ssh-key` |
 | ComfyUI 端口 | `8188` | 已公网暴露 |
 | 文生图工作流 | `/root/ComfyUI/user/default/workflows/Krea2_Turbo_文生图.json` | 同目录还有 `Krea2_Turbo_图生图.json`、`Krea2_Turbo_参考图生成.json` |
 | 模型栈 | Krea2 Turbo fp8 + qwen3vl_4b(type=krea2) + qwen_image_vae | steps 8 / cfg 1.0，**不要**加 FluxGuidance |
-| 一张图耗时 | 1024² 约 16 秒；1536×1024 约 30~60 秒 | 加开机+模型加载，整个流程 2~4 分钟 < ¥0.1 |
+| 计费规则 | **只在「运行中」期间计费** | deploy → 运行中这段（含铺 49 GB 镜像）**不花钱**。实测：首次部署壁钟 141s 只扣 ¥0.0075（≈17s） |
+| 一张图实测 | **¥0.0247**（1536×1024） | 计费窗口 56s；其中 GPU 画图 21.1s≈¥0.0093（仅 38%），其余是 SSH 就绪/ComfyUI 就绪/下载/销毁 |
+| 批量最划算 | 一次开机 8 张 | 计费 204s / ¥0.0901 → **单张 ¥0.0113**（比单张跑便宜 54%） |
+| ⚠ 别用壁钟乘单价 | 会虚报 ~20% | 开机等待免费。算真账单要看余额差额 |
 
-**为什么强调「立刻销毁」**：按秒计费，跑一张不到一毛钱，但忘记销毁挂一晚上是 **¥38**。
+**为什么强调「立刻销毁」**：按秒计费，跑一张 ¥0.025，但忘记销毁挂一整天是 **¥38.16**（一张图的 1545 倍）。
+余额 ¥16 ≈ 还能跑 650 张图，但只够裸挂不到 10 小时。
 所以 `xgc-image-run` 把销毁放在 `finally` 里，不是放在流程末尾。
 
 **镜像卫生（重要）**：用户会自己在控制台整理镜像 —— 他曾经把新存的镜像内容**覆盖回**

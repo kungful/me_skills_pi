@@ -239,17 +239,30 @@ HOST = "http://127.0.0.1:8188"
 
 
 def get(path):
-    return json.loads(urllib.request.urlopen(HOST + path, timeout=60).read())
+    last = None
+    for _ in range(10):
+        try:
+            return json.loads(urllib.request.urlopen(HOST + path, timeout=60).read())
+        except Exception as e:
+            last = e
+            time.sleep(4)
+    raise RuntimeError("ComfyUI GET %s 一直失败: %s" % (path, last))
 
 
 def post(path, data):
     req = urllib.request.Request(HOST + path, data=json.dumps(data).encode(),
                                  headers={"Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=120) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        raise RuntimeError("HTTP %s\n%s" % (e.code, e.read().decode("utf-8", "replace")[:3000]))
+    last = None
+    for _ in range(10):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            raise RuntimeError("HTTP %s\n%s" % (e.code, e.read().decode("utf-8", "replace")[:3000]))
+        except Exception as e:
+            last = e
+            time.sleep(4)
+    raise RuntimeError("ComfyUI POST %s 连不上: %s" % (path, last))
 
 
 # UI 工作流 -> API 格式。widgets_values 的位置映射在下面这张表里。
@@ -461,13 +474,20 @@ def main():
 
     before = {i["id"] for i in instances()}
     inst_id = None
-    t_start = time.time()
+    t_start = time.time()      # 壁钟，含不计费的开机等待
+    t_running = None           # 计费起算点：平台从实例达到“运行中”才开始计费
+    t_stop = None              # 计费终点：destroy 返回
     rate = 0.0
     local_png = None
+    destroy_failed = False
+
+    # 实测校准（2025-10-05）：deploy 到“运行中”这段是**不计费**的。第一次部署要现场铺
+    # 49GB 镜像，壁钟 141s 但只扣了 17s 的钱；缓存后只等 12s。所以计费窗口
+    # = 运行中 -> destroy，而不是整个壁钟。不要改成 t_start，会虚报 ~20%。
 
     try:
         # 2) 开机
-        print("\n[1/6] 开机 ...")
+        print("\n[1/7] 开机 ...")
         rc, out, _ = xgc("deploy", "--gpu", gpu, "--count", "1",
                          "--image", image, "--image-type", a.image_type,
                          "--name", "xgc-runpic", "--yes")
@@ -484,7 +504,7 @@ def main():
         print("      实例 ID = %s" % inst_id)
 
         # 3) 等运行中
-        print("[2/6] 等待运行中 ...")
+        print("[2/7] 等待运行中 ...")
         info = None
         for _ in range(180):
             time.sleep(5)
@@ -495,10 +515,11 @@ def main():
         if not info:
             die("实例迟迟没到 running，放弃")
         rate = float(info.get("price_per_hour") or 0)
+        t_running = time.time()          # 从这里开始才算钱
         print("      运行中 | %s | CNY %s/h" % (info.get("gpu_model"), rate))
 
         # 4) 连进去
-        print("[3/6] 建立 SSH ...")
+        print("[3/7] 建立 SSH ...")
         host = info.get("ssh_domain") or "%s-22.container.x-gpu.com" % inst_id
         port = int(info["ssh_port"])
         user = info.get("ssh_user") or "root"
@@ -507,8 +528,26 @@ def main():
             die("SSH 连不上（360s）。实例会照常销毁。")
         print("      %s@%s:%s | 认证方式 %s" % (user, host, port, rm.mode))
 
+        # SSH 通了不等于 ComfyUI 起来了。容器里是 screen 后台拉的，要等它监听端口，
+        # 否则提交就是 Connection refused（踩过这个坑）。
+        print("[4/7] 等 ComfyUI 就绪 ...")
+        cport = int(d.get("comfy_port") or 8188)
+        probe = ("curl -s -o /dev/null -w '%{{http_code}}' -m 5 "
+                 "http://127.0.0.1:{p}/system_stats".format(p=cport))
+        t0 = time.time()
+        ready = False
+        while time.time() - t0 < 600:
+            out = rm.run(probe, timeout=30, check=False)
+            if out.strip().endswith("200"):
+                ready = True
+                break
+            time.sleep(5)
+        if not ready:
+            raise RuntimeError("ComfyUI 等了 600s 还没监听 %d" % cport)
+        print("      就绪（等了 %ds）" % int(time.time() - t0))
+
         # 5) 出图
-        print("[4/6] 提交出图 ...")
+        print("[5/7] 提交出图 ...")
         cfg = {"prompt": a.prompt, "width": w, "height": h, "batch": a.batch,
                "steps": a.steps, "cfg": a.cfg, "seed": a.seed,
                "prefix": a.prefix, "workflow": workflow}
@@ -525,7 +564,7 @@ def main():
               % (res["filename"], res["seconds"], res["nodes"]))
 
         # 6) 拉回本地
-        print("[5/6] 下载到本地 ...")
+        print("[6/7] 下载到本地 ...")
         os.makedirs(a.out, exist_ok=True)
         local_png = os.path.join(os.path.abspath(a.out), res["filename"])
         with open(local_png, "wb") as f:
@@ -535,21 +574,31 @@ def main():
     finally:
         # 7) 无论如何都要关掉这个烧钱的东西
         if inst_id and not a.keep:
-            print("[6/6] 销毁实例 ...")
+            print("[7/7] 销毁实例 ...")
             rc, out, _ = xgc("destroy", inst_id, "--yes")
-            print("      " + ("已销毁" if rc == 0 else "销毁失败！去看日志: " + out))
+            destroy_failed = rc != 0
+            print("      " + ("已销毁" if not destroy_failed else "销毁失败！去看日志: " + out))
         elif inst_id and a.keep:
             print("\n!! --keep 生效，实例 %s 还在跑，CNY %s/h 继续烧！" % (inst_id, rate))
             print("!! 手动销毁: python %s destroy %s --yes" % (XGC_PY, inst_id))
 
         if inst_id:
-            secs = int(time.time() - t_start)
-            cost = secs / 3600 * rate
+            t_stop = time.time()
+            wall = int(t_stop - t_start)
+            billed = int(t_stop - t_running) if t_running else 0
+            boot = wall - billed
+            cost = billed / 3600 * rate
             print("\n=== 本次花费 ===")
-            print("  在线 %d 分 %d 秒 x CNY %s/h = CNY %.3f" % (secs // 60, secs % 60, rate, cost))
+            print("  计费时长 %d 分 %d 秒 x CNY %s/h = CNY %.4f"
+                  % (billed // 60, billed % 60, rate, cost))
+            print("  开机等待 %d 分 %d 秒  (不计费)" % (boot // 60, boot % 60))
+            print("  壁钟合计 %d 分 %d 秒" % (wall // 60, wall % 60))
             b = balance()
             if b is not None:
                 print("  余额 CNY %.2f" % b)
+            if not a.keep and destroy_failed:
+                print("  !! 销毁没成功，实例还在跑，上面这个数字正在继续变大。赶紧手动关：")
+                print("     python %s destroy %s --yes" % (XGC_PY, inst_id))
 
     if local_png:
         print("\n图在这儿: %s" % local_png)

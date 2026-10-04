@@ -323,8 +323,10 @@ def cmd_deploy(args):
     guard(args, body,
           what=f"DEPLOY {args.count}x {args.gpu} using image {args.image} ({args.image_type})",
           spend=f"billed per second from the moment it reaches 运行中, until destroyed. "
-                f"GPU rate is whatever the console shows for {args.gpu} (check first with "
-                f"'xgc.py instances' after the first run, or the site's pricing page).")
+                f"Provisioning and boot are FREE (a first deploy of an uncached image can sit "
+                f"for minutes - that wait costs nothing, do not abort it). Reference rate: "
+                f"RTX 4090 D = CNY 1.59/h = CNY 0.000442/s, so a 56s billed window is about "
+                f"CNY 0.025. Never estimate from wall clock; diff 'xgc.py balance' instead.")
     emit(api("/open/instance/deploy", "POST", body), "deploy", args)
 
 

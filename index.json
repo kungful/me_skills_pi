@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05 06:27:31",
+  "generatedAt": "2026-10-05 06:58:28",
   "count": 13,
   "skills": [
     {
@@ -64,7 +64,7 @@
     },
     {
       "name": "xgc-image-run",
-      "description": "仙宫云 GPU 跑图一条龙 —— 自动开机 → 自动连进容器 → 跑 ComfyUI 出图 → 把图拉回本地 → 立刻销毁实例。当用户说\"跑图/出图/生图/生成一张图/用仙宫云跑/用 ComfyUI 出图/用 Krea2 跑/拿我的 4090 跑一张/跑完就销毁/省钱的跑图方式\"，或者要用**本地部署的模型**（Krea2、自训 LoRA、ControlNet、图生图、参考图）出图时使用。目标是花几毛钱而不是开一天机。纯 API 出图（gpt-image / nano-banana）不走这里，用 grsai-image-2-5 或 grsai-nano-banana。",
+      "description": "仙宫云 GPU 跑图一条龙 —— 自动开机 → 自动连进容器 → 跑 ComfyUI 出图 → 把图拉回本地 → 立刻销毁实例。当用户说\"跑图/出图/生图/生成一张图/用仙宫云跑/用 ComfyUI 出图/用 Krea2 跑/拿我的 4090 跑一张/跑完就销毁/省钱的跑图方式\"，或者要用**本地部署的模型**（Krea2、自训 LoRA、ControlNet、图生图、参考图）出图时使用。目标是花**两三分钱**而不是开一天机（开机不计费，只在实例「运行中」期间按秒收费）。纯 API 出图（gpt-image / nano-banana）不走这里，用 grsai-image-2-5 或 grsai-nano-banana。",
       "source": "C:/Users/hua/.pi/agent/skills"
     }
   ]
