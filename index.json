@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-03 21:28:28",
-  "count": 11,
+  "generatedAt": "2026-10-04 09:35:19",
+  "count": 12,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -40,6 +40,11 @@
     {
       "name": "kicad",
       "description": "Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, traces nets, cross-references schematic to PCB, extracts BOM data, checks DRC/ERC, DFM, power trees, and regulator circuits. Every finding carries a confidence label and evidence source with trust_summary rollup. Analyzes PDF schematics from dev boards, reference designs, eval kits, and datasheets. Supports KiCad 5–10. Use whenever the user mentions .kicad_sch, .kicad_pcb, .kicad_pro, PCB design review, schematic analysis, PDF schematics, reference designs, Gerber files, DRC/ERC, netlist issues, BOM extraction, signal tracing, power budget, DFM, or wants to understand, debug, compare, or review any hardware design. Also for \"check my board\", \"review before fab\", \"what's wrong with my schematic\", \"is this ready to order\", \"check my power supply\", \"verify this circuit\", OSHWA certification readiness, or any electronics/PCB design question.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "pi-web-ui-deploy",
+      "description": "Deploy and stabilize pi-web-ui (pi 编码代理的 Web UI) inside an XGC / x-gpu container — global npm install, screen + /scripts/start.d autostart, dynamic Host allow-list (fixes \"host not allowed\"), version freeze to stop upgrade drift, and pi model-config backup/restore. Use when installing pi-web-ui on a fresh container, when the browser shows \"host not allowed\", when a restart changes the pi-web-ui version and model settings need reconfiguring, or when backing up/restoring the pi model config.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
