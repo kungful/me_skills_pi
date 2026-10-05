@@ -128,6 +128,10 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 - 解析课件数据时注意：`images[]` 里是 **`slot`** 字段（没有 id/filename），实际路径规则是 `img_sell/<slot>.jpg` 优先、其次 `img/<slot>.png`，跟 `工厂/project.py` 一致。
 - 课件名字里带年龄（`《小象洗澡》4-6岁课件`），剥名字拼标题时**必须先把年龄去掉**，否则会拼出《小象洗澡46岁》。
 - 没有"删除笔记"的接口/工具 —— 发错了只能去 App 里手动删。
+- **`PUBLISH_FAILED / 创作者中心登录失效，请重新扫码登录` 大概率是瞬时故障**，不是真的掉登录：`stop-mcp.ps1` → 起服务 → 重发一次即可（实测第二次 162s 发布成功，笔记数 +1）。**先重试，别急着换 cookie**。
+  - 真掉登录的判断方法：`cookies.json` 里 17 条 cookie 且 `is_logged_in:true` 就是好的；cookie 里只有 `.xiaohongshu.com / edith.xiaohongshu.com / www.xiaohongshu.com` 三个域，**没有** `creator.xiaohongshu.com`，创作者中心靠的就是 web_session，所以别指望按域判断。
+  - 真需要重新扫码时：`xiaohongshu-login.exe` 若已“登录状态: true”会**直接退出、不刷新 cookie**；把 `cookies.json` 挪走再跑，才会进扫码流程（注意：这样会换一个 fingerprint seed）。
+  - 反过来，如果浏览器 profile 还登录着（窗口停在 `xiaohongshu.com/explore`），登录工具会**死等一个永远不出现的扫码事件**、`cookies.json` 只有 99 字节且 `cookies: []`。判断办法：`powershell "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\""` 找到带 `remote-debugging-port` 的进程，`netstat -ano | grep <PID>` 拿端口，再 `GET http://127.0.0.1:<port>/json/list` 看当前 URL；是 explore 就说明 profile 已登录，别等二维码。
 
 ## 目录
 

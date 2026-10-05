@@ -318,6 +318,10 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 | **pixnio 搜中文出乱图** | pixnio 搜不到会返回随机图池（垃圾词也能出 48 张） | 代码里 pixnio **只接 ASCII 词**；中文词交给 Bing/360/百度 |
 | **Bing 图片接口的 `site:` 无效** | 被忽略 | 别指望 `site:pixabay.com` 定向，会返回 cookipedia/cgtn |
 | **百度图下载比声明小** | `middleURL` 被 `?w=800` 限宽 | 优先用 360 的 `img`（原图）；或接受 800px |
+| **某张图 3 次全 `generate image failed`（秒失败，不是超时）** | 服务端**内容过滤**：prompt 里同时出现 `close-up portrait` + `face` + `front teeth` 这类人脸词易被拒 | 改写措辞（实测改成 `A close-up wildlife photograph of a red squirrel in the forest, showing its head and shoulders...` 一次过）。判定方法：先用无关 prompt（如 “a red apple”）跑一发 —— 能过就是 prompt 被拒，不是服务端挂了 |
+| **图生成成功但 `[saved]` 不打印、脚本卡住** | 下载 CDN 慢/断 | 从日志里拿到 `[result] https://fileN.aitohumanize.com/...` 直接 `curl --max-time 300 --retry 3 -o img/<slot>.png <url>`，再补一个 `<slot>.png.url.txt` 就完事（别重画，省一张钱） |
+| **单张图超 600 秒被判 FAIL** | `grsai.py` 默认 `--timeout 600`，**任务在服务端还在跑** | 别重画：从日志拿 `[submit] ... id=X`，`grsai.py poll --id X --out img/<slot>.png` 续拉（实测续拉 3 分钟拿到） |
+| **一次出 10 张要等 40 分钟** | `pipeline.py` 没有并发参数 | 可以**多路后台并发**（只会写不同的图，`project.json` 只在启动时规范化一次、过程中不改）：`nohup python -u 工厂/pipeline.py <proj> --only 槽A 槽B --no-ui > /tmp/x.log 2>&1 &`。**关键：必须 nohup 脱离终端**，否则外部命令一被中断，整个进程组一起被杀、日志还是空的（已踩） |
 
 ## 图片压缩与体积
 
