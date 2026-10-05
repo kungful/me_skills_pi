@@ -15,6 +15,7 @@ description: 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付�
 - 用户只是想“随便找张照片”（跟课件无关）→ 也别用本 skill。
 - `工厂/photos.py` 是**课件流水线的内部模块**（结果要进 `项目/<课件>/img/` 并计入版权台账），不是独立搜图工具。
 - 一旦确认是课件需求，就**按下面的流程老老实实走完**（不要只出图不装配、不要跳过版权台账）。
+- 课件做完了要**发到小红书**（选图 / 补 3:4 封面 / 写文案 / 发布 / 回评论）→ 用配套 skill `xhs-courseware-post`，它直接读本 skill 产出的 `project.json`。
 
 ## 第一件事：确认工作根目录
 
@@ -360,5 +361,5 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 **汇报用事实，别用猜测**：用户对"猜"很反感。先查文件 mtime / md5 / API 返回值，再下结论。
 
 ## 相关技能
-
+- 发布与运营：`xhs-courseware-post`（读 `project.json` 一条龙发小红书：选图、补 3:4 封面、出文案、发布、核实、回评论）
 - 出图底层：`grsai-image-2-5`（gpt-image 系）、`grsai-nano-banana`（nano 系）
