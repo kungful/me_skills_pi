@@ -24,6 +24,16 @@ C:\Users\hua\tools\xiaohongshu-mcp\启动MCP.cmd      # 起服务（工作目录
 C:\Users\hua\tools\xiaohongshu-mcp\查看状态.cmd      # 看状态
 ```
 
+**必须带 `-headless=false` 启动**（`启动MCP.cmd` 已经带上了）。默认的 headless 模式在本机上会让指纹版 Chrome 卡在导航阶段，任何要拉浏览器的接口（`login/status`、`user/me`、`publish`）都在 30 秒死线超时后返回 `500 INTERNAL_ERROR`，而 `/health` 正常、`feeds/search` 正常 —— 看着像“掉登录”，其实是 headless 的锅。
+判断标志：`mcp.err.log` 里 panic 栈 `rod utils.go:68 ← must.go:36 ← must.go:457 ← login.go:23`（`context deadline exceeded`），同时临时 profile 目录 `%LOCALAPPDATA%\Temp\rod\user-data\*` 里 Chrome 起来了、`DevToolsActivePort` 写了端口、`/json/list` 也能读到页面，但页面标题卡在 `about:blank`。
+根治办法就是有头模式（会弹真窗口，别去关它）：
+```powershell
+Start-Process 'C:\Users\hua\tools\xiaohongshu-mcp\xiaohongshu-mcp.exe' `
+  -ArgumentList '-headless=false' `
+  -WorkingDirectory 'C:\Users\hua\tools\xiaohongshu-mcp' `
+  -RedirectStandardError 'C:\Users\hua\tools\xiaohongshu-mcp\mcp.err.log' -WindowStyle Hidden
+```
+
 - 没登录 / 掉登录 → 跑 `C:\Users\hua\tools\xiaohongshu-mcp\xiaohongshu-login.exe`（会弹原生 Chrome 扫码窗）。
 - **不要用网页版小红书**（`/api/v1/login/qrcode` 那个接口的图是透明底小图，扫不出来，而且会和 MCP 抢登录态）。
 - 脚本自己会检查服务与登录态，连不上会直接报错提示，不用你手动 curl。
@@ -118,7 +128,17 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 ## 踩过的坑（改脚本前先看）
 
 - **发布耗时 1~2 分钟**，是 HTTP 长请求，别设短超时、别中途 Ctrl-C。
-- **`/api/v1/login/status` 要 10 秒以上**（它会拉起浏览器校验），超时小于 10 秒会误报"没登录"。
+- **`/api/v1/login/status` 要 15~25 秒**（它会拉起浏览器校验），超时小于 30 秒会误报"没登录"。这个耗时**每次都不一样**，偶发超 30 秒内部死线返回 500 —— 所以发布脚本的登录检查失败时**先重试 2~3 次**，不要立刻去挪 cookies。
+- 排查这类问题的最小实验（比读源码快）：用指纹版 Chrome 自己拉一个页面，看加载要几秒。
+  ```bash
+  "C:/Users/hua/AppData/Local/xiaohongshu-mcp/browser/148.0.7778.215/browser/chrome.exe" \
+    --headless --no-sandbox --no-first-run --user-data-dir="C:/Users/hua/temp_probe" \
+    --remote-debugging-port=0 > /tmp/probe.out 2>&1 &
+  # 端口从 /tmp/probe.out 的 "DevTools listening on ws://127.0.0.1:<port>/" 里读
+  # 再用 python + websocket-client 连 page 的 webSocketDebuggerUrl（必须 suppress_origin=True，带 Origin 会被 403）
+  # 轮询 document.readyState / title。实测：有头 6 秒 complete，headless 卡住不动
+  ```
+  ⚠️ Windows 的 Python **不认 git-bash 的 `/tmp/...` 路径**（会当成 `C:\tmp\...`），要写 Windows 真实路径。
 - 这个 MCP 的响应常常**套两层** `data.data`（通知未读数、笔记列表都是），取数据要往里挖一层。
 - 通知列表结构：`data.data.{tab,filtered,items[]}`，item 形如 `{id,type,title,time,from:{user_id,nickname,xsec_token},feed_id,feed_title}`。
 - **`范画步骤5_加背景` 和 `范画成品` md5 相同**（三套课件都这样），不去重会发两张一样的图。
