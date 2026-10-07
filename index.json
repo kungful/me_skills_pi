@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-06 16:37:31",
-  "count": 14,
+  "generatedAt": "2026-10-07 11:28:33",
+  "count": 21,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -43,8 +43,43 @@
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
+      "name": "manage-pcba-program",
+      "description": "Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package through a reviewed order. Use for end-to-end requests, multi-stage hardware projects, workflow recovery, gate tracking, change invalidation, or deciding which specialist skill is required next.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "operate-jlcpcb-order",
+      "description": "Operate and review a JLCPCB PCB/PCBA quote, optional physical-stencil request, or order using a frozen Gerber/drill, BOM, CPL, sourcing lock, constraints, and release manifest. Use for browser upload, board or stencil options, cost anomalies, coupons, component matching, substitutions, imported placement calibration, top/bottom preview inspection, cart preparation, or order records without silently accepting placement errors or payment.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "pcb-layout-review",
+      "description": "Audit, finish, or port PCB placement and routing using circuit intent, mechanical constraints, sourcing evidence, native DRC/connectivity, rendered views, and manufacturing feedback. Use before routing, after autorouting, before fabrication release, when adapting a proven board to another connector, enclosure, platform, or regional variant, or when reviewing layers, GND references, power distribution, decoupling, buses, controlled interfaces, RF keepouts, vias, cost-driving features, opens, or DRC findings.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
       "name": "pi-web-ui-deploy",
       "description": "Deploy and stabilize pi-web-ui (pi 编码代理的 Web UI) inside an XGC / x-gpu container — global npm install, screen + /scripts/start.d autostart, dynamic Host allow-list (fixes \"host not allowed\"), version freeze to stop upgrade drift, and pi model-config backup/restore. Use when installing pi-web-ui on a fresh container, when the browser shows \"host not allowed\", when a restart changes the pi-web-ui version and model settings need reconfiguring, or when backing up/restoring the pi model config.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "plan-electronic-product",
+      "description": "Turn an electronic product idea, behavior description, reverse-engineering note, or incomplete circuit concept into a decision-ready engineering brief and architecture. Use before schematic design or audit when functions, operating states, power, interfaces, mechanics, production quantity, cost, or measurable requirements are missing or ambiguous.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "qualify-pcba-sourcing",
+      "description": "Verify a PCBA BOM and proposed components before circuit or placement freeze, including exact manufacturer part numbers, pin semantics, packages, footprints, CAD and 3D models, lifecycle, live stock, MOQ, assembly class, price, and approved substitutes. Use for sourcing locks, unavailable or expensive parts, JLCPCB/LCSC matching, BOM risk, or cost-aware substitution decisions.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "release-pcba-fabrication",
+      "description": "Build and verify a vendor-neutral PCB/PCBA manufacturing release from one frozen design revision. Use when generating or auditing Gerber, drill, IPC-2581/ODB++, BOM, CPL/pick-and-place, assembly drawings, constraints, renders, DFM evidence, hashes, or release manifests, and when preventing mixed-revision fabrication or assembly uploads.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "schematic-humanizer",
+      "description": "Reorganize label-heavy or netlist-like electronic schematics into human-readable functional diagrams with visible local wiring while preserving proven connectivity. Use for schematic readability correction, overlapping wires or symbols, visually floating connectors or support logic, functional-sheet restructuring, bus presentation, layout annotations, or multi-EDA handoff across KiCad, Altium, EasyEDA, EAGLE/Fusion, gEDA/Lepton, SPICE/netlist, and PDF/image sources.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

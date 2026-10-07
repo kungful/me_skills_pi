@@ -1,0 +1,4 @@
+interface:
+  display_name: "PCB Layout Reviewer"
+  short_description: "Review, port, route, and release PCB layouts"
+  default_prompt: "Use $pcb-layout-review to audit or port this PCB layout and identify the safest measurable path to release."

@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-06 16:37:31**
+最后同步：**2026-10-07 11:28:33**
 
-共 **14** 个 skill。
+共 **21** 个 skill。
 
 ## 安装
 
@@ -25,7 +25,14 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`grsai-image-2-5`](skills/grsai-image-2-5/) | Generate or restyle images through the grsai API (gpt-image-2 / 2.5 family; text-to-image, image-to-image with base64 or URL references, transparent backgrou... | pi |
 | [`grsai-nano-banana`](skills/grsai-nano-banana/) | Generate or edit images through the grsai legacy Nano Banana API (/v1/draw/nano-banana, /v1/draw/result) or the Gemini-compatible route (/v1beta/models/<mode... | pi |
 | [`kicad`](skills/kicad/) | Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, trace... | pi |
+| [`manage-pcba-program`](skills/manage-pcba-program/) | Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package thr... | pi |
+| [`operate-jlcpcb-order`](skills/operate-jlcpcb-order/) | Operate and review a JLCPCB PCB/PCBA quote, optional physical-stencil request, or order using a frozen Gerber/drill, BOM, CPL, sourcing lock, constraints, an... | pi |
+| [`pcb-layout-review`](skills/pcb-layout-review/) | Audit, finish, or port PCB placement and routing using circuit intent, mechanical constraints, sourcing evidence, native DRC/connectivity, rendered views, an... | pi |
 | [`pi-web-ui-deploy`](skills/pi-web-ui-deploy/) | Deploy and stabilize pi-web-ui (pi 编码代理的 Web UI) inside an XGC / x-gpu container — global npm install, screen + /scripts/start.d autostart, dynamic Host allo... | pi |
+| [`plan-electronic-product`](skills/plan-electronic-product/) | Turn an electronic product idea, behavior description, reverse-engineering note, or incomplete circuit concept into a decision-ready engineering brief and ar... | pi |
+| [`qualify-pcba-sourcing`](skills/qualify-pcba-sourcing/) | Verify a PCBA BOM and proposed components before circuit or placement freeze, including exact manufacturer part numbers, pin semantics, packages, footprints,... | pi |
+| [`release-pcba-fabrication`](skills/release-pcba-fabrication/) | Build and verify a vendor-neutral PCB/PCBA manufacturing release from one frozen design revision. Use when generating or auditing Gerber, drill, IPC-2581/ODB... | pi |
+| [`schematic-humanizer`](skills/schematic-humanizer/) | Reorganize label-heavy or netlist-like electronic schematics into human-readable functional diagrams with visible local wiring while preserving proven connec... | pi |
 | [`skills-github-sync`](skills/skills-github-sync/) | 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一... | pi |
 | [`web-browse`](skills/web-browse/) | Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metad... | pi |
 | [`xgc-api`](skills/xgc-api/) | Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down... | pi |
