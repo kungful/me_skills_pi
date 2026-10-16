@@ -157,6 +157,33 @@ def resolve_token(cfg: dict) -> str:
 
 # ----------------------------------------------------------------------------- 进程工具
 
+# Windows 上必须显式禁止子进程创建控制台窗口（实测踩过，见下）。
+#
+# 背景：扩展用 Node 的 spawn(..., {windowsHide: true}) 启动 python 时，python 这个进程
+# **本身没有控制台**（CREATE_NO_WINDOW）。计划任务用 pythonw.exe 启动时同理。
+# python 再启动 git.exe 这种控制台程序时，Windows 会**新分配一个控制台**；
+# 而 Windows 11 默认终端宿主是 Windows Terminal，于是每跑一条 git 命令就弹出一个
+# 标题为 `C:\Program Files\Git\mingw64\bin\git.exe` 的终端窗口 —— 一次同步要弹好几个。
+#
+# 加 CREATE_NO_WINDOW 后，git 及其所有子进程（git-lfs、credential helper…）全程无窗口。
+_CREATE_NO_WINDOW = 0x08000000
+
+
+def _hidden_process_kwargs() -> dict:
+    """让子进程绝不出现在屏幕上（Windows）。非 Windows 返回空。"""
+    if os.name != "nt":
+        return {}
+    kwargs = {"creationflags": _CREATE_NO_WINDOW}
+    try:
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = subprocess.SW_HIDE
+        kwargs["startupinfo"] = si
+    except AttributeError:  # pragma: no cover - 只在异常平台触发
+        pass
+    return kwargs
+
+
 def run(cmd, cwd=None, env=None, check=False, timeout=300):
     full_env = os.environ.copy()
     if env:
@@ -166,6 +193,7 @@ def run(cmd, cwd=None, env=None, check=False, timeout=300):
     proc = subprocess.run(
         cmd, cwd=str(cwd) if cwd else None, env=full_env,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout,
+        **_hidden_process_kwargs(),
     )
     out = proc.stdout.decode("utf-8", "replace").strip()
     err = proc.stderr.decode("utf-8", "replace").strip()
@@ -175,7 +203,7 @@ def run(cmd, cwd=None, env=None, check=False, timeout=300):
 
 
 def git(args, cwd, check=True, token: str | None = None, timeout=300):
-    cmd = ["git"]
+    cmd = ["git", "-c", "credential.interactive=false"]  # 凭据失效时只报错，不弹 GCM 窗口
     if token:
         # 只在本次命令里注入鉴权，不落盘
         blob = base64.b64encode(f"x-access-token:{token}".encode()).decode()
