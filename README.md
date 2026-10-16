@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-07 11:28:33**
+最后同步：**2026-10-16 10:28:41**
 
-共 **21** 个 skill。
+共 **22** 个 skill。
 
 ## 安装
 
@@ -32,6 +32,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`plan-electronic-product`](skills/plan-electronic-product/) | Turn an electronic product idea, behavior description, reverse-engineering note, or incomplete circuit concept into a decision-ready engineering brief and ar... | pi |
 | [`qualify-pcba-sourcing`](skills/qualify-pcba-sourcing/) | Verify a PCBA BOM and proposed components before circuit or placement freeze, including exact manufacturer part numbers, pin semantics, packages, footprints,... | pi |
 | [`release-pcba-fabrication`](skills/release-pcba-fabrication/) | Build and verify a vendor-neutral PCB/PCBA manufacturing release from one frozen design revision. Use when generating or auditing Gerber, drill, IPC-2581/ODB... | pi |
+| [`reverse-engineer-anything`](skills/reverse-engineer-anything/) | Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence t... | pi |
 | [`schematic-humanizer`](skills/schematic-humanizer/) | Reorganize label-heavy or netlist-like electronic schematics into human-readable functional diagrams with visible local wiring while preserving proven connec... | pi |
 | [`skills-github-sync`](skills/skills-github-sync/) | 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一... | pi |
 | [`web-browse`](skills/web-browse/) | Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metad... | pi |

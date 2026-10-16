@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07 11:28:33",
-  "count": 21,
+  "generatedAt": "2026-10-16 10:28:41",
+  "count": 22,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -75,6 +75,11 @@
     {
       "name": "release-pcba-fabrication",
       "description": "Build and verify a vendor-neutral PCB/PCBA manufacturing release from one frozen design revision. Use when generating or auditing Gerber, drill, IPC-2581/ODB++, BOM, CPL/pick-and-place, assembly drawings, constraints, renders, DFM evidence, hashes, or release manifests, and when preventing mixed-revision fabrication or assembly uploads.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "reverse-engineer-anything",
+      "description": "Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
