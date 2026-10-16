@@ -666,8 +666,44 @@ def has_remote(repo_dir: Path) -> bool:
 
 def commit_and_push(repo_dir: Path, cfg: dict, token: str, added: list[str], changed: list[str],
                     removed: list[str], branch: str, no_push: bool) -> str:
+    has_rem = has_remote(repo_dir)
+    if no_push or not has_rem:
+        has_rem = False
+
+    # 先拉一下，减少和 skills 同步抢仓库导致的 non-fast-forward
+    if has_rem:
+        git(["fetch", "origin", branch], cwd=repo_dir, check=False, token=token or None)
+        git(["pull", "--rebase", "--autostash", "origin", branch],
+            cwd=repo_dir, check=False, token=token or None)
+
+    def push() -> str:
+        push_cmd = ["push", "-u", "origin", f"HEAD:{branch}"]
+        code, out, err = git(push_cmd, cwd=repo_dir, check=False, token=token or None)
+        if code != 0:
+            log(f"推送失败，尝试 pull --rebase 后重试: {err or out}")
+            git(["pull", "--rebase", "--autostash", "origin", branch],
+                cwd=repo_dir, check=False, token=token or None)
+            code, out, err = git(push_cmd, cwd=repo_dir, check=False, token=token or None)
+            if code != 0:
+                log(f"ERROR: 推送最终失败: {err or out}", console=True)
+                return "failed"
+        log("推送成功。")
+        return "pushed"
+
     code, out, _ = git(["status", "--porcelain"], cwd=repo_dir, check=False)
     if not out.strip():
+        # 工作区干净：但如果本地有上次没推上去的提交，这里补推（否则永远卡在本地）
+        if not has_rem:
+            log("没有变化，跳过提交。")
+            return "no-change"
+        code, ahead, _ = git(["rev-list", "--count", f"origin/{branch}..HEAD"], cwd=repo_dir, check=False)
+        try:
+            need_push = code != 0 or int(ahead.strip()) > 0
+        except ValueError:
+            need_push = code != 0
+        if need_push:
+            log("本地有未推送的提交，补推。")
+            return push()
         log("没有变化，跳过提交。")
         return "no-change"
 
@@ -698,27 +734,10 @@ def commit_and_push(repo_dir: Path, cfg: dict, token: str, added: list[str], cha
 
     if no_push:
         return "committed"
-    if not has_remote(repo_dir):
+    if not has_rem:
         log("没有配置 remote，跳过推送。")
         return "committed"
-
-    # 先拉一下，减少和 skills 同步抢仓库导致的 non-fast-forward
-    git(["fetch", "origin", branch], cwd=repo_dir, check=False, token=token or None)
-    git(["pull", "--rebase", "--autostash", "origin", branch],
-        cwd=repo_dir, check=False, token=token or None)
-
-    push = ["push", "-u", "origin", f"HEAD:{branch}"]
-    code, out, err = git(push, cwd=repo_dir, check=False, token=token or None)
-    if code != 0:
-        log(f"推送失败，尝试 pull --rebase 后重试: {err or out}")
-        git(["pull", "--rebase", "--autostash", "origin", branch],
-            cwd=repo_dir, check=False, token=token or None)
-        code, out, err = git(push, cwd=repo_dir, check=False, token=token or None)
-        if code != 0:
-            log(f"ERROR: 推送最终失败: {err or out}", console=True)
-            return "failed"
-    log("推送成功。")
-    return "pushed"
+    return push()
 
 
 # ----------------------------------------------------------------------------- 命令
