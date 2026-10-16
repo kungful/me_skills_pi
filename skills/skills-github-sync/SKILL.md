@@ -30,6 +30,7 @@ description: 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 
 | 仓库文件 | `skills/<名字>/...` + `README.md` + `index.json` |
 | 实时自动上传 | ✓ 扩展 `skills-autosync.ts` 已生效 |
 | 定时自动上传 | ✓ 计划任务 `PiSkillsGitHubSync`（每 30 分钟 + 登录时） |
+| 静默（不弹窗口） | ✓ 子进程全部 `CREATE_NO_WINDOW`，推送不再弹终端窗口 |
 
 ## 三个问题先问清楚
 
@@ -133,6 +134,30 @@ Windows 的 `fs.watch`（底层 `ReadDirectoryChangesW`）**会静默丢事件**
 
 `session_shutdown` 里**故意不调 `stopWatchers()`**。pi / pi-web 是按会话触发事件的，
 会话结束不等于用户不用了；早期版本在这里关掉了监听器，结果下一个会话到来前完全不自动同步。
+
+### 为什么上传时不再弹终端窗口（踩过）
+
+**现象**：每同步一次就弹出（一次好几个）标题是
+`C:\Program Files\Git\mingw64\bin\git.exe` 的 Windows Terminal 窗口。
+
+**原因**：调用方启动 python 时 python 自己**没有控制台** ——
+扩展用 `spawn(py.exe, { windowsHide: true })`（= `CREATE_NO_WINDOW`，无窗口但无控制台），
+计划任务用 `pyw.exe`（GUI 子系统，压根没控制台）。
+python 再从这种“无控制台”状态启动 `git.exe` 这种**控制台程序**时，
+Windows 会给它**新分配一个控制台**；而 Win11 的默认终端宿主是 Windows Terminal，
+于是每条 git 命令都欢快地开一个终端窗口。
+
+**修法**：`sync.py` 的 `run()` 给**所有子进程**都带上 `CREATE_NO_WINDOW`
+（外加 `STARTUPINFO` 的 `SW_HIDE`），见 `_hidden_process_kwargs()`。
+这样 git 及其全部子进程（git-lfs、credential helper…）全程无窗口，
+扩展、计划任务、手动跑三条路径都安静。
+
+**别再“修”回去**：不要指望在扩展侧加 `windowsHide` 就够了 —— 它只作用于**直接子进程**，
+孙进程（git）照样自己开窗口。窗口必须在**真正 spawn 的地方**（`sync.py`）堵住。
+
+**顺带**：git 调用统一带 `-c credential.interactive=false`。
+凭据失效时只会推送失败 + 写日志 + 由扩展弹一条通知，
+**不会**再弹 Git Credential Manager 的登录窗口。
 
 ### 其他细节
 
