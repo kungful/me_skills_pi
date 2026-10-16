@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17 01:27:28",
+  "generatedAt": "2026-10-17 01:29:21",
   "count": 12,
   "totalApkBytes": 49062779,
   "categories": [
@@ -114,8 +114,8 @@
           "apk": "tools/cpe140-ctrl-android/cpe140-ctrl-android.apk",
           "source": "tools/cpe140-ctrl-android/src/",
           "size": 5496386,
-          "sha256": "0506399a9950990f4df2e1e55c3bae0fc990c0fc82b075e21929a0be04072028",
-          "builtAt": "2026-10-17 01:20:33",
+          "sha256": "0766533c8c270cf0dd61d003a5d11497b3d86fb15df6e21d8addbecdaa497283",
+          "builtAt": "2026-10-17 01:28:47",
           "notes": "同上手机版：概览/客户端/配置/root终端/维护(备份整片flash)，纯 Java + SAF，免存储权限"
         },
         {

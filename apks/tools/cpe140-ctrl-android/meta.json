@@ -9,11 +9,11 @@
   "apk": "cpe140-ctrl-android.apk",
   "apkName": "app-release.apk",
   "apkSize": 5496386,
-  "apkSha256": "0506399a9950990f4df2e1e55c3bae0fc990c0fc82b075e21929a0be04072028",
+  "apkSha256": "0766533c8c270cf0dd61d003a5d11497b3d86fb15df6e21d8addbecdaa497283",
   "srcSha": "4bcae066020b11b69c7f1cbd2570623f43a4b410",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/CPE140Ctrl",
-  "builtAt": "2026-10-17 01:20:33",
-  "syncedAt": "2026-10-17 01:27:28",
+  "builtAt": "2026-10-17 01:28:47",
+  "syncedAt": "2026-10-17 01:29:21",
   "auto": false
 }
