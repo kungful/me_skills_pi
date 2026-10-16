@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FF07090A</color>
+    <color name="panel">#FF101517</color>
+    <color name="line">#FF1F2A2E</color>
+    <color name="cyan">#FF4FE3C1</color>
+    <color name="amber">#FFE3B44F</color>
+    <color name="red">#FFE3635B</color>
+    <color name="text">#FFD7E3E0</color>
+    <color name="dim">#FF7C8C8A</color>
+    <color name="btnbg">#FF16211F</color>
+    <color name="btnbg_on">#FF23524A</color>
+    <color name="tab_text">#FF8FA6A2</color>
+    <color name="scrim">#CC000000</color>
+</resources>

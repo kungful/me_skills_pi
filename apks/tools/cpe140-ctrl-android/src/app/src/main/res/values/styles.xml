@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="T.App" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorAccent">@color/cyan</item>
+    </style>
+
+    <style name="Btn" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_btn</item>
+        <item name="android:textColor">@color/cyan</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
+    </style>
+
+    <style name="Tab" parent="Btn">
+        <item name="android:textColor">@color/tab_text</item>
+        <item name="android:background">@drawable/bg_tab</item>
+        <item name="android:layout_marginEnd">2dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+    </style>
+
+    <style name="Tab.On" parent="Tab">
+        <item name="android:background">@drawable/bg_tab_on</item>
+    </style>
+
+    <style name="Input" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_input</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textColorHint">@color/dim</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:inputType">text</item>
+        <item name="android:layout_marginBottom">6dp</item>
+    </style>
+
+    <style name="Out" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:lineSpacingMultiplier">1.1</item>
+        <item name="android:textIsSelectable">true</item>
+        <item name="android:paddingTop">8dp</item>
+    </style>
+
+    <style name="Kv" parent="Out">
+        <item name="android:textColor">@color/cyan</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+</resources>

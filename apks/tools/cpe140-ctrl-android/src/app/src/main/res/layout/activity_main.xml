@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical">
+
+    <!-- ================= 顶栏 ================= -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="10dp"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/host"
+            style="@style/Input"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="0dp"
+            android:singleLine="true"
+            android:hint="@string/host_hint"
+            android:text="192.168.188.254"
+            android:inputType="textUri" />
+
+        <Button
+            android:id="@+id/b_connect"
+            style="@style/Btn"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="0dp"
+            android:layout_marginBottom="0dp"
+            android:text="@string/connect" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/status"
+        style="@style/Kv"
+        android:layout_width="match_parent"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp"
+        android:text="未连接" />
+
+    <!-- ================= 标签 ================= -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/tabs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/tab1" style="@style/Tab.On" android:text="@string/tab1" />
+            <Button android:id="@+id/tab2" style="@style/Tab" android:text="@string/tab2" />
+            <Button android:id="@+id/tab3" style="@style/Tab" android:text="@string/tab3" />
+            <Button android:id="@+id/tab4" style="@style/Tab" android:text="@string/tab4" />
+            <Button android:id="@+id/tab5" style="@style/Tab" android:text="@string/tab5" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- == 1 概览 == -->
+        <ScrollView
+            android:id="@+id/panel1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <Button android:id="@+id/b_info" style="@style/Btn" android:text="设备信息" />
+                    <Button android:id="@+id/b_link" style="@style/Btn" android:text="链路状态" />
+                    <Button android:id="@+id/b_wan" style="@style/Btn" android:text="WAN" />
+                    <Button android:id="@+id/b_lan" style="@style/Btn" android:text="LAN" />
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button android:id="@+id/b_wifi" style="@style/Btn" android:text="无线配置" />
+                    <Button android:id="@+id/b_doctor" style="@style/Btn" android:text="系统自检" />
+                </LinearLayout>
+
+                <TextView android:id="@+id/out1" style="@style/Out" android:text="连接后点上面的按钮。" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- == 2 客户端 == -->
+        <ScrollView
+            android:id="@+id/panel2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <Button android:id="@+id/b_clients" style="@style/Btn" android:text="DHCP 客户端" />
+                    <Button android:id="@+id/b_arp" style="@style/Btn" android:text="ARP 表" />
+                    <Button android:id="@+id/b_scan" style="@style/Btn" android:text="扫描 WiFi" />
+                    <Button android:id="@+id/b_chan" style="@style/Btn" android:text="信道" />
+                </LinearLayout>
+
+                <TextView android:id="@+id/out2" style="@style/Out" android:text="查看谁挂在中继器上。" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- == 3 配置 == -->
+        <ScrollView
+            android:id="@+id/panel3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <Button android:id="@+id/b_cfgall" style="@style/Btn" android:text="读取全部配置" />
+                    <Button android:id="@+id/b_cfgsave" style="@style/Btn" android:text="备份到文件" />
+                </LinearLayout>
+
+                <EditText android:id="@+id/k_key" style="@style/Input" android:hint="KEY（如 WLAN0_VAP5_PSK）" android:singleLine="true" />
+                <EditText android:id="@+id/k_val" style="@style/Input" android:hint="VALUE（新值）" android:singleLine="true" />
+                <Button android:id="@+id/b_cfgset" style="@style/Btn" android:text="写入这一项" />
+
+                <TextView android:id="@+id/out3" style="@style/Out"
+                    android:text="全量配置含明文口令/PSK，注意别外传。" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- == 4 终端 == -->
+        <ScrollView
+            android:id="@+id/panel4"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" android:scrollbars="none">
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <Button android:id="@+id/q1" style="@style/Btn" android:text="id" />
+                        <Button android:id="@+id/q2" style="@style/Btn" android:text="ps" />
+                        <Button android:id="@+id/q3" style="@style/Btn" android:text="df -h" />
+                        <Button android:id="@+id/q4" style="@style/Btn" android:text="ip a" />
+                        <Button android:id="@+id/q5" style="@style/Btn" android:text="cat /proc/net/arp" />
+                        <Button android:id="@+id/q6" style="@style/Btn" android:text="logread | tail -40" />
+                        <Button android:id="@+id/q7" style="@style/Btn" android:text="ls -la /www" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <EditText android:id="@+id/cmd" style="@style/Input"
+                        android:layout_width="0dp" android:layout_weight="1" android:layout_marginBottom="0dp"
+                        android:hint="命令（root 执行）" android:singleLine="true"
+                        android:inputType="textVisiblePassword" />
+                    <Button android:id="@+id/b_run" style="@style/Btn"
+                        android:layout_marginStart="8dp" android:layout_marginEnd="0dp" android:layout_marginBottom="0dp"
+                        android:text="执行" />
+                </LinearLayout>
+
+                <TextView android:id="@+id/out4" style="@style/Out"
+                    android:text="命令注入通道：以 root 执行，无 Web 登录会话。\n不碰 WLAN0_VAP0_* / WLAN0_VAP5_* 就不会失联。" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- == 5 维护 == -->
+        <ScrollView
+            android:id="@+id/panel5"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <Button android:id="@+id/b_dump" style="@style/Btn" android:text="备份整片 Flash" />
+                    <Button android:id="@+id/b_pull" style="@style/Btn" android:text="下载文件" />
+                    <Button android:id="@+id/b_push" style="@style/Btn" android:text="上传文件" />
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button android:id="@+id/b_pw" style="@style/Btn" android:text="改 Web 口令" />
+                    <Button android:id="@+id/b_clean" style="@style/Btn" android:text="清理临时文件" />
+                    <Button android:id="@+id/b_reboot" style="@style/Btn" android:text="重启设备" />
+                    <Button android:id="@+id/b_factory" style="@style/Btn" android:text="恢复出厂" />
+                </LinearLayout>
+
+                <TextView style="@style/Kv" android:layout_width="match_parent" android:text="定时重启（每周几/时/分）" />
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <Switch android:id="@+id/sch_en" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                    <EditText android:id="@+id/sch_w" style="@style/Input"
+                        android:layout_width="0dp" android:layout_weight="1" android:layout_marginBottom="0dp"
+                        android:hint="周" android:inputType="number" android:singleLine="true" />
+                    <EditText android:id="@+id/sch_h" style="@style/Input"
+                        android:layout_width="0dp" android:layout_weight="1" android:layout_marginBottom="0dp"
+                        android:layout_marginStart="6dp" android:hint="时" android:inputType="number" android:singleLine="true" />
+                    <EditText android:id="@+id/sch_m" style="@style/Input"
+                        android:layout_width="0dp" android:layout_weight="1" android:layout_marginBottom="0dp"
+                        android:layout_marginStart="6dp" android:hint="分" android:inputType="number" android:singleLine="true" />
+                    <Button android:id="@+id/b_read_sch" style="@style/Btn"
+                        android:layout_marginStart="6dp" android:text="读" />
+                    <Button android:id="@+id/b_sched" style="@style/Btn" android:text="存" />
+                </LinearLayout>
+
+                <TextView android:id="@+id/out5" style="@style/Out"
+                    android:text="恢复出厂会清空配置；重启/恢复出厂后 Web 与注入通道都会短暂中断。" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>

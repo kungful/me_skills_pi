@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CPE140 控制台</string>
+    <string name="brand">CPE140 // CTRL</string>
+    <string name="host_hint">设备地址</string>
+    <string name="connect">连接</string>
+    <string name="tab1">概览</string>
+    <string name="tab2">客户端</string>
+    <string name="tab3">配置</string>
+    <string name="tab4">终端</string>
+    <string name="tab5">维护</string>
+</resources>

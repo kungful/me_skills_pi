@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-16 23:55:41",
-  "count": 10,
-  "totalApkBytes": 43566393,
+  "generatedAt": "2026-10-17 01:27:28",
+  "count": 12,
+  "totalApkBytes": 49062779,
   "categories": [
     {
       "id": "design",
@@ -96,6 +96,28 @@
       "id": "tools",
       "title": "工具",
       "apps": [
+        {
+          "slug": "cpe140-ctrl",
+          "title": "CPE140 控制台 (PC)",
+          "version": "1.0.0",
+          "apk": "",
+          "source": "tools/cpe140-ctrl/src/",
+          "size": 0,
+          "sha256": "",
+          "builtAt": "",
+          "notes": "易阔CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免登录，CLI+tkinter GUI，纯标准库；含脱敏逆向报告"
+        },
+        {
+          "slug": "cpe140-ctrl-android",
+          "title": "CPE140 控制台 (安卓)",
+          "version": "1.0.0",
+          "apk": "tools/cpe140-ctrl-android/cpe140-ctrl-android.apk",
+          "source": "tools/cpe140-ctrl-android/src/",
+          "size": 5496386,
+          "sha256": "0506399a9950990f4df2e1e55c3bae0fc990c0fc82b075e21929a0be04072028",
+          "builtAt": "2026-10-17 01:20:33",
+          "notes": "同上手机版：概览/客户端/配置/root终端/维护(备份整片flash)，纯 Java + SAF，免存储权限"
+        },
         {
           "slug": "pilink",
           "title": "Pi 通知 (piLink)",

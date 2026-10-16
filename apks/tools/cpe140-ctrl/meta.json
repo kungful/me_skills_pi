@@ -1,0 +1,19 @@
+{
+  "slug": "cpe140-ctrl",
+  "title": "CPE140 控制台 (PC)",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "cpe140.py",
+  "version": "1.0.0",
+  "notes": "易阔CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免登录，CLI+tkinter GUI，纯标准库；含脱敏逆向报告",
+  "apk": "",
+  "apkName": "",
+  "apkSize": 0,
+  "apkSha256": "",
+  "srcSha": "104d695144a8fd610a2376a0300fecc3f17f4c0d",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/cpe140-ctrl",
+  "builtAt": "",
+  "syncedAt": "2026-10-17 01:27:28",
+  "auto": false
+}
