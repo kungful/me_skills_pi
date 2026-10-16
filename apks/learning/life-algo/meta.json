@@ -1,0 +1,19 @@
+{
+  "slug": "life-algo",
+  "title": "生活算法",
+  "category": "learning",
+  "categoryTitle": "学习 / 科普",
+  "package": "org.opensource.lifealgo",
+  "version": "1.0.0",
+  "notes": "离线生活算法：穿搭/营养/睡眠/训练 + 各种计算器",
+  "apk": "life-algo.apk",
+  "apkName": "life-algo-1.0.0.apk",
+  "apkSize": 17351322,
+  "apkSha256": "31663071562abd63953595e08a8e20a10200a1407fe1f1e9ae116ff2fe2d1d03",
+  "srcSha": "72e781b39ba239ca637b0b30bd71d063d7b1271e",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/life-algo",
+  "builtAt": "2026-10-06 09:00:51",
+  "syncedAt": "2026-10-16 23:55:40",
+  "auto": false
+}

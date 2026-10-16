@@ -1,0 +1,67 @@
+{
+  "_说明": "这是配置模板，不是可直接用的配置。真实文件在 %USERPROFILE%\\.pi\\android-link\\local.json，由 setup.ps1 生成（含随机密码与令牌），并被 ACL 限制为仅当前用户可读。",
+  "_怎么用": "跑 setup.ps1 自动生成最省事；确实要手写就把下面的占位值换成你自己的，并且务必换掉 password 和 token。",
+
+  "piWeb": {
+    "_说明": "看门狗进程内访问的 pi-web 地址；password 必须与 run-pi-web.bat 启动 pi-web 时的 PI_WEB_PASSWORD 一致，否则看门狗会连打 pi-web 的登录限流（全局共享），最后你自己的浏览器也登不进去。",
+    "base": "http://127.0.0.1:30141",
+    "password": "<改成你自己的 32 位随机串，或留空走局域网免密码模式>"
+  },
+
+  "broker": {
+    "_说明": "消息中转就是派发台自己的 /pi/publish。token 通常与 lan.consoleToken 相同。",
+    "base": "http://127.0.0.1:8787",
+    "token": "<与 lan.consoleToken 一致>"
+  },
+
+  "lan": {
+    "_说明": "host 填你这台电脑的局域网 IPv4（手机要用它访问），不是 127.0.0.1。查法：ipconfig。",
+    "host": "192.168.1.100",
+    "piWebPort": 30141,
+    "consolePort": 8787,
+    "consoleToken": "<32 位随机十六进制，只给手机 App 用>"
+  },
+
+  "wan": {
+    "_说明": "异地通知（出门在外也能收）。不需要买/租服务器、不需要注册账号：电脑有公网地址就行。enabled=false 会完全关掉（不查公网 IP、不起隧道、不开统一出口端口）。",
+    "_安全阀": "piWeb.password 为空时，统一出口(:8788)和隧道都会拒绝启动 —— 能执行任意命令的 agent 不能裸奔到公网。",
+    "enabled": true,
+    "gatewayPort": 8788,
+    "tunnel": "auto",
+    "tunnelCommand": "",
+    "cloudflaredPath": "",
+    "extraBases": [],
+    "ipRefreshMs": 600000,
+    "gatewayWithoutPassword": false
+  },
+
+  "defaultCwd": "C:/pi-work",
+
+  "quickCommands": [
+    {
+      "_说明": "手机端「一键让它继续跑」派发的工作目录与提示词，按需改。",
+      "name": "status",
+      "label": "看看现在在跑什么",
+      "cwd": "C:/pi-link",
+      "prompt": "列出当前机器上正在运行的 pi 会话和它们的状态，用中文简述。"
+    },
+    {
+      "name": "resume",
+      "label": "继续上一个没跑完的事",
+      "cwd": "C:/pi-link",
+      "prompt": "看一下最近的会话状态，把没跑完的事情接着做完并汇报结果。"
+    }
+  ],
+
+  "_可选覆盖项": {
+    "pollMs": "轮询间隔毫秒，默认 5000",
+    "settleGraceMs": "停在工具调用时的保守静默等待，默认 20000",
+    "fastSettleMs": "末条已带 stopReason 时的短静默，默认 1500",
+    "hangMs": "仍在 running 但文件多久没动算卡死，默认 600000",
+    "recentSessionMs": "只看最近这段时间动过的会话，默认 129600000（36 小时）",
+    "tailBytes": "尾部判定起始窗口，默认 65536，不够会自动放大",
+    "authRetryMs": "鉴权失败后的最小退避，默认 60000",
+    "wan.ipRefreshMs": "公网 IPv4 刷新间隔毫秒，默认 600000（动态 IP 会变）",
+    "wan.gatewayPort": "统一出口端口，默认 8788（公网只暴露它）"
+  }
+}

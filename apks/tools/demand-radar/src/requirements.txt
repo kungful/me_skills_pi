@@ -1,0 +1,6 @@
+requests>=2.31
+PyYAML>=6.0
+lxml>=5.0
+jieba>=0.42
+Flask>=3.0
+flask-cors>=4.0

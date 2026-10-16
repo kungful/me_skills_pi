@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="gap">16dp</dimen>
+    <dimen name="radius">20dp</dimen>
+    <dimen name="radius_sm">14dp</dimen>
+    <dimen name="radius_pill">999dp</dimen>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">需求雷达</string>
+    <string name="service_label">需求雷达 · 读屏采集</string>
+    <string name="acc_desc">把你在手机上刷到的内容里的需求线索记下来，聚成机会榜。只读取屏幕文字，不会点击或滑动你的手机。</string>
+    <string name="acc_summary">读屏采集需求线索</string>
+</resources>

@@ -1,0 +1,19 @@
+{
+  "slug": "guantianxia",
+  "title": "观天下",
+  "category": "learning",
+  "categoryTitle": "学习 / 科普",
+  "package": "com.guantianxia.app",
+  "version": "1.0",
+  "notes": "新闻 / 财经 / 书架 聚合阅读",
+  "apk": "guantianxia.apk",
+  "apkName": "app-debug.apk",
+  "apkSize": 9839467,
+  "apkSha256": "bf0de76f5af517469c1bac885f22c321ec2442e31ec00bdede61c900c28f6743",
+  "srcSha": "43101ad482271809f555bd8f4b6e8a71352f74ed",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/AndroidStudioProjects/GuanTianXia",
+  "builtAt": "2026-10-09 22:58:31",
+  "syncedAt": "2026-10-16 23:55:40",
+  "auto": false
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="T.H1" parent="">
+        <item name="android:textSize">26sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+    </style>
+
+    <style name="T.CardTitle" parent="">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="T.Section" parent="">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textColor">@color/muted</item>
+    </style>
+
+    <style name="T.Sub" parent="">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/muted</item>
+    </style>
+
+    <style name="T.Num" parent="">
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="IconBtn" parent="">
+        <item name="android:layout_width">42dp</item>
+        <item name="android:layout_height">42dp</item>
+        <item name="android:padding">9dp</item>
+        <item name="android:background">@drawable/circle_surface</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="CardRow" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+</resources>

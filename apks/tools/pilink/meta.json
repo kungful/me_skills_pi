@@ -1,0 +1,19 @@
+{
+  "slug": "pilink",
+  "title": "Pi 通知 (piLink)",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "com.hua.pilink",
+  "version": "0.7.0",
+  "notes": "把 pi / pi-web 的通知与派发链路接到安卓手机",
+  "apk": "pilink.apk",
+  "apkName": "pilink-0.7.0-debug.apk",
+  "apkSize": 1944615,
+  "apkSha256": "4e7563bebccf2a616f8f04256a8d8a3192dd6013fb7a8c07d373428d342f844a",
+  "srcSha": "1d15d125501b87d321010f93b83a766ac8b2e059",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/piwebui通知到安卓手机",
+  "builtAt": "2026-09-26 10:11:47",
+  "syncedAt": "2026-10-16 23:55:41",
+  "auto": false
+}

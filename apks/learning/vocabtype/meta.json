@@ -1,0 +1,19 @@
+{
+  "slug": "vocabtype",
+  "title": "词打",
+  "category": "learning",
+  "categoryTitle": "学习 / 科普",
+  "package": "com.vocabtype.app",
+  "version": "1.0",
+  "notes": "单词打字背单词",
+  "apk": "vocabtype.apk",
+  "apkName": "词打-v1.0.apk",
+  "apkSize": 7177543,
+  "apkSha256": "93c0a2613c0d06149e1188b7f98814b7ad7aaf6e30afdb3a88382c97bc53bcfe",
+  "srcSha": "a50cf91c09e73473705f445289a9b10cc8280fd1",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/AndroidStudioProjects/VocabType",
+  "builtAt": "2026-10-10 09:26:41",
+  "syncedAt": "2026-10-16 23:55:40",
+  "auto": false
+}

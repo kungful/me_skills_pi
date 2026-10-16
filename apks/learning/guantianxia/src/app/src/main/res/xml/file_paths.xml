@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 分享卡片图片的临时目录 -->
+    <cache-path
+        name="share"
+        path="share/" />
+</paths>

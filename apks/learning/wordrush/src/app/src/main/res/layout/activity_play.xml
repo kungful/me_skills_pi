@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_app">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- ========== 顶栏 ========== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/btnClose"
+                style="@style/IconBtn"
+                android:contentDescription="退出"
+                android:src="@drawable/ic_close" />
+
+            <com.wordrush.app.ui.MeterView
+                android:id="@+id/meterQ"
+                android:layout_width="0dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tvPos"
+                style="@style/T.Num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="1/20"
+                android:textColor="@color/text_dim"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- ========== 生命 / 连击 / 分数 ========== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/hearts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+            <TextView
+                android:id="@+id/tvCombo"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/pill_gold"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="连击 x2"
+                android:textColor="#FF3A2600"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tvScore"
+                style="@style/T.Num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="@color/brand"
+                android:textSize="19sp" />
+        </LinearLayout>
+
+        <!-- ========== 题面 ========== -->
+        <LinearLayout
+            android:id="@+id/cardQ"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="14dp"
+            android:layout_weight="1"
+            android:background="@drawable/card"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:id="@+id/tvKind"
+                style="@style/T.Section"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="选择正确的中文释义" />
+
+            <ImageView
+                android:id="@+id/btnAudio"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/circle_surface"
+                android:contentDescription="播放发音"
+                android:padding="20dp"
+                android:src="@drawable/ic_speaker"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvQ"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
+                android:text="word"
+                android:textColor="@color/text"
+                android:textSize="34sp" />
+
+            <TextView
+                android:id="@+id/tvIpa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="@color/brand"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvTip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="@color/muted"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- ========== 选择题 ========== -->
+        <LinearLayout
+            android:id="@+id/options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical" />
+
+        <!-- ========== 拼写题 ========== -->
+        <LinearLayout
+            android:id="@+id/spellArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/slots"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal" />
+
+            <TextView
+                android:id="@+id/btnHint"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/btn_ghost"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="提示首个字母 (-5 分)"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/keypad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <!-- ========== 配对题 ========== -->
+        <LinearLayout
+            android:id="@+id/matchArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/colLeft"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical" />
+
+            <LinearLayout
+                android:id="@+id/colRight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvFooter"
+            style="@style/T.Sub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text=""
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- ========== 纠错卡（答错时从底部浮出） ========== -->
+    <LinearLayout
+        android:id="@+id/correctCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="14dp"
+        android:background="@drawable/card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/ccAudio"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/circle_surface"
+            android:contentDescription="播放发音"
+            android:padding="9dp"
+            android:src="@drawable/ic_speaker" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/ccWord"
+                style="@style/T.CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/ccMean"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/text_dim"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ========== 结算 ========== -->
+    <ScrollView
+        android:id="@+id/resultLayer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F2070B18"
+        android:clickable="true"
+        android:fillViewport="true"
+        android:focusable="true"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:id="@+id/resTitle"
+                style="@style/T.H1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="通关！"
+                android:textSize="30sp" />
+
+            <LinearLayout
+                android:id="@+id/starRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal" />
+
+            <TextView
+                android:id="@+id/resSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/text_dim"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:background="@drawable/card"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="正确率" />
+
+                    <TextView
+                        android:id="@+id/resAcc"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="最高连击" />
+
+                    <TextView
+                        android:id="@+id/resCombo"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="用时" />
+
+                    <TextView
+                        android:id="@+id/resTime"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="获得经验" />
+
+                    <TextView
+                        android:id="@+id/resXp"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/brand"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="获得金币" />
+
+                    <TextView
+                        android:id="@+id/resCoin"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/gold"
+                        android:textSize="15sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/resNew"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:textColor="@color/muted"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/btnAgain"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/btn_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="再来一轮"
+                    android:textColor="#FF06121F"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnBack"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/btn_ghost"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="返回"
+                    android:textColor="@color/text_dim"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

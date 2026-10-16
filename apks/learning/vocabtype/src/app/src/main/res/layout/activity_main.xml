@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <com.vocabtype.app.ui.Rain
+        android:id="@+id/rain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- ==================== 顶栏 ==================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_panel_flat"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="7dp">
+
+            <TextView
+                android:id="@+id/tvBrand"
+                style="@style/Txt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.14"
+                android:text="@string/brand"
+                android:textSize="12sp" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@color/line" />
+
+            <Button
+                android:id="@+id/btnDict"
+                style="@style/Btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="start|center_vertical"
+                android:maxLines="1"
+                android:text="@string/dict_title" />
+
+            <ImageButton
+                android:id="@+id/btnStats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="@string/stats_title"
+                android:padding="8dp"
+                android:src="@drawable/ic_stats" />
+
+            <ImageButton
+                android:id="@+id/btnReview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="@string/review_title"
+                android:padding="8dp"
+                android:src="@drawable/ic_review" />
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="@string/settings_title"
+                android:padding="8dp"
+                android:src="@drawable/ic_settings" />
+        </LinearLayout>
+
+        <!-- ==================== 战绩条 ==================== -->
+        <LinearLayout
+            android:id="@+id/statsBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="5dp">
+
+            <TextView
+                android:id="@+id/tvWpm"
+                style="@style/Txt.Stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.00 WPM" />
+
+            <TextView
+                android:id="@+id/tvAcc"
+                style="@style/Txt.Stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="0.00%" />
+
+            <TextView
+                android:id="@+id/tvStrk"
+                style="@style/Txt.Stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="STRK 0" />
+
+            <TextView
+                android:id="@+id/tvErr"
+                style="@style/Txt.Stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="ERR 0" />
+
+            <Button
+                android:id="@+id/btnSizeDown"
+                style="@style/Txt.Stats"
+                android:textAllCaps="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="缩小字号"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="5dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="5dp"
+                android:paddingBottom="3dp"
+                android:text="A-" />
+
+            <Button
+                android:id="@+id/btnCase"
+                style="@style/Txt.Stats"
+                android:textAllCaps="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_chip_on"
+                android:contentDescription="大小写切换"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="5dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="5dp"
+                android:paddingBottom="3dp"
+                android:text="AA" />
+
+            <Button
+                android:id="@+id/btnSizeUp"
+                style="@style/Txt.Stats"
+                android:textAllCaps="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="放大字号"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="5dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="5dp"
+                android:paddingBottom="3dp"
+                android:text="A+" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tvProg"
+                style="@style/Txt.Stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0/0" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/line" />
+
+        <!-- ==================== 模式 + 音频 ==================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp">
+
+            <Button
+                android:id="@+id/tabWord"
+                style="@style/Btn.Mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/mode_word" />
+
+            <Button
+                android:id="@+id/tabShort"
+                style="@style/Btn.Mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="@string/mode_short" />
+
+            <Button
+                android:id="@+id/tabComplex"
+                style="@style/Btn.Mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="@string/mode_complex" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnPlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="@string/play"
+                android:padding="7dp"
+                android:src="@drawable/ic_sound" />
+
+            <ImageButton
+                android:id="@+id/btnLoop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_mode"
+                android:contentDescription="循环朗读"
+                android:padding="7dp"
+                android:src="@drawable/ic_loop" />
+
+            <ImageButton
+                android:id="@+id/btnZen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="@string/zen"
+                android:padding="7dp"
+                android:src="@drawable/ic_zen" />
+        </LinearLayout>
+
+        <!-- ==================== 主体 ==================== -->
+        <ScrollView
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="10dp">
+
+                <!-- 打字区 -->
+                <FrameLayout
+                    android:id="@+id/typeBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_panel"
+                    android:minHeight="110dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp">
+
+                    <com.vocabtype.app.ui.TypeView
+                        android:id="@+id/typeView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvPhone"
+                    style="@style/Txt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:textColor="@color/text_mid"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tvTrans"
+                    style="@style/Txt.Trans"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tvHint"
+                    style="@style/Txt.Label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="@string/hint_idle" />
+
+                <!-- 短句卡片 -->
+                <LinearLayout
+                    android:id="@+id/cardShort"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="10dp"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Txt.Label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/tab_short" />
+
+                        <ImageButton
+                            android:id="@+id/shortPlay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_btn"
+                            android:contentDescription="@string/play"
+                            android:padding="5dp"
+                            android:src="@drawable/ic_play" />
+
+                        <ImageButton
+                            android:id="@+id/shortRegen"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_btn"
+                            android:contentDescription="@string/regen"
+                            android:padding="5dp"
+                            android:src="@drawable/ic_regen" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/shortZh"
+                        style="@style/Txt.Trans"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textColor="@color/text_dim"
+                        android:textSize="14sp" />
+
+                    <com.vocabtype.app.ui.FlowLayout
+                        android:id="@+id/shortFlow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp" />
+
+                    <TextView
+                        android:id="@+id/shortGram"
+                        style="@style/Txt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:lineSpacingMultiplier="1.3"
+                        android:textColor="@color/violet"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- 长句卡片 -->
+                <LinearLayout
+                    android:id="@+id/cardComplex"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="10dp"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Txt.Label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/tab_complex" />
+
+                        <ImageButton
+                            android:id="@+id/complexPlay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_btn"
+                            android:contentDescription="@string/play"
+                            android:padding="5dp"
+                            android:src="@drawable/ic_play" />
+
+                        <ImageButton
+                            android:id="@+id/complexRegen"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_btn"
+                            android:contentDescription="@string/regen"
+                            android:padding="5dp"
+                            android:src="@drawable/ic_regen" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/complexZh"
+                        style="@style/Txt.Trans"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textColor="@color/text_dim"
+                        android:textSize="14sp" />
+
+                    <com.vocabtype.app.ui.FlowLayout
+                        android:id="@+id/complexFlow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp" />
+
+                    <TextView
+                        android:id="@+id/complexGram"
+                        style="@style/Txt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:lineSpacingMultiplier="1.3"
+                        android:textColor="@color/violet"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvTail"
+                    style="@style/Txt.Label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center"
+                    android:text="点句子里的任意单词 → 发音 + 释义"
+                    android:textColor="@color/text_dim" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- 底部提示 -->
+        <TextView
+            android:id="@+id/tvFoot"
+            style="@style/Txt.Label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_panel_flat"
+            android:paddingStart="10dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="6dp"
+            android:text="@string/foot_hint" />
+    </LinearLayout>
+
+    <!-- 真正吃键盘输入的控件：看不见，但必须是可聚焦的 EditText -->
+    <EditText
+        android:id="@+id/etInput"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:alpha="0"
+        android:background="@null"
+        android:cursorVisible="false"
+        android:importantForAutofill="no"
+        android:inputType="textPassword|textNoSuggestions"
+        android:imeOptions="flagNoExtractUi|flagNoFullscreen|flagNoPersonalizedLearning"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:textColor="@color/transparent"
+        android:textCursorDrawable="@null" />
+</FrameLayout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#FF1F6FEB</color>
+    <color name="brand_dark">#FF0D47A1</color>
+    <color name="up">#FFD32F2F</color>
+    <color name="down">#FF388E3C</color>
+    <color name="flat">#FF757575</color>
+    <color name="score_good">#FF2E7D32</color>
+    <color name="score_bad">#FFEF6C00</color>
+    <color name="surface_alt">#FFF3F4F6</color>
+</resources>

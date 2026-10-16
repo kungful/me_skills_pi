@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-10-16 23:55:41",
+  "count": 10,
+  "totalApkBytes": 43566393,
+  "categories": [
+    {
+      "id": "design",
+      "title": "设计与演示",
+      "apps": [
+        {
+          "slug": "paintbox",
+          "title": "跑图助手",
+          "version": "1.0",
+          "apk": "design/paintbox/paintbox.apk",
+          "source": "design/paintbox/src/",
+          "size": 99187,
+          "sha256": "c0f694a83e7d08d6fdafc41c7bd4a664ab783c154193f4e370ca3c4fa39f6cde",
+          "builtAt": "2026-10-07 23:39:30",
+          "notes": "连本机 ComfyUI / 跑图服务看图与下载"
+        },
+        {
+          "slug": "pianowall",
+          "title": "钢琴墙 3D",
+          "version": "1.0",
+          "apk": "design/pianowall/pianowall.apk",
+          "source": "design/pianowall/src/",
+          "size": 226458,
+          "sha256": "0c6b9efae59af3f7fa43449573c76f7fbff4a086c5e64193aa8efde841f55228",
+          "builtAt": "2026-10-08 12:04:40",
+          "notes": "钢琴键盘图案墙的三维演示 + 全套带尺寸施工图"
+        }
+      ]
+    },
+    {
+      "id": "learning",
+      "title": "学习 / 科普",
+      "apps": [
+        {
+          "slug": "cosmos-codex",
+          "title": "万物原理",
+          "version": "1.0",
+          "apk": "learning/cosmos-codex/cosmos-codex.apk",
+          "source": "learning/cosmos-codex/src/",
+          "size": 255853,
+          "sha256": "db90c277939f2fde2d96445b3fba180f8500f831492e570ea93407df59a9d4b1",
+          "builtAt": "2026-10-06 21:32:25",
+          "notes": "宇宙运行手册：11 学科 85 课 170 题，纯离线 WebView"
+        },
+        {
+          "slug": "wordrush",
+          "title": "单词突围",
+          "version": "1.0",
+          "apk": "learning/wordrush/wordrush.apk",
+          "source": "learning/wordrush/src/",
+          "size": 5735523,
+          "sha256": "5fdf884ed29c759a1153a7162434df9e27d867d7b8ac275fb820d002092bae22",
+          "builtAt": "2026-10-04 21:33:39",
+          "notes": "单词闯关游戏"
+        },
+        {
+          "slug": "life-algo",
+          "title": "生活算法",
+          "version": "1.0.0",
+          "apk": "learning/life-algo/life-algo.apk",
+          "source": "learning/life-algo/src/",
+          "size": 17351322,
+          "sha256": "31663071562abd63953595e08a8e20a10200a1407fe1f1e9ae116ff2fe2d1d03",
+          "builtAt": "2026-10-06 09:00:51",
+          "notes": "离线生活算法：穿搭/营养/睡眠/训练 + 各种计算器"
+        },
+        {
+          "slug": "guantianxia",
+          "title": "观天下",
+          "version": "1.0",
+          "apk": "learning/guantianxia/guantianxia.apk",
+          "source": "learning/guantianxia/src/",
+          "size": 9839467,
+          "sha256": "bf0de76f5af517469c1bac885f22c321ec2442e31ec00bdede61c900c28f6743",
+          "builtAt": "2026-10-09 22:58:31",
+          "notes": "新闻 / 财经 / 书架 聚合阅读"
+        },
+        {
+          "slug": "vocabtype",
+          "title": "词打",
+          "version": "1.0",
+          "apk": "learning/vocabtype/vocabtype.apk",
+          "source": "learning/vocabtype/src/",
+          "size": 7177543,
+          "sha256": "93c0a2613c0d06149e1188b7f98814b7ad7aaf6e30afdb3a88382c97bc53bcfe",
+          "builtAt": "2026-10-10 09:26:41",
+          "notes": "单词打字背单词"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "工具",
+      "apps": [
+        {
+          "slug": "pilink",
+          "title": "Pi 通知 (piLink)",
+          "version": "0.7.0",
+          "apk": "tools/pilink/pilink.apk",
+          "source": "tools/pilink/src/",
+          "size": 1944615,
+          "sha256": "4e7563bebccf2a616f8f04256a8d8a3192dd6013fb7a8c07d373428d342f844a",
+          "builtAt": "2026-09-26 10:11:47",
+          "notes": "把 pi / pi-web 的通知与派发链路接到安卓手机"
+        },
+        {
+          "slug": "sunnet",
+          "title": "太阳网控制器",
+          "version": "1.0",
+          "apk": "tools/sunnet/sunnet.apk",
+          "source": "tools/sunnet/src/",
+          "size": 58457,
+          "sha256": "9a6468c3ad47ebcc187e91dd87bb0743f44289862246a61d11d6aa3285f65a12",
+          "builtAt": "2026-10-16 23:46:21",
+          "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
+        },
+        {
+          "slug": "demand-radar",
+          "title": "需求雷达",
+          "version": "",
+          "apk": "tools/demand-radar/demand-radar.apk",
+          "source": "tools/demand-radar/src/",
+          "size": 877968,
+          "sha256": "f7af255252b3f454c476f62b3e4a7e9723b2d9675637e1c075a07fbe8f5cbc83",
+          "builtAt": "2026-10-03 10:37:28",
+          "notes": "从公开渠道挖掘市场需求信号，打分聚簇出机会榜"
+        }
+      ]
+    }
+  ]
+}

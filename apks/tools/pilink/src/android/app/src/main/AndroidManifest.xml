@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pi 通知（pilink）
+
+  这份清单里的每一项都是对着「ntfy 1.25.2 在本机 OPPO/Android 16 上能跑」的实测清单来的
+  （aapt2 dump xmltree 读的它，不是抄文档）：
+
+    · usesCleartextTraffic=true   必须。订阅端是家里的 http://192.168.1.100:8080，明文。
+    · foregroundServiceType=specialUse（0x40000000）+ PROPERTY_SPECIAL_USE_FGS_SUBTYPE
+      必须用 specialUse 而不是 dataSync：Android 15+ 对 dataSync 有「每 24 小时 6 小时」的
+      前台服务超时，长连接会被系统按点掐掉；specialUse 没有时长限制。
+    · 故意【不】声明 SCHEDULE_EXACT_ALARM。
+      这正是 ntfy 掉线的根因：它靠 AlarmManager.setExact 排重连闹钟，而未授予该权限时
+      WsConnection.scheduleReconnect() 只打一行日志就返回，连接永远不会自己重连。
+      本客户端用「常驻协程重连循环 + setAndAllowWhileIdle 兜底 + 轮询兜底」，
+      不需要任何特殊权限。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 只用来把用户送到「电池优化白名单」那个系统页面，不是自己申请免死 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- 派发台 /app 页上的「一键配置」用的是这个深链：
+                 pilink://setup?base=...&topic=...&ack=...
+                 目的是彻底消除「topic 要手打」这个坑（打错=什么都收不到）。 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="pilink" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/app_name" />
+
+        <service
+            android:name=".PiLinkService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a subscription to the user's own notification server alive so session results can be delivered while the app is in the background." />
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

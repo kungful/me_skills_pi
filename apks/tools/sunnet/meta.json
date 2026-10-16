@@ -1,0 +1,19 @@
+{
+  "slug": "sunnet",
+  "title": "太阳网控制器",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "com.hua.sunnet",
+  "version": "1.0",
+  "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点",
+  "apk": "sunnet.apk",
+  "apkName": "SunNet.apk",
+  "apkSize": 58457,
+  "apkSha256": "9a6468c3ad47ebcc187e91dd87bb0743f44289862246a61d11d6aa3285f65a12",
+  "srcSha": "78e8065dd59b49b3ffa9f6b6a2d405c3ee7ddbc3",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/SunNet-Android",
+  "builtAt": "2026-10-16 23:46:21",
+  "syncedAt": "2026-10-16 23:55:41",
+  "auto": false
+}

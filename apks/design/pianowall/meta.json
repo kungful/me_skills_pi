@@ -1,0 +1,19 @@
+{
+  "slug": "pianowall",
+  "title": "钢琴墙 3D",
+  "category": "design",
+  "categoryTitle": "设计与演示",
+  "package": "com.hua.pianowall",
+  "version": "1.0",
+  "notes": "钢琴键盘图案墙的三维演示 + 全套带尺寸施工图",
+  "apk": "pianowall.apk",
+  "apkName": "PianoWall.apk",
+  "apkSize": 226458,
+  "apkSha256": "0c6b9efae59af3f7fa43449573c76f7fbff4a086c5e64193aa8efde841f55228",
+  "srcSha": "c7d99c3d851e5bcd4cf41d474b77033430f2ac9c",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/PianoWall-Android",
+  "builtAt": "2026-10-08 12:04:40",
+  "syncedAt": "2026-10-16 23:55:41",
+  "auto": false
+}

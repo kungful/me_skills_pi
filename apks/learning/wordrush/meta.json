@@ -1,0 +1,19 @@
+{
+  "slug": "wordrush",
+  "title": "单词突围",
+  "category": "learning",
+  "categoryTitle": "学习 / 科普",
+  "package": "com.wordrush.app",
+  "version": "1.0",
+  "notes": "单词闯关游戏",
+  "apk": "wordrush.apk",
+  "apkName": "单词突围-v1.0.apk",
+  "apkSize": 5735523,
+  "apkSha256": "5fdf884ed29c759a1153a7162434df9e27d867d7b8ac275fb820d002092bae22",
+  "srcSha": "7c1ea3578309a76cf69446d4e9dd5638d3b2f3e9",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/AndroidStudioProjects/WordRush",
+  "builtAt": "2026-10-04 21:33:39",
+  "syncedAt": "2026-10-16 23:55:40",
+  "auto": false
+}

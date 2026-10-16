@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主题基类：不加 parent，避免离线环境下找不到 framework 父样式 -->
+    <style name="T.App" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:colorBackground">@color/black</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorAccent">@color/cyan</item>
+    </style>
+
+    <style name="T.App.Transparent" parent="T.App">
+        <item name="android:windowBackground">@color/scrim</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+    </style>
+
+    <!-- ============ 文本 ============ -->
+    <style name="Txt" parent="">
+        <item name="android:textColor">@color/cyan</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Txt.Label" parent="">
+        <item name="android:textColor">@color/text_dim</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Txt.Stats" parent="">
+        <item name="android:textColor">@color/text_mid</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Txt.Trans" parent="">
+        <item name="android:textColor">@color/text_mid</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
+    </style>
+
+    <!-- ============ 按钮 ============ -->
+    <style name="Btn" parent="">
+        <item name="android:background">@drawable/bg_btn</item>
+        <item name="android:textColor">@color/cyan</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">7dp</item>
+        <item name="android:paddingBottom">7dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Btn.Mode" parent="">
+        <item name="android:background">@drawable/bg_mode</item>
+        <item name="android:textColor">@color/mode_tab_text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Btn.Icon" parent="Btn">
+        <item name="android:paddingStart">9dp</item>
+        <item name="android:paddingEnd">9dp</item>
+        <item name="android:paddingTop">7dp</item>
+        <item name="android:paddingBottom">7dp</item>
+    </style>
+</resources>

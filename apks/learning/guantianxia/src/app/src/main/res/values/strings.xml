@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">观天下</string>
+
+    <string name="tab_news">新闻</string>
+    <string name="tab_finance">财经</string>
+    <string name="tab_books">书架</string>
+
+    <string name="cat_all">全部</string>
+    <string name="cat_hot">热门</string>
+    <string name="cat_politics">时政</string>
+    <string name="cat_mil">军事</string>
+    <string name="cat_cn">国内</string>
+    <string name="cat_intl">国际</string>
+    <string name="cat_society">社会</string>
+    <string name="cat_finance">财经</string>
+    <string name="cat_tech">科技</string>
+    <string name="cat_sports">体育</string>
+    <string name="cat_culture">文化</string>
+    <string name="cat_edu">教育</string>
+    <string name="cat_health">健康</string>
+    <string name="cat_saved">收藏</string>
+
+    <string name="action_refresh">刷新</string>
+    <string name="action_back">返回</string>
+    <string name="action_share">分享</string>
+    <string name="share_timeline">分享到朋友圈</string>
+    <string name="share_friend">分享给微信 / QQ 好友…</string>
+    <string name="action_copy_link">复制链接</string>
+    <string name="action_open_browser">用浏览器打开</string>
+    <string name="action_retry">重新加载</string>
+    <string name="action_notify">重大新闻通知</string>
+    <string name="notify_on">已开启重大新闻通知</string>
+    <string name="notify_off">已关闭重大新闻通知</string>
+    <string name="notify_need_permission">需要通知权限才能推送</string>
+    <string name="notify_test_sent">已发送测试通知</string>
+    <string name="notify_test">发送测试通知</string>
+    <string name="notify_battery">后台运行设置（关屏也能收到）</string>
+    <string name="notify_system">系统通知设置</string>
+    <string name="notify_manual_hint">请在系统设置里开启：自启动 + 后台高耗电（省电）白名单，否则关屏可能收不到</string>
+
+    <!-- 后台运行 -->
+    <string name="bg_menu_on">开启后台运行（常驻不熄屏也能抓）</string>
+    <string name="bg_menu_off">关闭后台运行</string>
+    <string name="bg_starting">后台运行已启动…</string>
+    <string name="bg_running">后台运行中</string>
+    <string name="bg_fetching">正在抓取新闻…</string>
+    <string name="bg_next">%d 分钟后刷新</string>
+    <string name="bg_stop">停止</string>
+    <string name="bg_new">新增 %d 条</string>
+    <string name="bg_total">库内 %d 条</string>
+    <string name="bg_failed">本次抓取失败</string>
+    <string name="bg_on_hint">后台运行已开启，正在跳转电池白名单设置</string>
+    <string name="bg_off">后台运行已关闭</string>
+    <string name="bg_need_permission">需要通知权限才能后台运行，请允许通知</string>
+    <string name="empty_hint">暂无内容，下拉刷新试试</string>
+
+    <string name="quote_title">全球行情</string>
+    <string name="flash_title">财经快讯</string>
+
+    <string name="book_search_hint">搜书：书名 / 作者 / 关键词</string>
+    <string name="book_search">搜索</string>
+    <string name="book_read">在线阅读</string>
+    <string name="book_download">下载 EPUB</string>
+    <string name="book_no_epub">无 EPUB</string>
+    <string name="book_source_pd">公版书（Project Gutenberg）</string>
+    <string name="book_source_ctext">中国哲学书电子化（ctext）</string>
+    <string name="ev_sources">%d 家媒体报道</string>
+</resources>

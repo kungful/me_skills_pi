@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>需求雷达 · 市场机会看板 2026-10-03</title>
+<style>
+:root{--bg:#0b1220;--card:#121b2e;--card2:#0f1729;--fg:#e6edf7;--dim:#8fa3bf;--line:#1f2b45;
+--hot:#ff5470;--warm:#f59e0b;--cold:#3b82f6}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#080d18,#0b1220 400px);color:var(--fg);
+font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 18px 80px}
+h1{font-size:26px;margin:0 0 6px}
+.sub{color:var(--dim);margin-bottom:18px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 24px}
+input,select{background:var(--card2);border:1px solid var(--line);color:var(--fg);
+padding:9px 12px;border-radius:9px;font-size:13px}
+input{min-width:240px}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);
+border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.card.hot{border-color:#4a2033;box-shadow:0 0 0 1px #3a1a28 inset}
+.card header{display:flex;align-items:flex-start;gap:14px}
+.rank{font-weight:700;color:var(--dim);font-size:15px;padding-top:4px;min-width:34px}
+.title{flex:1} h3{margin:0 0 6px;font-size:17px}
+.score{text-align:right;min-width:86px}
+.score b{font-size:30px;line-height:1;display:block}
+.card.hot .score b{color:var(--hot)} .card.warm .score b{color:var(--warm)} .card.cold .score b{color:var(--cold)}
+.score span{font-size:11px;color:var(--dim)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:#1b2740;color:#a9bede;border:1px solid #24314d}
+.chip.soft{background:#141d31;color:#7f93b0}
+.chip.src{background:#132a22;color:#63d3a6;border-color:#1c4536}
+.meta{color:var(--dim);font-size:12.5px;margin:10px 0 12px}
+.bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 16px;margin:10px 0}
+.bar span{font-size:11.5px;color:var(--dim);display:flex;justify-content:space-between}
+.bar .track{height:5px;background:#1a2338;border-radius:4px;overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;border-radius:4px}
+.sources{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.money{background:#101c2e;border:1px dashed #2a3b5c;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px}
+.money span{color:#7fe3b8;margin-right:6px}
+details{margin:8px 0}
+summary{cursor:pointer;color:var(--dim);font-size:12.5px;padding:4px 0}
+summary:hover{color:var(--fg)}
+ul.samples{list-style:none;padding:0;margin:6px 0}
+ul.samples li{padding:8px 10px;background:#0d1526;border-left:2px solid #2b3d5f;border-radius:0 8px 8px 0;margin-bottom:6px;font-size:13px;color:#c8d6ea}
+ul.samples a{color:#9dc4ff;text-decoration:none}
+ol.val{margin:6px 0 6px 20px;color:#b7c7dd;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--dim);font-weight:600;position:sticky;top:0;background:#0b1220}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.h2{margin:34px 0 8px;font-size:19px}
+footer{color:var(--dim);font-size:12px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+</style></head><body><div class="wrap">
+<h1>🚀 需求雷达 · 市场机会看板</h1>
+<div class="sub">生成时间 2026-10-03 09:57 ・ 共 25 个需求主题 ・ 按机会分排序
+・ 分数 = 痛感26% + 证据量18% + 跨源多样性16% + 付费意愿14% + 热度/紧迫/新鲜度</div>
+<div class="toolbar">
+  <input id="q" placeholder="搜索主题 / 关键词 / 分类…">
+  <select id="minScore">
+    <option value="0">全部分数</option><option value="35">≥35 值得看</option>
+    <option value="55">≥55 优先做</option><option value="70">≥70 立刻动手</option>
+  </select>
+  <select id="sortBy"><option value="score">按机会分</option><option value="pay">按付费意愿</option>
+  <option value="evidence">按证据量</option><option value="diversity">按跨源多样性</option></select>
+</div>
+<div id="cards">
+<article class="card hot" data-score="55" data-label="记账 · 财务效率" data-cats="财务效率,AI 应用,通用">
+  <header>
+    <div class="rank">#1</div>
+    <div class="title"><h3>记账 · 财务效率</h3>
+      <div class="chips"><span class="chip">财务效率</span><span class="chip">AI 应用</span><span class="chip">通用</span><span class="chip soft">记账</span><span class="chip soft">广告</span><span class="chip soft">记账app</span><span class="chip soft">记账软件</span><span class="chip soft">萌宠</span><span class="chip soft">跳转</span></div>
+    </div>
+    <div class="score"><b>55</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>121</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>118</b> 人
+    · 2026-08-29 ~ 2026-10-01
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>54</b></span><div class="track"><i style="width:54%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>2</b></span><div class="track"><i style="width:2%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>80</b></span><div class="track"><i style="width:80%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>75</b></span><div class="track"><i style="width:75%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">appstore ×116</span><span class="chip src">baidu_sug ×5</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 订阅 ¥12-29/月；表格模板包 ¥9.9-29</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1483024444&amp;type=Purple%20Software" target=_blank>[喵喵记账-超可爱的萌宠记账app] 能接受跳广告比国产手机更快可下 关掉个性化广告，也不会减少广告，而且跳得很快啊，老铁我真的没招，手机比较流畅，跳得比安卓更快了，一点卡顿都没有。。。如果你只有记账的要求的话，那你可以…</a></li><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1483024444&amp;type=Purple%20Software" target=_blank>[喵喵记账-超可爱的萌宠记账app] 画风可爱，但不便捷 不推荐，记账容易分心，浪费时间，太花哨找不到签到按钮，建议做成游戏…</a></li><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1483024444&amp;type=Purple%20Software" target=_blank>[喵喵记账-超可爱的萌宠记账app] 懒得喷 记账做的挺好挺便捷。但是广告太多了。没见过这么多广告的记账。切个屏就是广告。进去第一下是广告就算了。叉掉到里面的页面还有广告。切一次来一次。太恶心了。纯祸害人浪费时间…</a></li><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1483024444&amp;type=Purple%20Software" target=_blank>[喵喵记账-超可爱的萌宠记账app] 广告太多 使用体验差…</a></li></ul></details>
+</article>
+<article class="card warm" data-score="54" data-label="excel · 办公效率" data-cats="办公效率,财务效率,素材资源">
+  <header>
+    <div class="rank">#2</div>
+    <div class="title"><h3>excel · 办公效率</h3>
+      <div class="chips"><span class="chip">办公效率</span><span class="chip">财务效率</span><span class="chip">素材资源</span><span class="chip soft">excel</span><span class="chip soft">排位</span><span class="chip soft">下拉词</span><span class="chip soft">表格</span><span class="chip soft">百度</span><span class="chip soft">记账</span></div>
+    </div>
+    <div class="score"><b>54</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>16</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>8</b> 人
+    · 2026-09-29 ~ 2026-10-01
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>56</b></span><div class="track"><i style="width:56%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>67</b></span><div class="track"><i style="width:67%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>58</b></span><div class="track"><i style="width:58%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×14</span><span class="chip src">rss ×2</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 脚本代做 ¥100-1000；工具插件 ¥49-199</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=excel表格" target=_blank>excel表格 百度搜索下拉词 · 种子「excel」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=工资表格电子版" target=_blank>工资表格电子版 百度搜索下拉词 · 种子「工资」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=excel怎么换行" target=_blank>excel怎么换行 百度搜索下拉词 · 种子「excel」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=excel是什么意思" target=_blank>excel是什么意思 百度搜索下拉词 · 种子「excel」· 排位 3</a></li></ul></details>
+</article>
+<article class="card warm" data-score="52" data-label="剪辑 · 内容生产" data-cats="内容生产,通用,技术服务">
+  <header>
+    <div class="rank">#3</div>
+    <div class="title"><h3>剪辑 · 内容生产</h3>
+      <div class="chips"><span class="chip">内容生产</span><span class="chip">通用</span><span class="chip">技术服务</span><span class="chip soft">剪辑</span><span class="chip soft">排位</span><span class="chip soft">下拉词</span><span class="chip soft">百度</span><span class="chip soft">去重</span><span class="chip soft">wp</span></div>
+    </div>
+    <div class="score"><b>52</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>10</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>5</b> 人
+    · 2026-09-30 ~ 2026-09-30
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>62</b></span><div class="track"><i style="width:62%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>10</b></span><div class="track"><i style="width:10%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>57</b></span><div class="track"><i style="width:57%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>10</b></span><div class="track"><i style="width:10%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>58</b></span><div class="track"><i style="width:58%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×9</span><span class="chip src">rss ×1</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 工具订阅 ¥19-99/月；代剪 ¥20-200/条；教程 ¥99-499</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">rss</span> <a href="https://www.ifanr.com/1682609?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=" target=_blank>iQOO 16 体验：可能是今年最卷的「性能旗舰」 &lt;p id=&quot;CwSizYA&quot;&gt;&lt;a href=&quot;https://s3.ifanr.com/wp-content/uploads/2026/09/img_6abc5ab…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=剪辑接单平台" target=_blank>剪辑接单平台 百度搜索下拉词 · 种子「剪辑」· 排位 4</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=剪辑软件免费" target=_blank>剪辑软件免费 百度搜索下拉词 · 种子「剪辑」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=剪辑软件" target=_blank>剪辑软件 百度搜索下拉词 · 种子「剪辑」· 排位 2</a></li></ul></details>
+</article>
+<article class="card warm" data-score="52" data-label="作品集 · 求职服务" data-cats="求职服务,AI 应用,办公效率">
+  <header>
+    <div class="rank">#4</div>
+    <div class="title"><h3>作品集 · 求职服务</h3>
+      <div class="chips"><span class="chip">求职服务</span><span class="chip">AI 应用</span><span class="chip">办公效率</span><span class="chip soft">作品集</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">portfolio</span><span class="chip soft">mmt510</span></div>
+    </div>
+    <div class="score"><b>52</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>10</b> 条 · 来源 <b>3</b> 个 · 独立作者 <b>5</b> 人
+    · 2026-09-28 ~ 2026-10-02
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>77</b></span><div class="track"><i style="width:77%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>10</b></span><div class="track"><i style="width:10%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>54</b></span><div class="track"><i style="width:54%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span><span class="chip src">hackernews ×1</span><span class="chip src">rss ×1</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 作品集模板 ¥29-99；咨询 ¥299/小时</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">hackernews</span> <a href="https://news.ycombinator.com/item?id=49938088" target=_blank>Ask HN: Who wants to be hired? (October 2026) Location: Berkeley / San Francisco, California. Remote: Yes. Ope…</a></li><li><span class="tag">rss</span> <a href="http://www.geekpark.net/news/371044" target=_blank>传 OpenAI 29 日推个人 AI 助手；AI 专家偏远地区买地，担心「AI 失控」；挖掘机能自动「挖沟」，网友：蓝翔还能开几年？ &lt;p style=&quot;text-align:center&quot;&gt;&lt;img src=&quot;htt…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=作品集英文" target=_blank>作品集英文 百度搜索下拉词 · 种子「作品集」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=作品集怎么做" target=_blank>作品集怎么做 百度搜索下拉词 · 种子「作品集」· 排位 2</a></li></ul></details>
+</article>
+<article class="card warm" data-score="46" data-label="ppt · 办公效率" data-cats="办公效率,AI 应用,技术工具">
+  <header>
+    <div class="rank">#5</div>
+    <div class="title"><h3>ppt · 办公效率</h3>
+      <div class="chips"><span class="chip">办公效率</span><span class="chip">AI 应用</span><span class="chip">技术工具</span><span class="chip soft">ppt</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">搜索</span><span class="chip soft">一键</span></div>
+    </div>
+    <div class="score"><b>46</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>10</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>5</b> 人
+    · 2026-09-27 ~ 2026-09-29
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>56</b></span><div class="track"><i style="width:56%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>57</b></span><div class="track"><i style="width:57%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>56</b></span><div class="track"><i style="width:56%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span><span class="chip src">rss ×2</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 模板站会员 ¥29-99/年；AI 生成按次 ¥4.9-19.9</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=ppt一键生成" target=_blank>ppt一键生成 百度搜索下拉词 · 种子「ppt」· 排位 1</a></li><li><span class="tag">rss</span> <a href="http://www.geekpark.net/news/371040" target=_blank>…答的是今天企业办公遇到的共性挑战：企业需要的已经不只是一个能写文档、做 PPT 的通用助手，而是一个能够理解组织数据、进入业务流程，同时受到身份、权限和审计约束的 Agent。对千问办公而言，「上下文」也不只是提示词或知…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=ppt背景图片" target=_blank>ppt背景图片 百度搜索下拉词 · 种子「ppt」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=ppt指的什么" target=_blank>ppt指的什么 百度搜索下拉词 · 种子「ppt」· 排位 3</a></li></ul></details>
+</article>
+<article class="card warm" data-score="45" data-label="字幕 · 内容生产" data-cats="内容生产,通用,语言学习">
+  <header>
+    <div class="rank">#6</div>
+    <div class="title"><h3>字幕 · 内容生产</h3>
+      <div class="chips"><span class="chip">内容生产</span><span class="chip">通用</span><span class="chip">语言学习</span><span class="chip soft">字幕</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">翻译</span><span class="chip soft">转录</span></div>
+    </div>
+    <div class="score"><b>45</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>9</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>4</b> 人
+    · 2026-09-28 ~ 2026-09-28
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>57</b></span><div class="track"><i style="width:57%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>53</b></span><div class="track"><i style="width:53%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>58</b></span><div class="track"><i style="width:58%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span><span class="chip src">rss ×1</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 按分钟计费 ¥0.1-1；会员 ¥29-99/月；这是被剪映免费化压价的赛道</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=字幕下载" target=_blank>字幕下载 百度搜索下拉词 · 种子「字幕」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=字幕生成软件" target=_blank>字幕生成软件 百度搜索下拉词 · 种子「字幕」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=字幕自动生成" target=_blank>字幕自动生成 百度搜索下拉词 · 种子「字幕」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=字幕翻译软件" target=_blank>字幕翻译软件 百度搜索下拉词 · 种子「字幕」· 排位 4</a></li></ul></details>
+</article>
+<article class="card warm" data-score="41" data-label="下拉词 · 长尾" data-cats="商家效率,流量增长,内容生产">
+  <header>
+    <div class="rank">#7</div>
+    <div class="title"><h3>下拉词 · 长尾</h3>
+      <div class="chips"><span class="chip">商家效率</span><span class="chip">流量增长</span><span class="chip">内容生产</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">写作技巧</span><span class="chip soft">拖拉</span><span class="chip soft">神器</span></div>
+    </div>
+    <div class="score"><b>41</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>19</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>10</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>53</b></span><div class="track"><i style="width:53%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>64</b></span><div class="track"><i style="width:64%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×19</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] SaaS ¥299-1999/年；按门店/账号收费；定制开发 ¥3000-50000</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=私域是什么意思" target=_blank>私域是什么意思 百度搜索下拉词 · 种子「私域」· 排位 1…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=私域运营怎么做" target=_blank>私域运营怎么做 百度搜索下拉词 · 种子「私域」· 排位 2…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=私域平台有哪些" target=_blank>私域平台有哪些 百度搜索下拉词 · 种子「私域」· 排位 3…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=私域运营" target=_blank>私域运营 百度搜索下拉词 · 种子「私域」· 排位 5…</a></li></ul></details>
+</article>
+<article class="card warm" data-score="39" data-label="简历 · 求职服务" data-cats="求职服务,素材资源,通用">
+  <header>
+    <div class="rank">#8</div>
+    <div class="title"><h3>简历 · 求职服务</h3>
+      <div class="chips"><span class="chip">求职服务</span><span class="chip">素材资源</span><span class="chip">通用</span><span class="chip soft">简历</span><span class="chip soft">求职</span><span class="chip soft">简历模板</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">WonderCV</span></div>
+    </div>
+    <div class="score"><b>39</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>23</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>19</b> 人
+    · 2026-07-09 ~ 2026-09-19
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>56</b></span><div class="track"><i style="width:56%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>80</b></span><div class="track"><i style="width:80%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>77</b></span><div class="track"><i style="width:77%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">appstore ×15</span><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 模板 ¥19.9-49；AI 优化按次 ¥19.9；1v1 改简历 ¥199-599；训练营 ¥999-2999</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1327732591&amp;type=Purple%20Software" target=_blank>[简历-超级简历WonderCV 专业求职简历制作模板] 别下载都是坑 付了两次费用简历也没导出来 别下载都是坑 付了两次费用简历也没导出来…</a></li><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1327732591&amp;type=Purple%20Software" target=_blank>[简历-超级简历WonderCV 专业求职简历制作模板] 难用 页面越来越花里胡哨，上传个简历都老是出错…</a></li><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1327732591&amp;type=Purple%20Software" target=_blank>[简历-超级简历WonderCV 专业求职简历制作模板] 纯骗钱改简历 纯坑 改简历全你自己提供素材 一个简历给你改出3000字…</a></li><li><span class="tag">appstore</span> <a href="https://itunes.apple.com/cn/review?id=1327732591&amp;type=Purple%20Software" target=_blank>[简历-超级简历WonderCV 专业求职简历制作模板] 沙🖊️软件 导出收钱，给你🐎买⚰️用❓截图加水印，加的是你🐎🖊️❓…</a></li></ul></details>
+</article>
+<article class="card warm" data-score="39" data-label="报销 · 财务效率" data-cats="财务效率">
+  <header>
+    <div class="rank">#9</div>
+    <div class="title"><h3>报销 · 财务效率</h3>
+      <div class="chips"><span class="chip">财务效率</span><span class="chip soft">报销</span><span class="chip soft">排位</span><span class="chip soft">下拉词</span><span class="chip soft">百度</span><span class="chip soft">发票</span><span class="chip soft">大写</span></div>
+    </div>
+    <div class="score"><b>39</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>17</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>8</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>47</b></span><div class="track"><i style="width:47%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>61</b></span><div class="track"><i style="width:61%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×17</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 企业版按人年费 ¥99-299；代整理服务 ¥5/张起</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=报销是什么意思" target=_blank>报销是什么意思 百度搜索下拉词 · 种子「报销」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=发票验票系统" target=_blank>发票验票系统 百度搜索下拉词 · 种子「发票」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=报销比例怎么算" target=_blank>报销比例怎么算 百度搜索下拉词 · 种子「报销」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=发票查询真伪" target=_blank>发票查询真伪 百度搜索下拉词 · 种子「发票」· 排位 2</a></li></ul></details>
+</article>
+<article class="card cold" data-score="34" data-label="抖音 · 流量增长" data-cats="流量增长,技术服务,电商经营">
+  <header>
+    <div class="rank">#10</div>
+    <div class="title"><h3>抖音 · 流量增长</h3>
+      <div class="chips"><span class="chip">流量增长</span><span class="chip">技术服务</span><span class="chip">电商经营</span><span class="chip soft">抖音</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">官网</span><span class="chip soft">带货</span></div>
+    </div>
+    <div class="score"><b>34</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>10</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>5</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>57</b></span><div class="track"><i style="width:57%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>57</b></span><div class="track"><i style="width:57%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>60</b></span><div class="track"><i style="width:60%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×9</span><span class="chip src">douyin_hot ×1</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 投流代运营 ¥5000+；话术脚本 ¥99-999；选品数据 ¥199-999/月</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=选品带货" target=_blank>选品带货 百度搜索下拉词 · 种子「选品」· 排位 8</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=抖音官网" target=_blank>抖音官网 百度搜索下拉词 · 种子「抖音」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=抖音月付" target=_blank>抖音月付 百度搜索下拉词 · 种子「抖音」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=抖音网页入口网" target=_blank>抖音网页入口网 百度搜索下拉词 · 种子「抖音」· 排位 3</a></li></ul></details>
+</article>
+<article class="card cold" data-score="34" data-label="搬家 · 本地生活" data-cats="本地生活,通用">
+  <header>
+    <div class="rank">#11</div>
+    <div class="title"><h3>搬家 · 本地生活</h3>
+      <div class="chips"><span class="chip">本地生活</span><span class="chip">通用</span><span class="chip soft">搬家</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">一周</span><span class="chip soft">codex</span></div>
+    </div>
+    <div class="score"><b>34</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>9</b> 条 · 来源 <b>2</b> 个 · 独立作者 <b>5</b> 人
+    · 2026-09-13 ~ 2026-09-13
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>57</b></span><div class="track"><i style="width:57%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>57</b></span><div class="track"><i style="width:57%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>62</b></span><div class="track"><i style="width:62%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span><span class="chip src">juejin ×1</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 派单平台抽佣 10-20%；师傅端 SaaS</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">juejin</span> <a href="https://juejin.cn/post/7684460980934049807" target=_blank>…的真实一周，以及过程中踩到的坑和省下的钱。 一、为什么换：被逼无奈的&quot;搬家&quot; 很早就听说腾讯出了智能体编程工具 W…</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=搬家电话附近" target=_blank>搬家电话附近 百度搜索下拉词 · 种子「搬家」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=搬家公司那家好" target=_blank>搬家公司那家好 百度搜索下拉词 · 种子「搬家」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=搬家公司" target=_blank>搬家公司 百度搜索下拉词 · 种子「搬家」· 排位 3</a></li></ul></details>
+</article>
+<article class="card cold" data-score="33" data-label="法律咨询 · 法律服务" data-cats="法律服务">
+  <header>
+    <div class="rank">#12</div>
+    <div class="title"><h3>法律咨询 · 法律服务</h3>
+      <div class="chips"><span class="chip">法律服务</span><span class="chip soft">法律咨询</span><span class="chip soft">排位</span><span class="chip soft">下拉词</span><span class="chip soft">百度</span><span class="chip soft">咨询电话</span><span class="chip soft">24</span></div>
+    </div>
+    <div class="score"><b>33</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>9</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>7</b></span><div class="track"><i style="width:7%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>59</b></span><div class="track"><i style="width:59%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×9</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 文书代写 ¥99-999；咨询 ¥99-499/次；模板包 ¥19.9-99</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=法律咨询怎么收费" target=_blank>法律咨询怎么收费 百度搜索下拉词 · 种子「法律咨询」· 排位 5</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=法律咨询在线服务" target=_blank>法律咨询在线服务 百度搜索下拉词 · 种子「法律咨询」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=法律咨询免费平台" target=_blank>法律咨询免费平台 百度搜索下拉词 · 种子「法律咨询」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=法律咨询电话" target=_blank>法律咨询电话 百度搜索下拉词 · 种子「法律咨询」· 排位 3</a></li></ul></details>
+</article>
+<article class="card cold" data-score="33" data-label="小红书 · 流量增长" data-cats="流量增长,商家效率,技术服务">
+  <header>
+    <div class="rank">#13</div>
+    <div class="title"><h3>小红书 · 流量增长</h3>
+      <div class="chips"><span class="chip">流量增长</span><span class="chip">商家效率</span><span class="chip">技术服务</span><span class="chip soft">小红书</span><span class="chip soft">排位</span><span class="chip soft">下拉词</span><span class="chip soft">百度</span><span class="chip soft">联想</span><span class="chip soft">redland</span></div>
+    </div>
+    <div class="score"><b>33</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>10</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>5</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>37</b></span><div class="track"><i style="width:37%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>60</b></span><div class="track"><i style="width:60%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×10</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 训练营 ¥999-2999；工具 ¥99-399/月；代运营 ¥3000-10000/月</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=小红书app下载" target=_blank>小红书app下载 百度搜索下拉词 · 种子「小红书」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=小红书redland登陆上海" target=_blank>小红书redland登陆上海 百度搜索下拉词 · 种子「小红书」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=小红书推广怎么做" target=_blank>小红书推广怎么做 百度搜索下拉词 · 种子「小红书」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=小红书怎么开店铺" target=_blank>小红书怎么开店铺 百度搜索下拉词 · 种子「小红书」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="32" data-label="相亲 · 情感服务" data-cats="情感服务">
+  <header>
+    <div class="rank">#14</div>
+    <div class="title"><h3>相亲 · 情感服务</h3>
+      <div class="chips"><span class="chip">情感服务</span><span class="chip soft">相亲</span><span class="chip soft">排位</span><span class="chip soft">下拉词</span><span class="chip soft">百度</span><span class="chip soft">相亲相爱</span><span class="chip soft">交友平台</span></div>
+    </div>
+    <div class="score"><b>32</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>9</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>61</b></span><div class="track"><i style="width:61%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×9</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 咨询 ¥199-999/小时；资料 ¥9.9-99；⚠ 行业灰色，注意合规</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=相亲交友平台" target=_blank>相亲交友平台 百度搜索下拉词 · 种子「相亲」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=相亲网" target=_blank>相亲网 百度搜索下拉词 · 种子「相亲」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=相亲平台" target=_blank>相亲平台 百度搜索下拉词 · 种子「相亲」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=相亲对象是学生" target=_blank>相亲对象是学生 百度搜索下拉词 · 种子「相亲」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="32" data-label="闲鱼 · 电商经营" data-cats="电商经营,商家效率">
+  <header>
+    <div class="rank">#15</div>
+    <div class="title"><h3>闲鱼 · 电商经营</h3>
+      <div class="chips"><span class="chip">电商经营</span><span class="chip">商家效率</span><span class="chip soft">闲鱼</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">二手</span><span class="chip soft">百度</span><span class="chip soft">二手交易</span></div>
+    </div>
+    <div class="score"><b>32</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>9</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>60</b></span><div class="track"><i style="width:60%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×9</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 工具 ¥49-299/月；代运营分成；⚠ 平台风控严，注意合规</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=闲鱼二手交易网" target=_blank>闲鱼二手交易网 百度搜索下拉词 · 种子「闲鱼」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=闲鱼二手旧货" target=_blank>闲鱼二手旧货 百度搜索下拉词 · 种子「闲鱼」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=闲鱼交易平台" target=_blank>闲鱼交易平台 百度搜索下拉词 · 种子「闲鱼」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=闲鱼下载" target=_blank>闲鱼下载 百度搜索下拉词 · 种子「闲鱼」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="32" data-label="辅食 · 母婴育儿" data-cats="母婴育儿">
+  <header>
+    <div class="rank">#16</div>
+    <div class="title"><h3>辅食 · 母婴育儿</h3>
+      <div class="chips"><span class="chip">母婴育儿</span><span class="chip soft">辅食</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">大全</span><span class="chip soft">辅食表</span></div>
+    </div>
+    <div class="score"><b>32</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>9</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>59</b></span><div class="track"><i style="width:59%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×9</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 资料包 ¥19.9-199；课程 ¥199-1999；打卡社群 ¥99</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=辅食添加表" target=_blank>辅食添加表 百度搜索下拉词 · 种子「辅食」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=辅食做法大全" target=_blank>辅食做法大全 百度搜索下拉词 · 种子「辅食」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=辅食什么意思" target=_blank>辅食什么意思 百度搜索下拉词 · 种子「辅食」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=辅食是什么食物" target=_blank>辅食是什么食物 百度搜索下拉词 · 种子「辅食」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="对账 · 财务效率" data-cats="财务效率,办公效率,素材资源">
+  <header>
+    <div class="rank">#17</div>
+    <div class="title"><h3>对账 · 财务效率</h3>
+      <div class="chips"><span class="chip">财务效率</span><span class="chip">办公效率</span><span class="chip">素材资源</span><span class="chip soft">对账</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">表格</span><span class="chip soft">账单</span><span class="chip soft">范本</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>63</b></span><div class="track"><i style="width:63%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 按次 ¥9.9-49；批量导出工具 ¥199 终身</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=对账单表格" target=_blank>对账单表格 百度搜索下拉词 · 种子「对账」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=对账函模板" target=_blank>对账函模板 百度搜索下拉词 · 种子「对账」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=对账函格式范本" target=_blank>对账函格式范本 百度搜索下拉词 · 种子「对账」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=对账单表格(通用版)" target=_blank>对账单表格(通用版) 百度搜索下拉词 · 种子「对账」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="进销存 · 商家效率" data-cats="商家效率,通用,办公效率">
+  <header>
+    <div class="rank">#18</div>
+    <div class="title"><h3>进销存 · 商家效率</h3>
+      <div class="chips"><span class="chip">商家效率</span><span class="chip">通用</span><span class="chip">办公效率</span><span class="chip soft">进销存</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">表格</span><span class="chip soft">百度</span><span class="chip soft">管理软件</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>63</b></span><div class="track"><i style="width:63%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] SaaS ¥299-1999/年；定制开发 ¥3000+，这是小微企业刚需</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=进销存管理软件" target=_blank>进销存管理软件 百度搜索下拉词 · 种子「进销存」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=进销存软件免费版" target=_blank>进销存软件免费版 百度搜索下拉词 · 种子「进销存」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=进销存软件推荐" target=_blank>进销存软件推荐 百度搜索下拉词 · 种子「进销存」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=进销存管理系统" target=_blank>进销存管理系统 百度搜索下拉词 · 种子「进销存」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="考研 · 考试考证" data-cats="考试考证,技术服务">
+  <header>
+    <div class="rank">#19</div>
+    <div class="title"><h3>考研 · 考试考证</h3>
+      <div class="chips"><span class="chip">考试考证</span><span class="chip">技术服务</span><span class="chip soft">考研</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">报班</span><span class="chip soft">考研网</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>63</b></span><div class="track"><i style="width:63%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] 真题/笔记资料包 ¥19.9-199；打卡社群 ¥99/期</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考研报名时间" target=_blank>考研报名时间 百度搜索下拉词 · 种子「考研」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考研究生" target=_blank>考研究生 百度搜索下拉词 · 种子「考研」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考研报班" target=_blank>考研报班 百度搜索下拉词 · 种子「考研」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考研要求和条件" target=_blank>考研要求和条件 百度搜索下拉词 · 种子「考研」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="配音 · 内容生产" data-cats="内容生产,通用">
+  <header>
+    <div class="rank">#20</div>
+    <div class="title"><h3>配音 · 内容生产</h3>
+      <div class="chips"><span class="chip">内容生产</span><span class="chip">通用</span><span class="chip soft">配音</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">神器</span><span class="chip soft">免费版</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>63</b></span><div class="track"><i style="width:63%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 按字数 ¥0.01-0.1；会员 ¥39-199/月</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=配音软件免费版" target=_blank>配音软件免费版 百度搜索下拉词 · 种子「配音」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=配音软件" target=_blank>配音软件 百度搜索下拉词 · 种子「配音」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=配音熊" target=_blank>配音熊 百度搜索下拉词 · 种子「配音」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=配音大咖" target=_blank>配音大咖 百度搜索下拉词 · 种子「配音」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="宠物 · 宠物经济" data-cats="宠物经济">
+  <header>
+    <div class="rank">#21</div>
+    <div class="title"><h3>宠物 · 宠物经济</h3>
+      <div class="chips"><span class="chip">宠物经济</span><span class="chip soft">宠物</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">宠物医院</span><span class="chip soft">托运</span><span class="chip soft">殡葬</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>64</b></span><div class="track"><i style="width:64%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 上门喂养 ¥30-80/次；用品分佣；宠托平台抽成</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=宠物托运" target=_blank>宠物托运 百度搜索下拉词 · 种子「宠物」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=宠物殡葬服务" target=_blank>宠物殡葬服务 百度搜索下拉词 · 种子「宠物」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=宠物医院" target=_blank>宠物医院 百度搜索下拉词 · 种子「宠物」· 排位 4</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=宠物医院附近" target=_blank>宠物医院附近 百度搜索下拉词 · 种子「宠物」· 排位 3</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="社保 · 政务代办" data-cats="政务代办">
+  <header>
+    <div class="rank">#22</div>
+    <div class="title"><h3>社保 · 政务代办</h3>
+      <div class="chips"><span class="chip">政务代办</span><span class="chip soft">社保</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">缴费</span><span class="chip soft">补交</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>63</b></span><div class="track"><i style="width:63%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 代办服务 ¥200-2000/单；攻略文档 ¥9.9-49</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=社保缴费查询" target=_blank>社保缴费查询 百度搜索下拉词 · 种子「社保」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=社保可以补交吗" target=_blank>社保可以补交吗 百度搜索下拉词 · 种子「社保」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=社保如何查询" target=_blank>社保如何查询 百度搜索下拉词 · 种子「社保」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=社保是什么" target=_blank>社保是什么 百度搜索下拉词 · 种子「社保」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="论文 · 学术服务" data-cats="学术服务,素材资源,AI 应用">
+  <header>
+    <div class="rank">#23</div>
+    <div class="title"><h3>论文 · 学术服务</h3>
+      <div class="chips"><span class="chip">学术服务</span><span class="chip">素材资源</span><span class="chip">AI 应用</span><span class="chip soft">论文</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">查重</span><span class="chip soft">百度</span><span class="chip soft">新手入门</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>62</b></span><div class="track"><i style="width:62%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 按次 ¥9.9-99；代排版 ¥100-500；风险高注意合规</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=论文怎么写新手入门" target=_blank>论文怎么写新手入门 百度搜索下拉词 · 种子「论文」· 排位 8</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=论文查重" target=_blank>论文查重 百度搜索下拉词 · 种子「论文」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=论文辅导" target=_blank>论文辅导 百度搜索下拉词 · 种子「论文」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=论文模板范文" target=_blank>论文模板范文 百度搜索下拉词 · 种子「论文」· 排位 3</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="报税 · 财务效率" data-cats="财务效率">
+  <header>
+    <div class="rank">#24</div>
+    <div class="title"><h3>报税 · 财务效率</h3>
+      <div class="chips"><span class="chip">财务效率</span><span class="chip soft">报税</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">哪几个</span><span class="chip soft">日历</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>62</b></span><div class="track"><i style="width:62%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [红海赛道] SaaS ¥299-999/年；代申报服务 ¥200-800/次</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=报税的操作流程" target=_blank>报税的操作流程 百度搜索下拉词 · 种子「报税」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=报税怎么申报" target=_blank>报税怎么申报 百度搜索下拉词 · 种子「报税」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=报税时间" target=_blank>报税时间 百度搜索下拉词 · 种子「报税」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=报税哪几个月" target=_blank>报税哪几个月 百度搜索下拉词 · 种子「报税」· 排位 4</a></li></ul></details>
+</article>
+<article class="card cold" data-score="31" data-label="考公 · 考试考证" data-cats="考试考证">
+  <header>
+    <div class="rank">#25</div>
+    <div class="title"><h3>考公 · 考试考证</h3>
+      <div class="chips"><span class="chip">考试考证</span><span class="chip soft">考公</span><span class="chip soft">下拉词</span><span class="chip soft">排位</span><span class="chip soft">百度</span><span class="chip soft">考公考</span><span class="chip soft">公务员</span></div>
+    </div>
+    <div class="score"><b>31</b><span>机会分</span></div>
+  </header>
+  <div class="meta">
+    证据 <b>8</b> 条 · 来源 <b>1</b> 个 · 独立作者 <b>4</b> 人
+    
+  </div>
+  <div class="bars"><div class="bar"><span>痛感 <b>60</b></span><div class="track"><i style="width:60%;background:#ff5470"></i></div></div><div class="bar"><span>付费意愿 <b>0</b></span><div class="track"><i style="width:0%;background:#00c48c"></i></div></div><div class="bar"><span>跨源多样性 <b>33</b></span><div class="track"><i style="width:33%;background:#3b82f6"></i></div></div><div class="bar"><span>紧迫度 <b>0</b></span><div class="track"><i style="width:0%;background:#f59e0b"></i></div></div><div class="bar"><span>热度 <b>62</b></span><div class="track"><i style="width:62%;background:#8b5cf6"></i></div></div></div>
+  <div class="sources"><span class="chip src">baidu_sug ×8</span></div>
+  <div class="money"><span>💰 变现路径</span> [有竞争] 题库会员 ¥49-199/年；资料包 ¥9.9-99；冲刺班 ¥999-4999</div>
+  <details><summary>验证动作（点开照做）</summary><ol class="val"><li>① 反向搜索：把需求原话丢进百度/必应/小红书/闲鱼，看是否已有人在做、价格多少</li><li>② 付费测试：做一页落地页 + 收款码（或预售），48 小时内看是否有 3 个人真的付钱</li><li>③ 人工MVP：自己先人工服务 3 个客户（收全价），验证需求真实存在再写代码</li></ol></details>
+  <details open><summary>典型原话（点击可跳原帖）</summary><ul class="samples"><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考公务员的条件" target=_blank>考公务员的条件 百度搜索下拉词 · 种子「考公」· 排位 1</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考公报名时间" target=_blank>考公报名时间 百度搜索下拉词 · 种子「考公」· 排位 2</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考公要求和条件" target=_blank>考公要求和条件 百度搜索下拉词 · 种子「考公」· 排位 3</a></li><li><span class="tag">baidu_sug</span> <a href="https://www.baidu.com/s?wd=考公咨询在线" target=_blank>考公咨询在线 百度搜索下拉词 · 种子「考公」· 排位 4</a></li></ul></details>
+</article></div>
+
+<h2 class="h2">📋 机会速查表</h2>
+<table><thead><tr><th>#</th><th>需求主题</th><th>机会分</th><th>证据</th><th>来源</th><th>痛感</th><th>付费</th><th>变现路径</th></tr></thead>
+<tbody><tr><td>1</td><td>记账 · 财务效率</td><td class='num'>55</td><td class='num'>121</td><td class='num'>2</td><td class='num'>54</td><td class='num'>2</td><td>订阅 ¥12-29/月；表格模板包 ¥9.9-29</td></tr><tr><td>2</td><td>excel · 办公效率</td><td class='num'>54</td><td class='num'>16</td><td class='num'>2</td><td class='num'>56</td><td class='num'>0</td><td>脚本代做 ¥100-1000；工具插件 ¥49-199</td></tr><tr><td>3</td><td>剪辑 · 内容生产</td><td class='num'>52</td><td class='num'>10</td><td class='num'>2</td><td class='num'>62</td><td class='num'>10</td><td>工具订阅 ¥19-99/月；代剪 ¥20-200/条；教程 ¥99-499</td></tr><tr><td>4</td><td>作品集 · 求职服务</td><td class='num'>52</td><td class='num'>10</td><td class='num'>3</td><td class='num'>60</td><td class='num'>0</td><td>作品集模板 ¥29-99；咨询 ¥299/小时</td></tr><tr><td>5</td><td>ppt · 办公效率</td><td class='num'>46</td><td class='num'>10</td><td class='num'>2</td><td class='num'>56</td><td class='num'>0</td><td>模板站会员 ¥29-99/年；AI 生成按次 ¥4.9-19.9</td></tr><tr><td>6</td><td>字幕 · 内容生产</td><td class='num'>45</td><td class='num'>9</td><td class='num'>2</td><td class='num'>57</td><td class='num'>0</td><td>按分钟计费 ¥0.1-1；会员 ¥29-99/月；这是被剪映免费化压价的赛道</td></tr><tr><td>7</td><td>下拉词 · 长尾</td><td class='num'>41</td><td class='num'>19</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>SaaS ¥299-1999/年；按门店/账号收费；定制开发 ¥3000-50000</td></tr><tr><td>8</td><td>简历 · 求职服务</td><td class='num'>39</td><td class='num'>23</td><td class='num'>2</td><td class='num'>56</td><td class='num'>0</td><td>模板 ¥19.9-49；AI 优化按次 ¥19.9；1v1 改简历 ¥199-599；训练营 ¥999-2999</td></tr><tr><td>9</td><td>报销 · 财务效率</td><td class='num'>39</td><td class='num'>17</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>企业版按人年费 ¥99-299；代整理服务 ¥5/张起</td></tr><tr><td>10</td><td>抖音 · 流量增长</td><td class='num'>34</td><td class='num'>10</td><td class='num'>2</td><td class='num'>57</td><td class='num'>0</td><td>投流代运营 ¥5000+；话术脚本 ¥99-999；选品数据 ¥199-999/月</td></tr><tr><td>11</td><td>搬家 · 本地生活</td><td class='num'>34</td><td class='num'>9</td><td class='num'>2</td><td class='num'>57</td><td class='num'>0</td><td>派单平台抽佣 10-20%；师傅端 SaaS</td></tr><tr><td>12</td><td>法律咨询 · 法律服务</td><td class='num'>33</td><td class='num'>9</td><td class='num'>1</td><td class='num'>60</td><td class='num'>7</td><td>文书代写 ¥99-999；咨询 ¥99-499/次；模板包 ¥19.9-99</td></tr><tr><td>13</td><td>小红书 · 流量增长</td><td class='num'>33</td><td class='num'>10</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>训练营 ¥999-2999；工具 ¥99-399/月；代运营 ¥3000-10000/月</td></tr><tr><td>14</td><td>相亲 · 情感服务</td><td class='num'>32</td><td class='num'>9</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>咨询 ¥199-999/小时；资料 ¥9.9-99；⚠ 行业灰色，注意合规</td></tr><tr><td>15</td><td>闲鱼 · 电商经营</td><td class='num'>32</td><td class='num'>9</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>工具 ¥49-299/月；代运营分成；⚠ 平台风控严，注意合规</td></tr><tr><td>16</td><td>辅食 · 母婴育儿</td><td class='num'>32</td><td class='num'>9</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>资料包 ¥19.9-199；课程 ¥199-1999；打卡社群 ¥99</td></tr><tr><td>17</td><td>对账 · 财务效率</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>按次 ¥9.9-49；批量导出工具 ¥199 终身</td></tr><tr><td>18</td><td>进销存 · 商家效率</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>SaaS ¥299-1999/年；定制开发 ¥3000+，这是小微企业刚需</td></tr><tr><td>19</td><td>考研 · 考试考证</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>真题/笔记资料包 ¥19.9-199；打卡社群 ¥99/期</td></tr><tr><td>20</td><td>配音 · 内容生产</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>按字数 ¥0.01-0.1；会员 ¥39-199/月</td></tr><tr><td>21</td><td>宠物 · 宠物经济</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>上门喂养 ¥30-80/次；用品分佣；宠托平台抽成</td></tr><tr><td>22</td><td>社保 · 政务代办</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>代办服务 ¥200-2000/单；攻略文档 ¥9.9-49</td></tr><tr><td>23</td><td>论文 · 学术服务</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>按次 ¥9.9-99；代排版 ¥100-500；风险高注意合规</td></tr><tr><td>24</td><td>报税 · 财务效率</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>SaaS ¥299-999/年；代申报服务 ¥200-800/次</td></tr><tr><td>25</td><td>考公 · 考试考证</td><td class='num'>31</td><td class='num'>8</td><td class='num'>1</td><td class='num'>60</td><td class='num'>0</td><td>题库会员 ¥49-199/年；资料包 ¥9.9-99；冲刺班 ¥999-4999</td></tr></tbody></table>
+
+<footer>demand-radar ・ 数据来自公开信息与本人账号可见内容，仅供选品与产品决策参考 ・
+生成于 2026-10-03T09:57:53</footer>
+</div>
+<script>
+const cards=[...document.querySelectorAll('.card')];
+const q=document.getElementById('q'),ms=document.getElementById('minScore'),sb=document.getElementById('sortBy');
+function apply(){
+  const kw=q.value.trim().toLowerCase(), min=+ms.value;
+  let vis=0;
+  cards.forEach(c=>{
+    const okKw=!kw||c.innerText.toLowerCase().includes(kw);
+    const okSc=+c.dataset.score>=min;
+    c.style.display=(okKw&&okSc)?'':'none'; if(okKw&&okSc)vis++;
+  });
+  const key={score:'score',pay:'pay',evidence:'evidence',diversity:'div'}[sb.value];
+  cards.sort((a,b)=>{
+    const g=e=>+((e.querySelector('.bar b')&&0)||0);
+    if(sb.value==='score')return b.dataset.score-a.dataset.score;
+    const val=(el,i)=>{
+      const bars=[...el.querySelectorAll('.bar')];
+      const name={pay:'付费意愿',evidence:null,diversity:'跨源多样性'}[sb.value];
+      if(sb.value==='evidence')return +(el.querySelector('.meta b').textContent);
+      const b=bars.find(x=>x.textContent.includes(name));return b?+b.querySelector('b').textContent:0;
+    };
+    return val(b)-val(a);
+  });
+  const box=document.getElementById('cards');cards.forEach(c=>box.appendChild(c));
+}
+q.oninput=apply;ms.onchange=apply;sb.onchange=apply;
+</script></body></html>

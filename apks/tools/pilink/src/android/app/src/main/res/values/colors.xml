@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与 App 主色、派发台图标同色，保证"同一条链路"看起来是一套东西 -->
+    <color name="ic_launcher_background">#0F766E</color>
+</resources>

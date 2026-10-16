@@ -1,0 +1,19 @@
+{
+  "slug": "demand-radar",
+  "title": "需求雷达",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "demand-radar",
+  "version": "",
+  "notes": "从公开渠道挖掘市场需求信号，打分聚簇出机会榜",
+  "apk": "demand-radar.apk",
+  "apkName": "需求雷达.apk",
+  "apkSize": 877968,
+  "apkSha256": "f7af255252b3f454c476f62b3e4a7e9723b2d9675637e1c075a07fbe8f5cbc83",
+  "srcSha": "ddb78364fce1f3160bf69e0956d536cb48d967fc",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/demand-radar",
+  "builtAt": "2026-10-03 10:37:28",
+  "syncedAt": "2026-10-16 23:55:41",
+  "auto": false
+}

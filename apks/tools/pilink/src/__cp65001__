@@ -1,0 +1,99 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260926125753
+Username: a\hua
+RunAs User: a\hua
+Configuration Name: 
+Machine: A (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\hua\Documents\备份代码\piwebui通知到安卓手机\fix-split-brain.ps1 __cp65001__ -DryRun
+Process ID: 23592
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+====================================================================
+ pi-web 双实例 / 绑定诊断与修复
+ 时间 2026-09-26 12:57:53
+ 报告 __cp65001__
+====================================================================
+
+[1/6] 读取链路配置
+  [OK]   local.json 已读取
+         路径      : C:\Users\hua\.pi\android-link\local.json
+         局域网地址: 192.168.31.77   pi-web 端口: 30141
+         密码      : 已配置（32 位）
+         中转/派发台: http://127.0.0.1:8787
+         派发台令牌: 已配置
+
+[2/6] 当前监听 30141 端口的进程
+         127.0.0.1:30141  pid 13780   仅回环 → 手机连不上 但电脑能连
+                          "C:\Program Files\nodejs\node.exe" C:\Users\hua\AppData\Roaming\npm\node_modules\@agegr\pi-web\n...
+
+  [!]    判定：只绑了 127.0.0.1 —— 手机连不上（但电脑正常）
+
+[3/6] 处置计划
+         将停止：
+           pid 6720    该实例的启动器外壳
+                    "C:\Program Files\nodejs\node.exe" C:\Users\hua\AppData\Roaming\npm/node_modules/@agegr/pi...
+           pid 13780   持有 127.0.0.1:30141 监听
+                    "C:\Program Files\nodejs\node.exe" C:\Users\hua\AppData\Roaming\npm\node_modules\@agegr\pi...
+         停止后端口会空出来，需要用 run-pi-web.bat 重新以 0.0.0.0 启动
+
+[4/6] 确认
+  [!]    按 -DryRun：只诊断，不执行停止
+
+[5/6] 执行
+         （未执行停止）
+
+[6/6] 复查
+         127.0.0.1:30141  pid 13780
+  [!]    只剩一个实例，但仍只绑 127.0.0.1 —— 手机还是连不上
+
+--------------------------------------------------------------------
+ 链路健康检查
+--------------------------------------------------------------------
+  [OK]   消息中转（派发台 /api/state）正常
+  [OK]   派发台 :8787 在跑且要求令牌 (401)
+  [OK]   看门狗在跑 (pid 25824)
+         网络类别      : Public（本机局域网实测为 Public，属正常）
+  [OK]   防火墙：没有 Block 规则命中 30141 ✓ 手机可达
+  [X]    ★ 配了密码但 pi-web 并没有鉴权（不带凭据也能调 API）—— agent 正在局域网裸奔
+         多半是启动器里写成了 "pi-web ..." 而不是 "call pi-web ..."
+         修法：setup.ps1 -ScriptsOnly 重新生成 run-pi-web.bat，然后双击它重启 pi-web
+  [OK]   pi-web Basic 认证通过（当前在跑 3 个会话）
+
+
+[7/7] 异地通知（不用服务器、不用账号）
+  [OK]   统一出口 http://0.0.0.0:8788 在监听（派发台路由 + pi-web 反代）
+         公网 IPv4     116.9.197.243
+         公网 IPv6     没有（网卡上没有全球单播 IPv6）
+         隧道          absent（PATH 里没有 cloudflared —— 隧道这条路先不可用（IPv6 / 端口映射 / 手填地址仍然可用））
+         首选公网地址  http://116.9.197.243:8788
+         · 没有公网 IPv6：打运营商电话要，或看光猫/路由器有没有下发 IPv6 前缀。
+         · 想用公网 IPv4：在路由器把 TCP 8788 转发到 192.168.31.77，并放行 Windows 防火墙。
+
+====================================================================
+ 结论：DRY RUN 结束，什么都没改动。去掉 -DryRun 或直接双击即可执行。
+
+ 报告已写入：__cp65001__
+====================================================================
+
+====================================================================
+ 登录 pi-web 用的凭据
+====================================================================
+         地址  : http://192.168.31.77:30141   （本机也可 http://localhost:30141）
+         用户名: pi
+         密码  : 5d3263b10d10ba546d9e2e28499a56d4
+         浏览器弹的那个框是 HTTP Basic 对话框（Chrome 中文界面就显示"用户名/密码"）。
+         不想用它就直接开 http://192.168.31.77:30141/login —— 那个页面只要填密码。
+         这份报告含密码，别外传（.gitignore 已排除）。
+====================================================================
+**********************
+Windows PowerShell transcript end
+End time: 20260926125801
+**********************

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">词打</string>
+
+    <string name="brand">VOCAB//TYPE</string>
+    <string name="brand_cn">打字记单词</string>
+
+    <string name="mode_word">WORD</string>
+    <string name="mode_short">SHORT</string>
+    <string name="mode_complex">COMPLEX</string>
+    <string name="mode_word_hint">单词</string>
+    <string name="mode_short_hint">短句</string>
+    <string name="mode_complex_hint">长句</string>
+
+    <string name="tab_short">SHORT SENTENCE</string>
+    <string name="tab_complex">COMPLEX SENTENCE</string>
+    <string name="label_grammar">解析</string>
+
+    <string name="hint_idle">点击屏幕 / 敲键盘开始打字</string>
+    <string name="foot_hint">点句中单词可发音 · 长按打字区清空 · A-/A+ 或双指缩放调字号</string>
+    <string name="hint_pick_dict">[ 请选择词库 ]</string>
+    <string name="hint_no_sentence">[ 该词暂无例句 · 切到单词模式继续 ]</string>
+    <string name="hint_loading">[ 生成中… ]</string>
+    <string name="hint_done">本节完成</string>
+
+    <string name="dict_title">选择词库</string>
+    <string name="dict_search">搜索词库…</string>
+    <string name="settings_title">系统设置</string>
+    <string name="stats_title">训练统计</string>
+    <string name="review_title">选词复习</string>
+    <string name="review_hint">点选要练的词，不选则全部</string>
+
+    <string name="play">播放</string>
+    <string name="regen">重新生成</string>
+    <string name="zen">禅定</string>
+    <string name="save">保存</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="clear">清空</string>
+    <string name="reset">重置</string>
+    <string name="close">关闭</string>
+
+    <string name="sys_settings">系统设置</string>
+    <string name="sys_dict">词库</string>
+    <string name="sys_stats">统计</string>
+    <string name="sys_review">复习</string>
+</resources>

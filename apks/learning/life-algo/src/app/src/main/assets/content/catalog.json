@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-05",
+  "categories": [
+    {
+      "id": "style",
+      "name": "穿搭与形象",
+      "tagline": "让衣服替你说话",
+      "description": "从体型比例、配色逻辑到场合规则和面料保养。目标是穿得对、穿得久，而不是追潮流。判断标准是合身与协调，不是价格标签。",
+      "icon": "style",
+      "accent": "#B0763A",
+      "order": 1,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "tixing",
+          "name": "体型与比例"
+        },
+        {
+          "id": "peise",
+          "name": "配色"
+        },
+        {
+          "id": "danpin",
+          "name": "单品与搭配"
+        },
+        {
+          "id": "changhe",
+          "name": "场合规则"
+        },
+        {
+          "id": "mianliao",
+          "name": "面料与保养"
+        }
+      ]
+    },
+    {
+      "id": "nutrition",
+      "name": "营养与饮食",
+      "tagline": "吃什么、吃多少、为什么",
+      "description": "把蛋白质、脂肪、碳水、膳食纤维和微量营养素讲清楚，再讲怎么落到一日三餐。不卖食谱，也不制造恐惧。",
+      "icon": "nutrition",
+      "accent": "#4C7A57",
+      "order": 2,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "hongliang",
+          "name": "宏量营养素"
+        },
+        {
+          "id": "weiliang",
+          "name": "微量营养素"
+        },
+        {
+          "id": "celue",
+          "name": "饮食策略"
+        },
+        {
+          "id": "buji",
+          "name": "补剂"
+        },
+        {
+          "id": "anquan",
+          "name": "食品安全"
+        }
+      ]
+    },
+    {
+      "id": "sleep",
+      "name": "睡眠与代谢",
+      "tagline": "睡觉代谢点到底是啥",
+      "description": "睡眠不是关机，是大脑清洗、激素重排、能量重新分配的过程。这一栏讲睡眠结构、昼夜节律、基础代谢与总消耗的关系，以及怎么用行为把睡眠修回来。",
+      "icon": "sleep",
+      "accent": "#4A5BA8",
+      "order": 3,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "jizhi",
+          "name": "睡眠机制"
+        },
+        {
+          "id": "zhouye",
+          "name": "昼夜节律"
+        },
+        {
+          "id": "daixie",
+          "name": "代谢与能量"
+        },
+        {
+          "id": "fangan",
+          "name": "改善方案"
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "name": "运动与体能",
+      "tagline": "练得少但练得对",
+      "description": "力量、有氧、柔韧与恢复。用可执行的组次和频率代替热血口号，先把动作做对，再谈强度。",
+      "icon": "training",
+      "accent": "#B5533C",
+      "order": 4,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "liliang",
+          "name": "力量训练"
+        },
+        {
+          "id": "youyang",
+          "name": "有氧与心肺"
+        },
+        {
+          "id": "zengjian",
+          "name": "增肌与减脂"
+        },
+        {
+          "id": "titai",
+          "name": "体态与柔韧"
+        },
+        {
+          "id": "huifu",
+          "name": "恢复与伤病"
+        }
+      ]
+    },
+    {
+      "id": "reaction",
+      "name": "反应力与专注",
+      "tagline": "看到到动手差了多远",
+      "description": "从刺激出现到你做出动作，中间隔着感觉、传导、决策、运动四段延迟。这一栏讲清楚反应时的构成、什么在拖慢它、哪些能练哪些练不动，并内置三项可以当场做的测试：简单反应、选择与抑制、目标追踪。",
+      "icon": "reaction",
+      "accent": "#D97706",
+      "order": 5,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "ceshi",
+          "name": "测试与解读"
+        },
+        {
+          "id": "jizhi",
+          "name": "反应机制"
+        },
+        {
+          "id": "yingxiang",
+          "name": "影响因素"
+        },
+        {
+          "id": "xunlian",
+          "name": "训练与提升"
+        },
+        {
+          "id": "anquan",
+          "name": "反应与安全"
+        }
+      ]
+    },
+    {
+      "id": "selfcontrol",
+      "name": "戒除与自控",
+      "tagline": "冲动不是靠忍的",
+      "description": "一套行为改变工具，用来减少你自己不满意的重复行为：记天数、度过冲动、改环境、失误之后不带羞耻地继续。不做道德评判，也不承诺玄学效果。",
+      "icon": "selfcontrol",
+      "accent": "#6F5AA8",
+      "order": 6,
+      "daily": false,
+      "subcategories": [
+        {
+          "id": "fangfa",
+          "name": "方法与定位"
+        },
+        {
+          "id": "poxi",
+          "name": "破除迷思"
+        },
+        {
+          "id": "chongdong",
+          "name": "冲动应对"
+        },
+        {
+          "id": "huanjing",
+          "name": "环境与复发"
+        },
+        {
+          "id": "qiuzhu",
+          "name": "何时求助"
+        }
+      ]
+    },
+    {
+      "id": "grooming",
+      "name": "仪容与护理",
+      "tagline": "干净是最高性价比的加分项",
+      "description": "皮肤、头发、气味、牙齿。大部分问题靠规律清洁、防晒和少折腾就能解决，不需要复杂流程。",
+      "icon": "grooming",
+      "accent": "#A4547E",
+      "order": 7,
+      "daily": false,
+      "subcategories": [
+        {
+          "id": "pifu",
+          "name": "皮肤"
+        },
+        {
+          "id": "maofa",
+          "name": "毛发"
+        },
+        {
+          "id": "qiwei",
+          "name": "气味管理"
+        },
+        {
+          "id": "kouqiang",
+          "name": "口腔"
+        }
+      ]
+    },
+    {
+      "id": "mind",
+      "name": "情绪与关系",
+      "tagline": "先稳住自己，再谈别的",
+      "description": "情绪不是敌人，是信号。这一栏讲压力机制、睡眠与情绪的关系、沟通和边界，以及什么时候该找专业帮助。",
+      "icon": "mind",
+      "accent": "#6B5CA5",
+      "order": 8,
+      "daily": false,
+      "subcategories": [
+        {
+          "id": "qingxu",
+          "name": "情绪"
+        },
+        {
+          "id": "yali",
+          "name": "压力"
+        },
+        {
+          "id": "goutong",
+          "name": "沟通"
+        },
+        {
+          "id": "guanxi",
+          "name": "关系与边界"
+        }
+      ]
+    },
+    {
+      "id": "urban",
+      "name": "城市生存",
+      "tagline": "在规则里活得体面",
+      "description": "租房、防骗、财务、急救、维权、突发状况。城市是低风险高规则的环境，吃亏的人通常是不知道规则，而不是不够强。",
+      "icon": "urban",
+      "accent": "#3A7CA5",
+      "order": 9,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "zufang",
+          "name": "租房与居住"
+        },
+        {
+          "id": "fangpian",
+          "name": "防骗与安全"
+        },
+        {
+          "id": "jijiu",
+          "name": "急救"
+        },
+        {
+          "id": "caiwu",
+          "name": "财务与契约"
+        },
+        {
+          "id": "quanli",
+          "name": "权利与维权"
+        }
+      ]
+    },
+    {
+      "id": "wild",
+      "name": "野外生存",
+      "tagline": "顺序错了会要命",
+      "description": "野外生存有严格的优先级：先别受伤，再保温，再找水，最后才是食物。这一栏按优先级讲，并且讲明白为什么是这个顺序。",
+      "icon": "wild",
+      "accent": "#4E7A3A",
+      "order": 10,
+      "daily": true,
+      "subcategories": [
+        {
+          "id": "shui",
+          "name": "找水与净化"
+        },
+        {
+          "id": "huo",
+          "name": "生火"
+        },
+        {
+          "id": "bihusuo",
+          "name": "庇护所与保温"
+        },
+        {
+          "id": "fangxiang",
+          "name": "方向与导航"
+        },
+        {
+          "id": "qiujiu",
+          "name": "求救与信号"
+        },
+        {
+          "id": "shengwu",
+          "name": "危险生物"
+        }
+      ]
+    },
+    {
+      "id": "digital",
+      "name": "数字与生活系统",
+      "tagline": "把生活当成一个系统来维护",
+      "description": "账号安全、隐私、备份、证件与文档管理、时间与注意力。这些平时看不见，出事时决定你损失多少。",
+      "icon": "digital",
+      "accent": "#5A6B7A",
+      "order": 11,
+      "daily": false,
+      "subcategories": [
+        {
+          "id": "shuju",
+          "name": "数据与备份"
+        },
+        {
+          "id": "yinsi",
+          "name": "隐私与账号"
+        },
+        {
+          "id": "xiaolv",
+          "name": "效率与注意力"
+        },
+        {
+          "id": "zhengjian",
+          "name": "证件与文档"
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "name": "原理与方法",
+      "tagline": "怎么判断一个说法是真是假",
+      "description": "这一栏不教具体知识，教你怎么判断知识。相关与因果、样本量、幸存者偏差、怎么读一篇研究、怎么识别贩卖焦虑。",
+      "icon": "science",
+      "accent": "#2F6F6B",
+      "order": 12,
+      "daily": false,
+      "subcategories": [
+        {
+          "id": "fangfalun",
+          "name": "科学方法"
+        },
+        {
+          "id": "tongji",
+          "name": "统计与概率"
+        },
+        {
+          "id": "xinxi",
+          "name": "信息素养"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_app"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- ========== 顶部：等级 / 经验 / 金币 ========== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:background="@drawable/badge_ring">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="LV"
+                        android:textColor="@color/muted"
+                        android:textSize="8sp" />
+
+                    <TextView
+                        android:id="@+id/tvLv"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1"
+                        android:textColor="@color/brand"
+                        android:textSize="19sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvXpLeft"
+                        style="@style/T.Sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 XP" />
+
+                    <TextView
+                        android:id="@+id/tvXpRight"
+                        style="@style/T.Sub"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="还需 200" />
+                </LinearLayout>
+
+                <com.wordrush.app.ui.MeterView
+                    android:id="@+id/meterXp"
+                    android:layout_width="match_parent"
+                    android:layout_height="10dp"
+                    android:layout_marginTop="6dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/pill_dark"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_coin" />
+
+                <TextView
+                    android:id="@+id/tvCoins"
+                    style="@style/T.Num"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="0"
+                    android:textColor="@color/gold"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 打卡 / 今日 ========== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/card_soft"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_flame" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvStreak"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 天"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="连续打卡" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_soft"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_target" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvTodayCount"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 / 20"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="今日目标" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 今日挑战 ========== -->
+        <LinearLayout
+            android:id="@+id/cardToday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/card_brand"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:text="今日挑战"
+                android:textColor="#FF06121F"
+                android:textSize="23sp" />
+
+            <TextView
+                android:id="@+id/tvTodaySub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:text="复习 0 词 · 新词 20 词"
+                android:textColor="#CC06121F"
+                android:textSize="13sp" />
+
+            <com.wordrush.app.ui.MeterView
+                android:id="@+id/meterToday"
+                android:layout_width="match_parent"
+                android:layout_height="10dp"
+                android:layout_marginTop="14dp" />
+
+            <LinearLayout
+                android:id="@+id/btnStart"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/btn_dark"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tvStartLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="开始挑战"
+                    android:textColor="@color/text"
+                    android:textSize="17sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 四个入口 ========== -->
+        <TextView
+            style="@style/T.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="一起练" />
+
+        <LinearLayout
+            style="@style/CardRow"
+            android:layout_marginTop="10dp">
+
+            <LinearLayout
+                android:id="@+id/cardMap"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/card_click"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_map" />
+
+                <TextView
+                    style="@style/T.CardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="关卡地图" />
+
+                <TextView
+                    android:id="@+id/tvMapSub"
+                    style="@style/T.Sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="0 关" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardBank"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_click"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_book" />
+
+                <TextView
+                    style="@style/T.CardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="词库" />
+
+                <TextView
+                    android:id="@+id/tvBankSub"
+                    style="@style/T.Sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="基础必备" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/CardRow"
+            android:layout_marginTop="10dp">
+
+            <LinearLayout
+                android:id="@+id/cardWrong"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/card_click"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_heart" />
+
+                <TextView
+                    style="@style/T.CardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="错题本" />
+
+                <TextView
+                    android:id="@+id/tvWrongSub"
+                    style="@style/T.Sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="0 个待攻克" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardAchieve"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_click"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_trophy" />
+
+                <TextView
+                    style="@style/T.CardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="成就" />
+
+                <TextView
+                    android:id="@+id/tvAchieveSub"
+                    style="@style/T.Sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="0 / 15" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 数据 ========== -->
+        <LinearLayout
+            android:id="@+id/cardStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/card_click"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/T.CardTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="我的进度" />
+
+                <TextView
+                    style="@style/T.Sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="查看报告 ›" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvMastered"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/ok"
+                        android:textSize="21sp" />
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="已掌握" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvLearning"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/brand"
+                        android:textSize="21sp" />
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="学习中" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvAccuracy"
+                        style="@style/T.Num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="@color/gold"
+                        android:textSize="21sp" />
+
+                    <TextView
+                        style="@style/T.Sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="总正确率" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========== 设置 ========== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnSound"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:background="@drawable/btn_ghost"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="音效 开"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/btnVib"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/btn_ghost"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="震动 开"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/btnGoal"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/btn_ghost"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="目标 20"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center"
+            android:text="离线可用 · 数据只存本机"
+            android:textColor="@color/muted_deep"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+</ScrollView>

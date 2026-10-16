@@ -1,0 +1,195 @@
+# ============================================================
+#  需求雷达 · 采集源配置
+#  说明：
+#   - enabled: 是否启用
+#   - 每个 collector 的 max_items 控制单次采集量，防止过量请求
+#   - 需要 cookie / token 的源默认关闭，在下面填好凭据后再打开
+#   - 合规提示：只采集公开可访问的信息；带 cookie 的源使用你自己的账号，
+#     请保持低频（建议 >= 3 秒/请求），不要用于批量搬运他人隐私数据。
+# ============================================================
+
+global:
+  # 单次运行的全局请求间隔下限（秒）
+  min_interval: 1.2
+  # 单次运行最多新增条目
+  max_total_items: 800
+  # 只保留最近 N 天的内容（趋势要新鲜）
+  recency_days: 90
+
+# ============================================================
+#  源先验 prior（0-1）：这条素材本身有多大概率是「真需求」
+#  这是本系统最关键的一个可调参数，直接决定哪些源说话算数。
+#
+#  高（0.7+）：人在主动搜索/求助/吐槽 → 需求已经说出口了
+#  中（0.5） ：一手内容，但需要看具体文本
+#  低（0.25） ：只是话题热，不代表有人要花钱解决
+# ============================================================
+source_prior:
+  hackernews: 0.80        # 需求句式检索出来的，本身就是需求
+  baidu_sug: 0.75         # 搜索下拉词 = 人在搜怎么解决
+  github_issues: 0.75     # issue 里提功能需求
+  weibo: 0.70             # 关键词搜索命中的公开讨论
+  appstore: 0.65          # 差评/求功能：别人做烂了 = 你的机会
+  android_screen: 0.50    # 你手动刷到的内容（优质但含噪音）
+  juejin: 0.35
+  rss: 0.30
+  baidu_hot: 0.25         # 热搜只是话题热度
+  douyin_hot: 0.25
+
+sources:
+
+  # ---------- 中国大陆：趋势 / 热点 ----------
+  baidu_hot:
+    enabled: true
+    max_items: 60
+    tabs: [realtime, novel, movie, teleplay, car, game]   # 各榜单
+    weight: 1.0        # 源可信度权重（影响热度分）
+
+  juejin:
+    enabled: true
+    max_items: 40
+    weight: 0.9
+
+  # 用户真实搜索行为 = 真实需求（下拉词）
+  baidu_sug:
+    enabled: true
+    weight: 1.25
+    max_items: 300
+    max_seeds: 60          # 自动用领域词典做种子词，最多几个
+    suggestions_per_seed: 8
+    extra_seeds: []        # 你想额外挖的方向，例如 [露营, 宠物殡葬]
+
+  douyin_hot:
+    enabled: true
+    weight: 0.95
+    max_items: 50
+
+  # ---------- 中文：独立开发者 / 产品讨论（RSS） ----------
+  rss:
+    enabled: true
+    weight: 0.8
+    max_items: 120
+    per_feed: 25
+    feeds:
+      - {name: 少数派,     url: "https://sspai.com/feed"}
+      - {name: 36氪,       url: "https://36kr.com/feed"}
+      - {name: 虎嗅,       url: "https://www.huxiu.com/rss/0.xml"}
+      - {name: 爱范儿,     url: "https://www.ifanr.com/feed"}
+      - {name: 极客公园,   url: "https://www.geekpark.net/rss"}
+      - {name: V2EX-最热,  url: "https://rsshub.app/v2ex/topics/hot", enabled: false}  # 需科学上网
+      - {name: HackerNews, url: "https://hnrss.org/best", enabled: false}
+      - {name: 阮一峰周刊, url: "https://feeds.feedburner.com/ruanyifeng", enabled: false}
+
+  # ---------- 英文：真实付费需求最密集的地方 ----------
+  hackernews:
+    enabled: true
+    weight: 1.15
+    max_items: 120
+    # 用需求句式直接检索评论区，命中即高价值需求原话
+    queries:
+      - "I wish there was"
+      - "someone should build"
+      - "is there a tool"
+      - "would pay for"
+      - "willing to pay"
+      - "shut up and take my money"
+      - "painful to do manually"
+      - "no good alternative"
+    tags: [comment]
+
+  # ---------- 应用商店：差评 = 未被满足的需求 ----------
+  appstore:
+    enabled: true
+    weight: 1.2
+    max_items: 200
+    # 按关键词搜索 App，然后抓它们的低分评论（抱怨就是需求）
+    countries: [cn, us]
+    search_terms:
+      - 记账
+      - 简历
+      - 报销
+      - 待办
+      - 健身计划
+      - 学英语
+      - 清理照片
+      - 自动字幕
+      - 微商
+      - 进销存
+    # 每个关键词取前 N 个 App
+    apps_per_term: 6
+    # 每个 App 抓取评论页数
+    review_pages: 2
+    # 只把 <= max_rating 的评论计为"抱怨信号"
+    max_rating: 3
+    # 也抓高分评论里的"要是能…就好了"
+    extract_wishes_from_all: true
+
+  # ---------- GitHub Issue：开发者公开说的"缺功能" ----------
+  github_issues:
+    enabled: true
+    weight: 1.0
+    max_items: 120
+    per_query: 30
+    # 可选：填 token 提升速率限制（不填也能用，60次/小时）
+    token: ""
+    queries:
+      - '"feature request" in:title is:issue is:open'
+      - '"is it possible to" in:body is:issue is:open'
+      - 'label:"enhancement" "support for" is:issue is:open'
+      - '"alternative to" in:body is:issue is:open'
+
+  # ---------- 微博（需自己登录后的 cookie，默认关闭） ----------
+  weibo:
+    enabled: false
+    weight: 1.1
+    max_items: 80
+    per_query: 20
+    cookie: ""            # 从浏览器复制 m.weibo.cn 的 Cookie
+    queries:
+      - "求推荐 工具"
+      - "有没有 好用"
+      - "求一个 软件"
+      - "愿意付费"
+
+  # ---------- 安卓手机读屏采集（USB 调试） ----------
+  android_screen:
+    enabled: true
+    weight: 1.3          # 手机上是真人一手需求，权重最高
+    # 目标 App 包名 -> 友好名（只影响标注，不影响采集）
+    # 只放「公开内容」的 App。微信/私聊类属私密内容，默认不采；
+    # 确有必要请自行评估合规性后手动加回来（如 com.tencent.mm）。
+    apps:
+      com.xingin.eva: 小红书
+      com.taobao.idlefish: 闲鱼
+      com.zhuanzhuan.hunter: 转转
+      com.ss.android.ugc.aweme: 抖音
+      com.zhihu.android: 知乎
+      com.taobao.taobao: 淘宝
+      com.sankuai.dianping: 大众点评
+      com.hpbr.directhires: BOSS直聘
+      com.gotokeep.keep: Keep
+      com.smzdm.client.android: 什么值得买
+      com.reddit.frontpage: Reddit
+      com.twitter.android: X
+      com.github.android: GitHub
+    # 系统/桌面/输入法界面永远不采（这是双保险，代码里另有黑名单）
+    allow_system_apps: false
+    # 只在这些 App 前台时采集，避免抓到无关内容
+    only_listed_apps: true
+    # 监听模式轮询间隔（秒）
+    poll_seconds: 4.0
+    # 同一屏文本哈希去重，窗口大小
+    dedupe_window: 400
+    # 文本太少时启用截图 OCR 兜底（Windows 自带中文 OCR）
+    ocr_fallback: true
+    ocr_min_chars: 40
+    # ⚠ 危险功能：自动上滑翻页（无人工参与）。默认关闭。
+    #    开启前请确认：手动操作自己的账号、低频、不当内容生产者不当数据贩子。
+    auto_swipe: false
+    auto_swipe_times: 10
+    # 每次采完自动把截图存到 data/screens（便于人工复核）
+    save_screenshots: false
+    # 一屏里最多把多少条长文本拆成独立条目
+    max_node_items: 10
+    # 非监听模式下，单次抓屏的持续秒数（0 = 只抓一次）
+    listen_seconds: 0

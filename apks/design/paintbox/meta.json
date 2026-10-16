@@ -1,0 +1,19 @@
+{
+  "slug": "paintbox",
+  "title": "跑图助手",
+  "category": "design",
+  "categoryTitle": "设计与演示",
+  "package": "com.hua.paintbox",
+  "version": "1.0",
+  "notes": "连本机 ComfyUI / 跑图服务看图与下载",
+  "apk": "paintbox.apk",
+  "apkName": "PaintBox.apk",
+  "apkSize": 99187,
+  "apkSha256": "c0f694a83e7d08d6fdafc41c7bd4a664ab783c154193f4e370ca3c4fa39f6cde",
+  "srcSha": "7d3cc492890b97b3150ac764bdaf6fe1fb406e52",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/PaintBox-Android",
+  "builtAt": "2026-10-07 23:39:30",
+  "syncedAt": "2026-10-16 23:55:41",
+  "auto": false
+}

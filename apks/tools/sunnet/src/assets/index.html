@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>太阳网控制器</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="brand">
+      <span class="dot" id="linkDot"></span>
+      <b>太阳网</b><small>风光雨自动控制器</small>
+    </div>
+    <div class="chips">
+      <span class="chip" id="connChip">未连接</span>
+      <span class="chip" id="modeChip">—</span>
+      <span class="chip" id="faultChip">—</span>
+      <span class="chip" id="netChip">—</span>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="ctrl" class="act">控制</button>
+    <button data-tab="link">连接</button>
+    <button data-tab="cfg">参数</button>
+    <button data-tab="diy">散装</button>
+    <button data-tab="diag">诊断</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============================ 控制 ============================ -->
+  <section class="tab act" data-tab="ctrl">
+    <div id="offBanner" class="banner">
+      <b>还没连上设备。</b> 去「连接」页：要么把手机连到设备热点再点连接（WiFi），
+      要么直接扫 BLE 连（不用切 WiFi）。
+    </div>
+
+    <div class="card">
+      <h2>传感器 <small>光照 / 雨 / 风</small></h2>
+      <div class="gauges">
+        <div class="gauge">
+          <label>光照 <em id="pinLightTag"></em></label>
+          <div class="bar"><i id="barLight"></i><u id="thDown"></u><u id="thUp"></u></div>
+          <b id="valLight">–</b>
+        </div>
+        <div class="gauge">
+          <label>设定点 <em id="pinPotTag"></em></label>
+          <div class="bar"><i id="barPot"></i></div>
+          <b id="valPot">–</b>
+        </div>
+      </div>
+      <div class="kv">
+        <div><span>雨</span><b id="valRain">–</b></div>
+        <div><span>风</span><b id="valWind">–</b></div>
+        <div><span>阈值 上/下</span><b id="valTh">–</b></div>
+        <div><span>昼/夜</span><b id="valNight">–</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>网 / 电机 <small>展开 = 追日 · 收拢 = 停放</small></h2>
+      <div class="pads">
+        <button id="btnCCW" class="pad big">◀ CCW 回程</button>
+        <button id="btnStop" class="pad stop">■ 停</button>
+        <button id="btnCW" class="pad big">CW 追日 ▶</button>
+      </div>
+      <div class="row">
+        <button class="wide" id="btnDeploy">展开到 A 限位（自动走完）</button>
+        <button class="wide" id="btnStow">收拢到 B 限位（自动走完）</button>
+      </div>
+      <div class="row">
+        <button class="wide auto" id="btnAuto">切到自动跟踪</button>
+        <button class="wide danger" id="btnEstop">急停锁存</button>
+        <button class="wide" id="btnClear">解除急停/故障</button>
+      </div>
+      <div class="row">
+        <label class="slider">点动占空 <input type="range" id="duty" min="12" max="100" value="50" /><b id="dutyVal">50%</b></label>
+      </div>
+      <div class="row tight">
+        <label class="slider">点动时长 <input type="range" id="jogMs" min="200" max="8000" step="100" value="1500" /><b id="jogVal">1500ms</b></label>
+      </div>
+      <div class="kv">
+        <div><span>电机状态</span><b id="valMotor">–</b></div>
+        <div><span>指令来源</span><b id="valSource">–</b></div>
+        <div><span>本小时运行</span><b id="valRun">–</b></div>
+        <div><span>动作次数</span><b id="valJogs">–</b></div>
+        <div><span>限位 A / B</span><b id="valLimits">–</b></div>
+        <div><span>收拢状态</span><b id="valStow">–</b></div>
+        <div><span>母线 MOT_EN</span><b id="valPower">–</b></div>
+        <div><span>电流</span><b id="valImon">–</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>面板按键（现场不用手机也能操作）</h2>
+      <div class="pads">
+        <button class="pad" data-hold="cw">按住 CW</button>
+        <button class="pad" data-hold="ccw">按住 CCW</button>
+        <button class="pad" data-press="mode">模式切换</button>
+        <button class="pad" data-press="clear">清故障</button>
+      </div>
+      <div class="kv">
+        <div><span>模式键</span><b id="btn3">–</b></div>
+        <div><span>CW 键</span><b id="btn4">–</b></div>
+        <div><span>CCW 键</span><b id="btn5">–</b></div>
+        <div><span>BOOT 键</span><b id="btnBoot">–</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>指示灯自检 <small>接管 5 秒</small></h2>
+      <div class="row">
+        <label class="slider">LED1 图案
+          <select id="ledRun">
+            <option value="0">0 灭</option><option value="1">1 常亮</option>
+            <option value="2">2 慢闪1Hz</option><option value="3">3 快闪5Hz</option>
+            <option value="4">4 故障双闪</option>
+          </select>
+        </label>
+        <label class="slider">LED2
+          <select id="ledMotor"><option value="0">灭</option><option value="1">亮</option></select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 连接 ============================ -->
+  <section class="tab" data-tab="link">
+    <div class="card">
+      <h2>通道 <small>两个任选其一</small></h2>
+      <div class="row">
+        <button class="chip" id="btnModeWifi">WiFi / HTTP</button>
+        <button class="chip" id="btnModeBle">蓝牙 BLE</button>
+      </div>
+      <p class="hint" id="connHelp"></p>
+
+      <div id="wifiBox">
+        <div class="row">
+          <input type="text" id="hostInput" placeholder="192.168.4.1" />
+          <button class="primary" id="btnConnect">连接</button>
+        </div>
+        <p class="hint">
+          设备默认开热点 <b>pcbsun-XXXX</b>，密码 <b>pcbsun1234</b>，地址 <b>192.168.4.1</b>。<br />
+          手机先到「设置 → WLAN」连上这个热点，再回来点连接。若设备已配好家里的 WiFi
+          （AP+STA 模式），也可以填它在你局域网里的 IP。
+        </p>
+      </div>
+
+      <div id="bleBox" style="display:none">
+        <div class="row">
+          <button class="primary" id="btnScan">扫描设备</button>
+          <button id="btnDisc">断开</button>
+        </div>
+        <p class="hint">蓝牙通道支持：状态、点动/展开/收拢/急停、改参数。<b>不支持</b>日志和 GPIO 探针（那两个走 WiFi）。</p>
+        <div class="devlist" id="devList"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>接线备忘 <small>装完对一遍</small></h2>
+      <div class="kv">
+        <div><span>电机</span><b>OUT1 / OUT2 → 网机两线</b></div>
+        <div><span>限位 A（展开）</span><b>干接点对地</b></div>
+        <div><span>限位 B（收拢）</span><b>干接点对地</b></div>
+        <div><span>急停回路</span><b>断开 = 母线断电</b></div>
+        <div><span>电源</span><b>12V ≥3A，保险 3A</b></div>
+      </div>
+      <p class="hint">上电后先在「诊断」里跑一次自检。</p>
+    </div>
+  </section>
+
+  <!-- ============================ 参数 ============================ -->
+  <section class="tab" data-tab="cfg">
+    <div class="card">
+      <h2>自动跟踪参数 <small>写 NVS，断电保留</small></h2>
+      <p class="hint" id="cfgStatus">未读取</p>
+      <div class="grid" id="cfgGrid"></div>
+      <div class="row">
+        <button class="primary wide" id="btnSaveCfg">保存修改</button>
+        <button class="wide" id="btnReload">重新读取</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== 散装（现成模块） ======================== -->
+  <section class="tab" data-tab="diy">
+    <div class="card">
+      <h2>方案 A · 散装采购清单 <small>全部买现成模块，不画板不贴片</small></h2>
+      <p class="hint">
+        点一行 = 勾上「已买」，勾选存在手机里。<b>约 ¥220</b> 就能凑出和这块 PCB 一样的功能，
+        而且用的是<b>同一套固件</b>（只改下面那张引脚表），所以这个 App 直接能用。
+      </p>
+      <div class="row">
+        <button id="btnCopyBom" class="primary">复制清单</button>
+        <button id="btnCopyKw">复制全部搜索词</button>
+      </div>
+      <div class="row tight">
+        <button id="btnSkipBom">只买最小集</button>
+        <button id="btnClearBom">清空勾选</button>
+      </div>
+      <div class="bomhead">
+        <span id="bomCount">0/17 已买</span>
+        <b id="bomTotal">合计 ≈ ¥0</b>
+      </div>
+      <div class="bom" id="bomList"></div>
+      <p class="hint">
+        每行都写了<b>该买多少电压</b>（⚡ 那个黄标）和具体规格，买的时候对着看。<br />
+        每行右边：<b>复制关键词</b>（粘到任意搜索框）+ <b>淘宝 / 拼多多 / 1688</b>
+        三个直跳按钮（点一下直接开对应 App 搜这个零件；没装就退到网页版）。<br />
+        「只买最小集」= 先不买风速开关、急停、模式旋钮，约 <b>¥178</b>，
+        先把电机和光/雨/限位跑通，再补安全链。
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>电压怎么分 <small>哪一层用多少 V</small></h2>
+      <div id="voltTable" class="wires"></div>
+    </div>
+
+    <div class="card">
+      <h2>电源怎么走 <small>先搭电，再上信号</small></h2>
+      <pre class="out">【12V 母线】12V 电源 ─┬─ 3A 保险 ─┬─ 急停常闭(硬断电) ── MOS 开关模块 ── DRV8871 VM
+                      │            └─ LM2596 降压 ── 【5V】── 开发板 5V/VIN
+                      └─ GND ───────────────────── 所有模块 GND 共地
+
+【5V】  LM2596 输出（空载先调到 5.0V 再插板子）
+【3.3V】开发板 3V3 脚 ── 光敏 VCC / 雨滴 VCC / 电位器两端 / ACS712(3.3V 版)
+【干接点】限位A 限位B / 急停 / 风速开关 / 旋钮 / 按键  ── 一端 GPIO、一端 GND
+
+DRV8871  OUT1 ── 网机(电机) 一根线          ┐ 12V 换向
+DRV8871  OUT2 ── 网机(电机) 另一根线        ┘
+急停按钮【第一组常闭】串在 12V → MOS 开关 之间（硬断电）
+急停按钮【第二组常闭】接 GPIO12（固件回读）</pre>
+    </div>
+
+    <div class="card">
+      <h2>接线表 <small>板上位号 → 模块 → GPIO → 电压</small></h2>
+      <div class="row">
+        <button id="btnCopyWire">复制接线表</button>
+      </div>
+      <div id="wireTable" class="wires"></div>
+    </div>
+
+    <div class="card">
+      <h2>组装步骤 <small>照着做</small></h2>
+      <div id="stepList" class="steps"></div>
+    </div>
+
+    <div class="card">
+      <h2>固件引脚表 <small>改 board.h 这几行，其余照旧</small></h2>
+      <div class="row">
+        <button id="btnCopyPin" class="primary">复制引脚表</button>
+      </div>
+      <pre class="out" id="pinPatch"></pre>
+      <pre class="out">pio run -t upload      # 烧固件
+pio run -t uploadfs    # 烧 WebUI（不做这步浏览器打开会 404）</pre>
+    </div>
+
+    <div class="card">
+      <h2>六条硬注意 <small>踩了会烧板子</small></h2>
+      <div id="noteList"></div>
+    </div>
+
+    <div class="card">
+      <h2>方案 B · 室外长年运行 <small>约 ¥380</small></h2>
+      <div id="bomB" class="bom"></div>
+    </div>
+
+    <div class="card">
+      <h2>方案 C · 网机是 220V 交流 <small>别用 DRV8871</small></h2>
+      <div id="bomC" class="bom"></div>
+      <p class="hint">换成继电器/接触器后，电机就是「有/无」两态，需要把 <code>motor_drv8871.cpp</code>
+        换成一个继电器输出实现（约 30 行）。220V 侧单独走电器盒 + 漏保。</p>
+    </div>
+
+    <div class="card">
+      <h2>方案 D · 完全不动手 <small>买成品</small></h2>
+      <div id="bomD" class="bom"></div>
+      <p class="hint">优点：0 开发。缺点：协议不开放，<b>这个 App 连不上它</b>。</p>
+    </div>
+
+    <div class="card">
+      <h2>为什么先散装 <small>钱和时间</small></h2>
+      <div class="tbl">
+        <div class="tr head"><span>项目</span><span>自制 PCB（现在路线）</span><span>散装模块</span></div>
+        <div class="tr"><span>一次投入</span><span>¥450~800</span><span class="ok">¥220</span></div>
+        <div class="tr"><span>要买多少东西</span><span>105 个位号元件 + 板 + 钢网</span><span class="ok">17 项模块</span></div>
+        <div class="tr"><span>到货</span><span>打样 3-5 天 + 贴片 3-7 天</span><span class="ok">当天~3 天</span></div>
+        <div class="tr"><span>改一版</span><span>重画重贴，再等一轮</span><span class="ok">重插一根线</span></div>
+        <div class="tr"><span>风险</span><span>贴片起订、虚焊、天线禁布</span><span class="ok">插错线</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 诊断 ============================ -->
+  <section class="tab" data-tab="diag">
+    <div class="card">
+      <h2>上电自检 <small>电源/传感器/安全链</small></h2>
+      <button class="primary wide" id="btnSelftest">立刻自检</button>
+      <pre class="out" id="selftestOut">尚未运行自检</pre>
+    </div>
+
+    <div class="card">
+      <h2>GPIO 探针 <small>现场确认端子接的是谁</small></h2>
+      <div class="row">
+        <input type="number" id="scanGpio" min="0" max="48" value="6" />
+        <button id="btnScanIo">探针扫 IO</button>
+      </div>
+      <pre id="scanOut" class="out">把传感器怼到某个端子，点探针，看 analog/level 变化即可确认谁是谁。</pre>
+    </div>
+
+    <div class="card">
+      <h2>传感器角色改绑</h2>
+      <div class="row">
+        <select id="roleSel">
+          <option value="light">光照 light</option><option value="rain">雨 rain</option>
+          <option value="wind">风 wind</option><option value="pot">设定点 pot</option>
+        </select>
+        <input type="number" id="roleGpio" min="1" max="48" value="5" />
+        <button id="btnMap">改绑</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>事件日志</h2>
+      <pre id="log" class="out">—</pre>
+    </div>
+
+    <div class="card">
+      <h2>安全链状态</h2>
+      <div class="kv">
+        <div><span>硬急停 J10</span><b id="valEstopHw">–</b></div>
+        <div><span>模式开关 J11</span><b id="valModeSel">–</b></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    固件 <b id="fwVer">–</b> · 运行 <b id="uptime">–</b> · BLE <b id="bleInfo">–</b>
+  </footer>
+</main>
+<script src="transport.js"></script>
+<script src="bom.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

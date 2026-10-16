@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>钢琴墙 3D 演示</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div class="brand">
+      <span class="logo"></span>
+      <div>
+        <h1>钢琴墙 · 3D 演示</h1>
+        <p id="subtitle">L 型转角墙 10 000 × 2 000 mm × 2 面</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab on" data-tab="view3d">3D</button>
+      <button class="tab" data-tab="draw">图纸</button>
+      <button class="tab" data-tab="spec">规格</button>
+    </nav>
+  </header>
+
+  <main id="stage">
+
+    <!-- ============ 3D ============ -->
+    <section id="tab-view3d" class="tabpane on">
+      <canvas id="gl"></canvas>
+
+      <div class="hud hud-tl">
+        <div class="row">
+          <button class="chip on" data-view="全景">全景</button>
+          <button class="chip" data-view="人视">人视</button>
+          <button class="chip" data-view="正视">正视</button>
+          <button class="chip" data-view="俯视">俯视</button>
+          <button class="chip" data-view="转角">转角</button>
+          <button class="chip" data-view="特写">黑键特写</button>
+        </div>
+      </div>
+
+      <div class="hud hud-bl">
+        <div class="row">
+          <button class="chip toggle on" data-toggle="dims">尺寸标注</button>
+          <button class="chip toggle on" data-toggle="scale">人形参考</button>
+          <button class="chip toggle" data-toggle="spin">自动旋转</button>
+          <button class="chip" id="btn-shot3d">存图</button>
+          <button class="chip toggle" data-toggle="legend">数据</button>
+        </div>
+      </div>
+
+      <div class="hud hud-br" id="legend"></div>
+    </section>
+
+    <!-- ============ 图纸 ============ -->
+    <section id="tab-draw" class="tabpane">
+      <div class="hud hud-tl static">
+        <div class="row">
+          <button class="chip on" data-sheet="all">全部</button>
+          <button class="chip" data-sheet="plan">平面</button>
+          <button class="chip" data-sheet="elev">展开立面</button>
+          <button class="chip" data-sheet="unit">单元详图</button>
+          <button class="chip" data-sheet="sect">剖面节点</button>
+          <button class="chip" id="btn-shotdw">存图</button>
+        </div>
+      </div>
+      <div id="sheets">
+        <figure class="sheet" data-sheet="plan"><canvas id="cv-plan"></canvas></figure>
+        <figure class="sheet" data-sheet="elev"><canvas id="cv-elev"></canvas></figure>
+        <figure class="sheet" data-sheet="unit"><canvas id="cv-unit"></canvas></figure>
+        <figure class="sheet" data-sheet="sect"><canvas id="cv-sect"></canvas></figure>
+        <figure class="sheet" data-sheet="table">
+          <div class="totals" id="dimtable"></div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 规格 ============ -->
+    <section id="tab-spec" class="tabpane">
+      <article id="spec"></article>
+    </section>
+  </main>
+
+  <footer id="params">
+    <div class="paramhead">
+      <b>图案参数</b><span class="hint" id="phint">拖动即时重算 · 点三维里的任意一块键板可看这块的尺寸</span>
+      <button class="chip ghost" id="btn-reset">还原图纸尺寸</button>
+      <button class="chip" id="btn-fold">收起</button>
+    </div>
+    <div class="pgrid" id="pgrid"></div>
+  </footer>
+
+  <!-- 选中某一块键板时，这一块顶到最下面，参数面板自动收起来 -->
+  <section id="keycard" hidden>
+    <div class="kc-head">
+      <b id="kc-title">白键板</b>
+      <button class="chip" id="kc-zoom">镜头定位</button>
+      <button class="kc-x" id="kc-x">✕</button>
+    </div>
+    <table class="kc-table" id="kc-body"></table>
+    <div class="kc-hint">点空白处取消选中</div>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<script src="three.min.js"></script>
+<script src="spec.js"></script>
+<script src="draw.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

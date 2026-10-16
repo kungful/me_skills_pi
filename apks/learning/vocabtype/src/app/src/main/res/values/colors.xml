@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ============ CYBERPUNK TERMINAL PALETTE ============ -->
+    <color name="cyan">#FF00F0FF</color>
+    <color name="cyan_dim">#6600F0FF</color>
+    <color name="cyan_deep">#1F00F0FF</color>
+    <color name="magenta">#FFFF003C</color>
+    <color name="green">#FF39FF14</color>
+    <color name="green_dim">#5539FF14</color>
+    <color name="amber">#FFFFB020</color>
+    <color name="violet">#FFB388FF</color>
+
+    <color name="black">#FF050505</color>
+    <color name="dark">#FF0A0A0F</color>
+    <color name="panel">#FF0D0D18</color>
+    <color name="gray">#FF1A1A2E</color>
+    <color name="line">#3300F0FF</color>
+
+    <color name="text_dim">#FF4A5568</color>
+    <color name="text_mid">#FF8A9BB2</color>
+    <color name="text_bright">#FFE0E6ED</color>
+
+    <color name="char_untyped">#FF3E4C5E</color>
+    <color name="char_correct">#FF39FF14</color>
+    <color name="char_incorrect">#FFFF003C</color>
+    <color name="char_done">#FF2A6E4A</color>
+    <color name="char_extra">#FFB388FF</color>
+
+    <color name="transparent">#00000000</color>
+    <color name="scrim">#CC000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
