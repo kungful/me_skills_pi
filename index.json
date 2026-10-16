@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-16 10:28:41",
-  "count": 22,
+  "generatedAt": "2026-10-16 23:28:37",
+  "count": 26,
   "skills": [
     {
       "name": "blender-motion-state-inspection",
@@ -90,6 +90,26 @@
     {
       "name": "skills-github-sync",
       "description": "把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说\"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一下\"，或需要初始化一个 skills 仓库、配置自动上传、排查同步失败时使用。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "solidcraft-checking",
+      "description": "Use alongside solidcraft-modeling and solidcraft-editing whenever you build, change or port a SolidCraft design. Checks for errors SolidCraft does not report (parameter ranges, every allowed value, exact STEP comparison), regression tests, designs kept in git, porting from build123d, CadQuery, OpenSCAD or STEP.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "solidcraft-editing",
+      "description": "Use when changing, fixing or extending an existing SolidCraft design through its MCP server - a .solidcraft file or the design open in the app. Typical requests: resize it, move a cut, change a hole or standoff, add a fillet or chamfer, make a fixed value parametric, or a feature shows an error after a change or after the app crashed.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "solidcraft-mechanisms",
+      "description": "Use when building, driving or animating an assembly or mechanism in SolidCraft through its MCP server - components, grounding, joints and joint origins, rigid groups, motion links, closed loops such as an actuator on a hinged panel or a linkage, contact sets, motion studies, degrees of freedom - or when a drive moves nothing, stops early or a part jumps when it is joined. To model the parts themselves, use solidcraft-modeling.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "solidcraft-modeling",
+      "description": "Use when building a new part, enclosure, bracket, plate, flange or any other 3D solid in SolidCraft through its MCP server (tools such as batch, execute, measure, screenshot), or when a SolidCraft session is using many tool calls or tokens.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
