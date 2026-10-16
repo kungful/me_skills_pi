@@ -1,7 +1,12 @@
 {
-  "generatedAt": "2026-10-16 23:34:46",
-  "count": 26,
+  "generatedAt": "2026-10-16 23:58:35",
+  "count": 27,
   "skills": [
+    {
+      "name": "apk-github-sync",
+      "description": "把本机 Pi 开发出来的 Android APK 软件包和源代码镜像备份到 GitHub 仓库（自动提交 + 推送 + 定时/实时自动备份）。当用户说\"备份 apk / 把 apk 传到 GitHub / apk 自动上传 / 新做的安卓 app 传上去 / 备份安卓源码 / apks 文件夹更新一下 / 查 apk 备份状态\"时使用。和 skills-github-sync 是姊妹技能，共用同一个仓库。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
     {
       "name": "blender-motion-state-inspection",
       "description": "Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where screenshots alone are not enough.",

@@ -469,6 +469,22 @@ def write_readme(repo_dir: Path, skills: dict, warnings: list[str]) -> None:
         lines.append(f"| [`{dest}`](skills/{dest}/) | {desc} | {info['tag']} |")
     lines.append("")
 
+    # 仓库里如果已经有 apk 备份（apk-github-sync 维护），顺手做个入口
+    apk_index = repo_dir / "apks" / INDEX_NAME
+    if apk_index.is_file():
+        try:
+            apk = json.loads(apk_index.read_text(encoding="utf-8"))
+            n = int(apk.get("count") or 0)
+            lines += [
+                "## APK 备份",
+                "",
+                f"Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 {n} 个应用，"
+                f"由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。",
+                "",
+            ]
+        except (OSError, ValueError):
+            pass
+
     if warnings:
         lines += ["## 警告", ""]
         lines += [f"- {w}" for w in warnings]
