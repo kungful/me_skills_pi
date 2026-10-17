@@ -46,7 +46,7 @@ import time
 import urllib.error
 import urllib.request
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 HOWTO = r"""
 ==============================================================================
@@ -164,16 +164,33 @@ GUARD_SH = "/etc/netguard.sh"      # 巡检脚本本体
 GUARD_CONF = "/etc/netguard.conf"  # 参数（分钟数/模式/恢复命令）
 
 
+# 分级软修复（netfix）：比重启温和的救网阶梯
+WAN_TARGETS = ("223.5.5.5", "114.114.114.114")   # 判定「有没有网」的探测目标
+FIX_SH = "/etc/netfix.sh"       # 阶梯脚本本体
+FIX_CONF = "/etc/netfix.conf"   # 参数
+FIX_RECOVER = FIX_SH             # 看门狗默认的「先软后硬」恢复命令
+
+
 def guard_script_path() -> str:
     """找 netguard.sh：cpe140.py 同级的 device/ 目录，或当前目录。"""
+    return _device_script("netguard.sh")
+
+
+def fix_script_path() -> str:
+    """找 netfix.sh：cpe140.py 同级的 device/ 目录，或当前目录。"""
+    return _device_script("netfix.sh")
+
+
+def _device_script(name: str) -> str:
+    """在几个候选位置里找 device/ 下的设备端脚本。"""
     here = os.path.dirname(os.path.abspath(__file__))
-    for c in (os.path.join(here, "device", "netguard.sh"),
-              os.path.join(here, "netguard.sh"),
-              os.path.join(os.getcwd(), "device", "netguard.sh"),
-              os.path.join(os.getcwd(), "netguard.sh")):
+    for c in (os.path.join(here, "device", name),
+              os.path.join(here, name),
+              os.path.join(os.getcwd(), "device", name),
+              os.path.join(os.getcwd(), name)):
         if os.path.isfile(c):
             return c
-    raise CpeError("找不到 netguard.sh（它应放在 cpe140.py 同级的 device/ 目录里）")
+    raise CpeError(f"找不到 {name}（它应放在 cpe140.py 同级的 device/ 目录里）")
 
 
 class CpeError(Exception):
@@ -366,7 +383,10 @@ class Cpe:
              "AUTO_REBOOT_WEEK": payload}
         self.api("timectrl", d, timeout=timeout)
 
-    _UNSAFE = (chr(96), chr(34), chr(92))   # 反引号/双引号/反斜杠 不能内联进 uci 值
+    _UNSAFE = (chr(96), chr(34), chr(92), "$", "{", "}")
+    # 反引号/双引号/反斜杠 会破坏 uci 值里的 sh -c "..." 语法；
+    # $ 会被那层 shell 提前展开成空；{ } 会让 CGI 静默丢掉整个值。
+    # 命中任何一个都改走「上传成脚本再执行」的路径。
     BUDGET = 620                     # 内联载荷长度上限 (给 uci 前缀+重定向留余量)
 
     def _ensure_link(self) -> None:
@@ -619,6 +639,144 @@ class Cpe:
             pass
         return res
 
+    # ------------------------- 断网诊断 & 分级软修复 ------------------------- #
+
+    def netfix_install(self) -> str:
+        """把分级软修复脚本装到设备（幂等，不启用任何自动动作）。"""
+        with open(fix_script_path(), "rb") as f:
+            self.push_bytes(f.read(), FIX_SH)
+        self.run(f"chmod 755 {FIX_SH}")
+        conf = ("# 由 cpe140 控制台写入：分级软修复参数\n"
+                "TARGETS=\"%s\"\n" % " ".join(WAN_TARGETS) +
+                "STEPS=\"usr1 unstuck renew reassoc ifup wifireload\"\n")
+        self.push_bytes(conf.encode(), FIX_CONF)
+        self.run(f"chmod 644 {FIX_CONF}")
+        return self.netfix_status()
+
+    def netfix_status(self) -> str:
+        return self.run(f"sh {FIX_SH} status 2>&1")
+
+    def netfix_log(self, n: int = 40) -> str:
+        return self.run(f"sh {FIX_SH} log 2>&1 | tail -n {n}")
+
+    def netfix_check(self) -> str:
+        return self.run(f"sh {FIX_SH} check 2>&1")
+
+    def netfix_dry(self) -> str:
+        """干跑：只打印会做什么，绝不执行。"""
+        return self.netfix_run(dry=True)
+
+    def netfix_run(self, wait: float = 90.0, dry: bool = False) -> str:
+        """现在就按阶梯软修一次（从最轻的动作开始，救回来就停）。
+
+        脚本放后台跑、这里轮询它的输出 —— 因为最坏情况要跑 1 分多钟，
+        而 uhttpd 的 CGI 只等 60 秒，同步调用会被半路砍断。
+        """
+        cmd = ("DRY=1 " if dry else "") + f"sh {FIX_SH}"
+        self.run_quiet(f"{cmd} > /tmp/netfix.out 2>&1 &", timeout=30)
+        t0 = time.time()
+        out = ""
+        while time.time() - t0 < wait:
+            time.sleep(3)
+            try:
+                out = self.run("cat /tmp/netfix.out 2>/dev/null", timeout=60)
+            except CpeError:
+                continue
+            if "--netfix--end" in out:
+                break
+        return out.strip() or "(没有输出 —— 脚本可能没跑起来)"
+
+    def diagnose(self) -> str:
+        """断网取证：一键盘点每一层，并给出「到底是哪一层坏了」的判定。
+
+        专治那个怪现象：打开管理页就又能上网 —— 多半是固件自带的
+        「强制门户」误判，把 DNS/HTTP 劫持到自己页面上（假断网）。
+        """
+        def sh(cmd: str, to: float = 60.0) -> str:
+            try:
+                return self.run(cmd, timeout=to).strip()
+            except Exception as e:                       # noqa: BLE001
+                return f"<执行失败: {e}>"
+
+        L: list[str] = ["========== 断网取证快照 ==========",
+                        sh("date '+%Y-%m-%d %H:%M:%S'; uptime")]
+
+        # 时间戳 + 上行无线
+        L.append("\n--- 1. 上行无线 (apcli0) ---")
+        L.append(sh("iwinfo apcli0 info 2>&1 | head -8"))
+
+        # ARP 里的上游网关
+        gw = sh("ip route | awk '/^default/ {print $3; exit}'")
+        L.append(f"\n--- 2. 默认网关 / 路由 ---\n网关: {gw or '(没有默认路由!)'}")
+        L.append(sh("ip route"))
+        gwarp = sh("awk 'NR>1 && $1==\"%s\" && $4!=\"00:00:00:00:00:00\" {print $4}' /proc/net/arp" % gw) if gw else ""
+        L.append("网关 ARP: " + (gwarp or "(没有有效条目 -> 二层可能不通)"))
+
+        # 三层测试（任一目标通即算通，和看门狗/软修复同一个判据）
+        L.append("\n--- 3. 三层连通性 ---")
+        def pingable(t):
+            return sh(f"ping -c 1 -W 2 {t} >/dev/null 2>&1 && echo y") == "y"
+
+        gw_up = bool(gw) and pingable(gw)
+        res = {t: pingable(t) for t in WAN_TARGETS}
+        net_up = any(res.values())
+        L.append(f"网关 {gw}: {'通' if gw_up else '不通'}")
+        L.append("外网: " + "  ".join(f"{t}={'通' if v else '不通'}" for t, v in res.items()))
+        dns_raw = sh("nslookup www.baidu.com 114.114.114.114 2>&1 | tail -4")
+        dns_ok = "Address" in dns_raw or "address" in dns_raw
+        L.append(f"外网 DNS 查询: {'通' if dns_ok else '失败'}")
+        L.append(dns_raw)
+
+        # 固件那条「强制门户」劫持链
+        L.append("\n--- 4. 固件自带的门户口（假断网元凶） ---")
+        hij = sh("iptables -t nat -S 2>/dev/null | grep -E 'detect_internet|lan_redirect|dport 53 -j DNAT|dport 80 -j DNAT'")
+        hijack = bool(hij) and "<执行失败" not in hij and bool(hij.strip())
+        L.append("劫持规则: " + (hij if hijack else "无（正常）"))
+        istat = sh("cat /tmp/.internet_status 2>/dev/null")
+        L.append(f"固件自报的互联网状态: {istat!r}（实测网络正常时它一直写 0）")
+        L.append("检测进程: " + (sh("pidof detect_internet") or "未运行"))
+        vap5 = sh("uci -q get wireless.vap5.disabled 2>/dev/null")
+        L.append(f"上行禁用旗 vap5.disabled: {vap5 or '(未设置)'}  "
+                 "(1 = 固件自己的 aptrack 把上行关了，它要等 200 秒才恢复)")
+
+        # 上行接口 & DHCP
+        L.append("\n--- 5. 上行接口 wan ---")
+        L.append(sh("ubus call network.interface.wan status 2>/dev/null "
+                   "| grep -E '\"up\"|\"address\"|\"proto\"' | head -4"))
+
+        # 相关守护
+        L.append("\n--- 6. 相关守护进程 ---")
+        L.append(sh("ps w | grep -E 'aptrack|detect_internet|wpa_supp|udhcpc|netguard' | grep -v grep"))
+
+        # 日志尾部（滤掉我们自己刷屏的噪声，否则真消息会被挤掉）
+        L.append("\n--- 7. 系统日志 (有意义的尾 25 行) ---")
+        L.append(sh("logread 2>/dev/null | grep -v 'Broken pipe' | grep -v drop_caches | tail -25"))
+
+        # ---- 判定 ----
+        L.append("\n========== 判定 ==========")
+        if net_up and hijack:
+            L.append("→ 【假断网】外网其实是通的，但固件的门户劫持规则在生效：")
+            L.append("  它把你的 DNS(53) 和网页(80) 抢到自己的页面上，所以你『上不了网』。")
+            L.append("  这就是那种“没动什么就又好了”的断网，也是最可疑的假断网。")
+            L.append("  ✅ 立即恢复: python cpe140.py fix   (第一步 kill -USR1 就会清掉)")
+            L.append("  ✅ 根治(可选): uci set detect_internet.main.enable_redirect=0 后重启该服务")
+        elif not gw_up:
+            L.append("→ 【上行无线/网关不通】设备与上游光猫的链路断了（看第 1 节信号与第 4 节的禁用旗）。")
+            if vap5 == "1":
+                L.append("  ⚠ 看到 vap5.disabled=1：这是固件自带的 aptrack 把上行关了，"
+                         "它会睡 200 秒才自己恢复。")
+            L.append("  ✅ 先软修: python cpe140.py fix （重新关联/重拨，比重启轻）")
+        elif not net_up:
+            L.append("→ 【上游/宽带问题】能到光猫但到不了外网 —— 重启本机基本没用。")
+            L.append("  ✅ 检查光猫/宽带；本机最多软修一下上行 DHCP。")
+        elif not dns_ok:
+            L.append("→ 【DNS 层坏了】外网 IP 通但域名解析不了。")
+            L.append("  ✅ 切 DNS 或重启 dnsmasq；这和重启中继器无关。")
+        else:
+            L.append("→ 【现在一切正常】没抓到现场。下次出问题时立刻再跑一次以便对比。")
+        L.append("\n提示: 这是只读取证，没有改动设备的任何东西。")
+        return "\n".join(L)
+
     def close(self) -> None:
         """清理设备上的读取通道 (幂等, 进程退出自动调用)。"""
         if not getattr(self, "_link_ok", False):
@@ -652,12 +810,15 @@ class Cpe:
 
     def guard_install(self, minutes: int = 10, mode: str = "reboot",
                       recover: str = "", enable: bool = True,
-                      max_reboot: int = 3, long_wait: int = 21600) -> str:
-        """把看门狗脚本 + 参数装到设备上（enable=True 同时挂上 crontab）。
+                      max_reboot: int = 3, long_wait: int = 21600,
+                      softfix: bool = True) -> str:
+        """把看门狗脚本（+ 分级软修复）装到设备上（enable=True 同时挂上 crontab）。
 
         minutes    连续断网多少分钟算断网
         max_reboot 单次断网最多自动重启几次（超限后改 long_wait 秒一次）
         long_wait  超限后的重试间隔（秒，默认 21600 = 6 小时）
+        softfix    True（默认）= 重启之前先跑一遍分级软修复；
+                   救得回来就不重启，救不回来看门狗才动手
         """
         if mode not in ("reboot", "log"):
             raise CpeError("mode 只能是 reboot 或 log")
@@ -669,10 +830,14 @@ class Cpe:
             raise CpeError("long_wait 至少 60 秒")
         if re.search(r"[\n\r'\"`$\\]", recover):
             raise CpeError("recover 里有危险字符（换行/引号/反引号/$/反斜杠）")
+        if softfix and not recover:
+            recover = FIX_RECOVER
         src = guard_script_path()
         with open(src, "rb") as f:
             self.push_bytes(f.read(), GUARD_SH)
         self.run(f"chmod 755 {GUARD_SH}")
+        if softfix or recover == FIX_RECOVER:
+            self.netfix_install()          # 先把阶梯脚本装好，再写参数
         conf = ("# 由 cpe140 控制台写入：断网看门狗参数\n"
                 f"MINUTES={minutes}\n"
                 # 向上取整，保证「选 5 分钟」不会早于 5 分钟动手
@@ -691,7 +856,8 @@ class Cpe:
         self.run(f"sh {GUARD_SH} cron off 2>&1")
         return self.run(f"rm -f {GUARD_SH} {GUARD_CONF} /etc/netguard.last "
                         f"/etc/netguard.reboots /tmp/netguard.*; "
-                        f"echo 已卸载看门狗（含单次断网重启计数）")
+                        f"echo 已卸载看门狗（含单次断网重启计数）；"
+                        f"分级软修复 {FIX_SH} 还留着，不动它")
 
 
 # --------------------------------------------------------------------------- #
@@ -822,7 +988,20 @@ def gui(host: str, port: int) -> None:                   # pragma: no cover
     ttk.Button(b4, text="命令手册", width=10, command=howto).pack(side="left", padx=6)
 
     # 维护
-    t5 = ttk.Frame(nb); nb.add(t5, text=" 维护 "); b5 = bar(t5); x5 = mk_text(t5)
+    t5 = ttk.Frame(nb); nb.add(t5, text=" 诊断/救网 "); b5 = bar(t5); b5b = bar(t5); x5 = mk_text(t5)
+    ttk.Button(b5, text="一键盘点（断网取证）", width=20,
+               command=lambda: bg(cpe.diagnose, x5, "诊断")).pack(side="left", padx=3)
+    ttk.Button(b5, text="分级软修复（比重启温和）", width=22,
+               command=lambda: bg(cpe.netfix_run, x5, "软修复")).pack(side="left", padx=3)
+    ttk.Button(b5, text="只看能不能修（干跑）", width=18,
+               command=lambda: bg(cpe.netfix_dry, x5, "干跑")).pack(side="left", padx=3)
+    ttk.Button(b5, text="软修复状态", width=12,
+               command=lambda: bg(cpe.netfix_status, x5, "状态")).pack(side="left", padx=3)
+    ttk.Button(b5, text="软修复日志", width=12,
+               command=lambda: bg(cpe.netfix_log, x5, "日志")).pack(side="left", padx=3)
+    ttk.Label(b5b, text="开管理页就又能上网？先点「一键盘点」：它会把行踪是「假断网（固件门户误判劫持 DNS/网页）」还是「真断网（上行挂了）」直接判给你。",
+              foreground="#555").pack(side="left")
+
     def _dump():
         fn = filedialog.asksaveasfilename(defaultextension=".bin",
                                           initialfile="cpe140_fullflash.bin") or "fb.bin"
@@ -936,6 +1115,10 @@ def main(argv=None) -> int:
     sp = sub.add_parser("schedule", help="定时重启设置")
     sp.add_argument("--off", action="store_true"); sp.add_argument("--week", type=int, default=0)
     sp.add_argument("--hour", type=int, default=4); sp.add_argument("--minute", type=int, default=0)
+    sp = sub.add_parser("diagnose", help="断网取证：一键盘点每一层 + 判定到底哪层坏了")
+    sp = sub.add_parser("fix", help="分级软修复：从轻到重救网，比直接重启温和")
+    sp.add_argument("action", nargs="?", default="run",
+                    choices=["run", "check", "dry", "status", "log", "install"])
     sp = sub.add_parser("guard", help="断网看门狗：持续断网自动重启")
     sp.add_argument("action", nargs="?", default="status",
                     choices=["status", "on", "off", "log", "test", "reset",
@@ -949,6 +1132,8 @@ def main(argv=None) -> int:
     sp.add_argument("--long-wait", type=int, default=21600,
                     help="超限后的重试间隔秒数（默认 21600 = 6 小时）")
     sp.add_argument("--no-enable", action="store_true", help="只装不启用")
+    sp.add_argument("--no-softfix", action="store_true",
+                    help="不要「先软后硬」：到点直接重启（默认先跑分级软修复）")
     sp = sub.add_parser("mode", help="工作模式切换 (危险)")
     sp.add_argument("mode", choices=list(MODE_MAP)); sp.add_argument("--force", action="store_true")
     sp = sub.add_parser("factory-reset", help="恢复出厂 (危险!)"); sp.add_argument("--yes", action="store_true")
@@ -978,9 +1163,25 @@ def main(argv=None) -> int:
                 print(cpe.guard_reset())
             elif a.action == "install":
                 print(cpe.guard_install(a.minutes, a.mode, a.recover, not a.no_enable,
-                                        a.max_reboot, a.long_wait))
+                                        a.max_reboot, a.long_wait, not a.no_softfix))
             elif a.action == "uninstall":
                 print(cpe.guard_uninstall())
+            return 0
+        if a.cmd == "diagnose":
+            print(cpe.diagnose()); return 0
+        if a.cmd == "fix":
+            if a.action == "install":
+                print(cpe.netfix_install())
+            elif a.action == "status":
+                print(cpe.netfix_status())
+            elif a.action == "check":
+                print(cpe.netfix_check())
+            elif a.action == "dry":
+                print(cpe.netfix_dry())
+            elif a.action == "log":
+                print(cpe.netfix_log())
+            else:
+                print(cpe.netfix_run())
             return 0
         if a.cmd == "gui":
             gui(a.host, a.port); return 0
