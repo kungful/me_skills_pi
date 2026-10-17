@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-17 09:01:53**　|　共 **12** 个应用　|　APK 合计 **46.8 MB**
+最后同步：**2026-10-17 09:24:30**　|　共 **12** 个应用　|　APK 合计 **46.8 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -36,8 +36,8 @@ apks/<分类>/<应用>/
 
 | 应用 | 版本 | APK | 源码 | 体积 | 说明 |
 |---|---|---|---|---|---|
-| **CPE140 控制台 (PC)** | 1.0.0 | - | [`src/`](tools/cpe140-ctrl/src/) | 0 B | 易阔CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免登录，CLI+tkinter GUI，纯标准库；含脱敏逆向报告 |
-| **CPE140 控制台 (安卓)** | 1.0.0 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.2 MB | 同上手机版：概览/客户端/配置/root终端/维护(备份整片flash)，纯 Java + SAF，免存储权限 |
+| **CPE140 控制台 (PC)** | 1.1.0 | - | [`src/`](tools/cpe140-ctrl/src/) | 0 B | 逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI；断网看门狗（断网 N 分钟自动重启）；命令手册 howto；含脱敏报告 |
+| **CPE140 控制台 (安卓)** | 1.1.0 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.3 MB | 手机版完全控制台：概览/客户端/配置/root 终端/维护（整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；纯 Java + SAF 零存储权限；深色自绘 UI |
 | **Pi 通知 (piLink)** | 0.7.0 | [`pilink.apk`](tools/pilink/pilink.apk) | [`src/`](tools/pilink/src/) | 1.9 MB | 把 pi / pi-web 的通知与派发链路接到安卓手机 |
-| **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 57.1 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
+| **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 65.1 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
 | **需求雷达** | - | [`demand-radar.apk`](tools/demand-radar/demand-radar.apk) | [`src/`](tools/demand-radar/src/) | 857.4 KB | 从公开渠道挖掘市场需求信号，打分聚簇出机会榜 |

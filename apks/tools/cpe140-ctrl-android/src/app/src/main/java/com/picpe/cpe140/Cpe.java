@@ -41,6 +41,10 @@ public class Cpe {
     public static final int INJ_MAX = 880;
     public static final int BUDGET = 620;
 
+    /** 断网看门狗在设备上的落点。 */
+    public static final String GUARD_SH = "/etc/netguard.sh";
+    public static final String GUARD_CONF = "/etc/netguard.conf";
+
     public static final Set<String> DANGEROUS = new HashSet<>(Arrays.asList(
             "OP_MODE", "VLAN_ENABLED", "PSMODE", "LAN_IP_ADDR", "LAN_NETMASK",
             "LAN_DHCP_SERVER_ENABLED", "DHCP_SERVER_ENABLED", "WLAN0_VAP0_SSID",
@@ -288,25 +292,105 @@ public class Cpe {
         return http(OUT_URL, null, null, to);
     }
 
+    /**
+     * 上传任意二进制：裸 body → /tmp/upload.img → 目标路径，并在设备端 wc -c 校验。
+     * 设备 CGI 偶发竞态（头一次回读可能拿到空内容），所以默认重试 3 次。
+     */
     public void push(byte[] data, String remote) throws Exception {
-        ensureLink();
-        http("/cgi-bin/upload", data, "application/octet-stream",
-                (int) Math.max(60000, data.length / 15 + 30000));
-        String q = q(remote);
-        exec("mv -f " + UP_TMP + " " + q + " 2>/dev/null || cp " + UP_TMP + " " + q, 90000);
-        String got = run("wc -c < " + q).trim();
-        try {
-            if (Integer.parseInt(got.split("\\s+")[0]) != data.length) {
-                throw new IOException("上传校验失败：期望 " + data.length + " 实际 " + got);
+        Exception last = null;
+        for (int i = 0; i < 3; i++) {
+            if (i > 0) {
+                linkOk = false;      // 重新铺一遍回读通道再试
             }
-        } catch (NumberFormatException e) {
-            throw new IOException("上传校验失败：" + got);
+            try {
+                ensureLink();
+                http("/cgi-bin/upload", data, "application/octet-stream",
+                        (int) Math.max(60000, data.length / 15 + 30000));
+                String q = q(remote);
+                exec("mv -f " + UP_TMP + " " + q + " 2>/dev/null || cp " + UP_TMP + " " + q, 90000);
+                String got = run("wc -c < " + q).trim();
+                int n;
+                try {
+                    n = Integer.parseInt(got.split("\\s+")[0]);
+                } catch (Exception e) {
+                    last = new IOException("回读拿到空内容");
+                    continue;
+                }
+                if (n == data.length) {
+                    return;
+                }
+                last = new IOException("设备端只有 " + n + " 字节");
+            } catch (IOException e) {
+                last = e;
+            }
         }
+        throw new IOException("上传校验失败：" + (last == null ? "未知" : last.getMessage()));
     }
 
     /** 整片 flash 备份（默认 mtd9 = fullflash 8MB）。 */
     public byte[] dumpFlash(int mtd) throws Exception {
         return readBytes("/dev/mtd" + mtd, 600000);
+    }
+
+    // ---------------------------------------------------- 断网看门狗 netguard
+
+    /** 看门狗状态；没装的话给一句人话提示。 */
+    public String guardStatus() throws Exception {
+        String s = run("sh " + GUARD_SH + " status 2>&1");
+        if (s.contains("can't open") || s.contains("not found")) {
+            return "看门狗还没装上。\n点「开启看门狗」（或先点「干跑测试」看它现在会怎么判断）。";
+        }
+        return s;
+    }
+
+    public String guardLog() throws Exception {
+        String s = run("tail -n 60 /tmp/netguard.log 2>&1");
+        return s.trim().isEmpty() || s.contains("No such file") ? "（还没有日志：说明它还没真正判过「断网」）" : s;
+    }
+
+    /** 干跑：只算一遍，绝不重启、绝不执行恢复。 */
+    public String guardTest() throws Exception {
+        return run("sh " + GUARD_SH + " test 2>&1");
+    }
+
+    public String guardReset() throws Exception {
+        return run("sh " + GUARD_SH + " reset 2>&1");
+    }
+
+    public String guardOn() throws Exception {
+        return run("sh " + GUARD_SH + " cron on 2>&1");
+    }
+
+    public String guardOff() throws Exception {
+        return run("sh " + GUARD_SH + " cron off 2>&1");
+    }
+
+    /** 安装脚本 + 参数（enable=true 同时挂上 crontab）。 */
+    public String guardInstall(byte[] script, int minutes, String mode, String recover,
+                               boolean enable) throws Exception {
+        push(script, GUARD_SH);
+        run("chmod 755 " + GUARD_SH);
+        int need = Math.max(1, Math.round(minutes / 2f));
+        String conf = "# 由 CPE140 控制台写入：断网看门狗参数\n"
+                + "MINUTES=" + minutes + "\n"
+                + "FAIL_NEED=" + need + "\n"
+                + "MODE=" + mode + "\n"
+                + "RECOVER=" + recover + "\n";
+        push(conf.getBytes("UTF-8"), GUARD_CONF);
+        run("chmod 644 " + GUARD_CONF);
+        if (enable) {
+            guardOn();
+        } else {
+            guardOff();
+        }
+        return guardStatus();
+    }
+
+    /** 停用并摸掉脚本，设备回到没装过的状态。 */
+    public String guardUninstall() throws Exception {
+        run("sh " + GUARD_SH + " cron off 2>&1");
+        return run("rm -f " + GUARD_SH + " " + GUARD_CONF + " /tmp/netguard.log /tmp/netguard.fails; "
+                + "echo 已卸载看门狗");
     }
 
     // --------------------------------------------------------------- 管理

@@ -745,6 +745,14 @@ def gui(host: str, port: int) -> None:                   # pragma: no cover
     def bar(parent):
         b = ttk.Frame(parent, padding=4); b.pack(fill="x"); return b
 
+    def howto():
+        w = tk.Toplevel(root); w.title("命令手册 / 教程"); w.geometry("860x660")
+        t = tk.Text(w, wrap="word", bg="#0f1418", fg="#cfe8cf", font=("Consolas", 9))
+        sb = ttk.Scrollbar(w, command=t.yview); t.configure(yscrollcommand=sb.set)
+        sb.pack(side="right", fill="y"); t.pack(fill="both", expand=True)
+        t.insert("end", HOWTO.strip() + "\n")
+        ttk.Button(w, text="关闭", command=w.destroy).pack(pady=4)
+
     # 概览
     t1 = ttk.Frame(nb); nb.add(t1, text=" 概览 "); b1 = bar(t1); x1 = mk_text(t1)
     for lbl, fn in (("设备信息", cpe.sysinfo), ("链路状态", cpe.wireless_status),
@@ -792,6 +800,7 @@ def gui(host: str, port: int) -> None:                   # pragma: no cover
                    ("mtd", "cat /proc/mtd"), ("日志", "logread | tail -30")):
         ttk.Button(b4, text=lbl, width=6,
                    command=lambda cc=c: (var.set(cc), bg(lambda: cpe.run(cc), x4))).pack(side="left")
+    ttk.Button(b4, text="命令手册", width=10, command=howto).pack(side="left", padx=6)
 
     # 维护
     t5 = ttk.Frame(nb); nb.add(t5, text=" 维护 "); b5 = bar(t5); x5 = mk_text(t5)
@@ -808,6 +817,32 @@ def gui(host: str, port: int) -> None:                   # pragma: no cover
         "确认", "重启设备? 会短暂断网。") and bg(
         lambda: "重启命令已发送" if cpe.reboot() else "失败", x5, "重启")).pack(side="left", padx=3)
     ttk.Button(b5, text="清残留并退出", command=lambda: (cpe.close(), root.destroy())).pack(side="left", padx=3)
+
+    # 断网看门狗
+    t6 = ttk.Frame(nb); nb.add(t6, text=" 看门狗 "); b6a = bar(t6); b6 = bar(t6); x6 = mk_text(t6)
+    ttk.Label(b6a, text="断网看门狗：设备每 2 分钟 ping 一次外网；连续", foreground="#333").pack(side="left")
+    gmin = tk.StringVar(value="10")
+    ttk.Entry(b6a, textvariable=gmin, width=4).pack(side="left")
+    ttk.Label(b6a, text="分钟不通 → 自动重启它自己（30 分钟冷却，与「定时重启」互不干扰）",
+              foreground="#333").pack(side="left")
+
+    def _g_on():
+        m = int(gmin.get() or 10)
+        if not messagebox.askyesno("确认开启", f"安装并启用断网看门狗：\n连续 {m} 分钟不通外网就自动重启设备。\n\n"
+                                   "只会真的断网时才重启；上游光猫坏了也不会无限重启。\n确认？"):
+            return
+        bg(lambda: cpe.guard_install(minutes=m), x6, "开启看门狗")
+
+    ttk.Button(b6, text="开启（装+启用）", width=16, command=_g_on).pack(side="left", padx=3)
+    ttk.Button(b6, text="停用", width=8, command=lambda: bg(cpe.guard_off, x6, "停用")).pack(side="left", padx=3)
+    for lbl, fn in (("状态", cpe.guard_status), ("干跑（不重启）", cpe.guard_test),
+                    ("日志", cpe.guard_log), ("重置计数", cpe.guard_reset)):
+        ttk.Button(b6, text=lbl, width=14,
+                   command=lambda f=fn, l=lbl: bg(f, x6, l)).pack(side="left", padx=3)
+    ttk.Button(b6, text="卸载看门狗", command=lambda: messagebox.askyesno(
+        "确认", "删掉设备上的 /etc/netguard.sh 和它的定时任务？") and bg(
+        cpe.guard_uninstall, x6, "卸载")).pack(side="left", padx=3)
+    bg(cpe.guard_status, x6, "当前状态")
     root.after(150, pump)
     root.mainloop()
 

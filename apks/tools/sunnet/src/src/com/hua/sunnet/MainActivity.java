@@ -2,6 +2,7 @@ package com.hua.sunnet;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -79,6 +80,13 @@ public class MainActivity extends Activity {
 
         // 蓝牙权限：进来自动问一次（可在设置里拒绝，页面上有按钮重新问）
         requestBlePermissions(false);
+    }
+
+    // ------------------------------------------------------------ 选文件回传
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        try { if (bridge != null) bridge.onActivityResult(req, res, data); } catch (Throwable ignored) { }
     }
 
     // ------------------------------------------------------------ 权限

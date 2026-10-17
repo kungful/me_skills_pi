@@ -2,15 +2,16 @@ package com.picpe.cpe140;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.res.ColorStateList;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.InputType;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -24,7 +25,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -38,7 +38,12 @@ import java.util.concurrent.Executors;
 
 /**
  * 易阔 CPE140 中继器控制台（Android）。
- * 全部功能走两条未认证通道：Web API + timectrl 的 root 命令注入。
+ *
+ * 全部功能走两条未认证通道：
+ *   1) Web API（/cgi-bin/*）读/写配置、重启、改口令；
+ *   2) /cgi-bin/timectrl 的 root 命令注入 —— 等价于设备的 root shell。
+ *
+ * UI：纯自绘深色风格（自写 drawable + 自写底部导航），不依赖 Material 主题。
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -48,26 +53,31 @@ public class MainActivity extends AppCompatActivity {
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     private Cpe cpe;
-    private TextView status;
+    private TextView status, pill, guardState;
     private TextView[] out = new TextView[6];
-    private Button[] tabs = new Button[6];
     private ScrollView[] panels = new ScrollView[6];
-    private EditText hostBox, cmdBox, kKey, kVal, schW, schH, schM;
+    private LinearLayout[] navs = new LinearLayout[6];
+    private ImageView[] navIcons = new ImageView[6];
+    private TextView[] navLabels = new TextView[6];
+    private EditText hostBox, cmdBox, kKey, kVal, schW, schH, schM, guardMin;
     private Switch schEn;
     private int tab = 1;
+
+    private final List<String> hist = new ArrayList<>();
+    private int histPos = -1;
 
     private String pendingTask, pendingArg;
     private ActivityResultLauncher<String> createDoc;
     private ActivityResultLauncher<String[]> openDoc;
 
-    // ------------------------------------------------------------ 生命周期
+    // ============================================================ 生命周期
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_main);
 
-        // targetSdk 35+ 强制边到边：自己把系统栏/刘海的内边距补上，别让顶栏压状态栏
+        // targetSdk 35+ 强制边到边：自己把系统栏/刘海的内边距补上
         View root = findViewById(R.id.root);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, ins) -> {
             androidx.core.graphics.Insets bars = ins.getInsets(
@@ -76,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
             return ins;
         });
 
+        pill = findViewById(R.id.pill_state);
         status = findViewById(R.id.status);
         hostBox = findViewById(R.id.host);
         cmdBox = findViewById(R.id.cmd);
@@ -85,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
         schW = findViewById(R.id.sch_w);
         schH = findViewById(R.id.sch_h);
         schM = findViewById(R.id.sch_m);
+        guardMin = findViewById(R.id.guardMin);
+        guardState = findViewById(R.id.guardState);
 
         out[1] = findViewById(R.id.out1);
         out[2] = findViewById(R.id.out2);
@@ -92,31 +105,34 @@ public class MainActivity extends AppCompatActivity {
         out[4] = findViewById(R.id.out4);
         out[5] = findViewById(R.id.out5);
 
-        int[] tabIds = {0, R.id.tab1, R.id.tab2, R.id.tab3, R.id.tab4, R.id.tab5};
+        int[] navIds = {0, R.id.nav1, R.id.nav2, R.id.nav3, R.id.nav4, R.id.nav5};
+        int[] iconIds = {0, R.id.navi1, R.id.navi2, R.id.navi3, R.id.navi4, R.id.navi5};
+        int[] labelIds = {0, R.id.navt1, R.id.navt2, R.id.navt3, R.id.navt4, R.id.navt5};
         int[] panelIds = {0, R.id.panel1, R.id.panel2, R.id.panel3, R.id.panel4, R.id.panel5};
         for (int i = 1; i <= 5; i++) {
-            tabs[i] = findViewById(tabIds[i]);
+            navs[i] = findViewById(navIds[i]);
+            navIcons[i] = findViewById(iconIds[i]);
+            navLabels[i] = findViewById(labelIds[i]);
             panels[i] = findViewById(panelIds[i]);
             final int n = i;
-            tabs[i].setOnClickListener(v -> selectTab(n));
+            navs[i].setOnClickListener(v -> selectTab(n));
         }
 
-        createDoc = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"),
-                uri -> {
+        createDoc = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
                     if (uri == null) {
                         say(out[tab], "已取消。");
                         return;
                     }
+                    final Uri u = uri;
                     if ("dumpflash".equals(pendingTask)) {
-                        final Uri u = uri;
-                        bg(out[5], "正在经注入通道读取 /dev/mtd9（8MB，约 10 秒）…", () -> {
+                        bg(out[5], "正在读取 /dev/mtd9（8MB，约 10 秒）…", () -> {
                             byte[] d = cpe.dumpFlash(9);
                             writeUri(u, d);
                             return "已备份 " + sz(d.length) + " → " + u.getLastPathSegment()
-                                    + "\n（md5 请在本机用工具核对）";
+                                    + "\n（md5 可在电脑上用 cpe140.py 复核）";
                         });
                     } else if ("pull".equals(pendingTask)) {
-                        final Uri u = uri;
                         final String remote = pendingArg;
                         bg(out[5], "正在下载 " + remote + " …", () -> {
                             byte[] d = cpe.readBytes(remote, 300000);
@@ -124,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
                             return "已下载 " + sz(d.length) + " → " + u.getLastPathSegment();
                         });
                     } else if ("cfgsave".equals(pendingTask)) {
-                        final Uri u = uri;
                         bg(out[3], "正在导出全量配置…", () -> {
                             String j = cpe.cfgAll().toString(2);
                             writeUri(u, j.getBytes("UTF-8"));
@@ -147,9 +162,12 @@ public class MainActivity extends AppCompatActivity {
             });
         });
 
-        findViewById(R.id.b_connect).setOnClickListener(v -> connect());
+        findViewById(R.id.b_connect).setOnClickListener(v -> {
+            hideKeyboard();
+            connect();
+        });
 
-        // 1 概览
+        // ---------------------------------------------------------- 1 概览
         on(R.id.b_info, 1, "设备信息", () -> Cpe.pretty(cpe.sysinfo()));
         on(R.id.b_link, 1, "链路状态（上游接入）", () -> Cpe.pretty(cpe.wirelessStatus()));
         on(R.id.b_wan, 1, "WAN", () -> Cpe.pretty(cpe.wan()));
@@ -157,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
         on(R.id.b_wifi, 1, "无线配置", () -> Cpe.pretty(cpe.wifiConfig()));
         on(R.id.b_doctor, 1, "系统自检", () -> cpe.doctor());
 
-        // 2 客户端
+        // -------------------------------------------------------- 2 客户端
         on(R.id.b_clients, 2, "DHCP 客户端", () -> Cpe.pretty(cpe.clients()));
         on(R.id.b_arp, 2, "ARP 表", () -> {
             StringBuilder sb = new StringBuilder("IP 地址 / MAC / 接口\n");
@@ -169,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         on(R.id.b_scan, 2, "扫描周边 WiFi", () -> Cpe.pretty(cpe.scan()));
         on(R.id.b_chan, 2, "可用信道", () -> Cpe.pretty(cpe.channels()));
 
-        // 3 配置
+        // ---------------------------------------------------------- 3 配置
         on(R.id.b_cfgall, 3, "全量配置", () -> cpe.cfgAll().toString(2));
         findViewById(R.id.b_cfgsave).setOnClickListener(v -> {
             if (!ready(3)) return;
@@ -178,42 +196,59 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.b_cfgset).setOnClickListener(v -> {
             if (!ready(3)) return;
-            String k = kKey.getText().toString().trim();
-            String val = kVal.getText().toString();
+            hideKeyboard();
+            final String k = kKey.getText().toString().trim();
+            final String val = kVal.getText().toString();
             if (k.isEmpty()) {
-                say(out[3], "先填 KEY。");
+                say(out[3], "先填 KEY，例如 SysDevName。");
                 return;
             }
-            boolean danger = Cpe.DANGEROUS.contains(k.toUpperCase());
-            if (danger) {
-                confirm("危险键写入", k + " 属于可能中断连接/牵连无线的键，"
-                                + "写错会掉线甚至失联（需拿网线+串口救）。\n确认要写吗？",
+            if (Cpe.DANGEROUS.contains(k.toUpperCase())) {
+                confirm("危险键写入", k + " 属于可能中断连接 / 牵连无线的键，"
+                                + "写错会掉线甚至失联。\n确认要写吗？",
                         () -> bg(out[3], "写入 " + k + " …", () -> {
                             cpe.cfgSet(true, k, val);
-                            return "写入 " + k + " = " + val + "\n返回 OK；改无线类字段会让 wifi 短暂重启。";
+                            return "已写 " + k + " = " + val + "\n（改无线类字段会让 wifi 短暂重启）";
                         }));
             } else {
                 bg(out[3], "写入 " + k + " …", () -> {
                     cpe.cfgSet(true, k, val);
-                    return "写入 " + k + " = " + val;
+                    return "已写 " + k + " = " + val;
                 });
             }
         });
 
-        // 4 终端
+        // ---------------------------------------------------------- 4 终端
+        findViewById(R.id.b_help).setOnClickListener(v ->
+                Help.show(this, s -> cmdBox.setText(s)));
+        findViewById(R.id.b_hist).setOnClickListener(v -> {
+            if (hist.isEmpty()) {
+                toast("还没有历史命令");
+                return;
+            }
+            histPos = histPos <= 0 ? hist.size() - 1 : histPos - 1;
+            cmdBox.setText(hist.get(histPos));
+            cmdBox.setSelection(cmdBox.getText().length());
+        });
+        findViewById(R.id.b_clear).setOnClickListener(v -> say(out[4], "$ 界面已清空，历史还在「↑ 上一条」里。"));
         findViewById(R.id.b_run).setOnClickListener(v -> {
-            if (!ready(4)) return;
+            hideKeyboard();
             runCmd(cmdBox.getText().toString());
         });
-        quick(R.id.q1, "id");
-        quick(R.id.q2, "ps w");
-        quick(R.id.q3, "df -h");
-        quick(R.id.q4, "ip a");
-        quick(R.id.q5, "cat /proc/net/arp");
-        quick(R.id.q6, "logread | tail -40");
-        quick(R.id.q7, "ls -la /www");
+        cmdBox.setOnEditorActionListener((v, actionId, ev) -> {
+            hideKeyboard();
+            runCmd(cmdBox.getText().toString());
+            return true;
+        });
+        quick(R.id.q1, "id; uname -a", "我是谁");
+        quick(R.id.q2, "ps w", "进程");
+        quick(R.id.q3, "df -h", "磁盘");
+        quick(R.id.q4, "ip a", "网卡与地址");
+        quick(R.id.q5, "cat /proc/net/arp", "在线设备");
+        quick(R.id.q6, "logread | tail -40", "系统日志");
+        quick(R.id.q7, "ls -la /www; ls -la /etc/config", "网站目录");
 
-        // 5 维护
+        // ---------------------------------------------------------- 5 维护
         findViewById(R.id.b_dump).setOnClickListener(v -> {
             if (!ready(5)) return;
             pendingTask = "dumpflash";
@@ -221,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.b_pull).setOnClickListener(v -> {
             if (!ready(5)) return;
-            input("下载设备文件", "设备上的路径（如 /etc/config/administrator）", "/etc/config/administrator", s -> {
+            input("下载设备文件", "设备上的路径", "/etc/config/administrator", s -> {
                 pendingTask = "pull";
                 pendingArg = s;
                 String name = s.substring(s.lastIndexOf('/') + 1);
@@ -231,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.b_push).setOnClickListener(v -> {
             if (!ready(5)) return;
-            input("上传文件", "目标路径（如 /tmp/u.bin）", "/tmp/u.bin", s -> {
+            input("上传文件", "目标路径", "/tmp/u.bin", s -> {
                 pendingTask = "push";
                 pendingArg = s;
                 openDoc.launch(new String[]{"*/*"});
@@ -241,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
             if (!ready(5)) return;
             bg(out[5], "清理 /tmp/.cpeout /tmp/.cpesh /tmp/upload.img /www/.cpeout …", () -> {
                 cpe.clean();
-                return "已清理临时文件。";
+                return "已清理设备上的临时文件。";
             });
         });
         findViewById(R.id.b_pw).setOnClickListener(v -> {
@@ -257,8 +292,9 @@ public class MainActivity extends AppCompatActivity {
             l.addView(n);
             new AlertDialog.Builder(this).setTitle("改 Web 管理员口令").setView(l)
                     .setPositiveButton("改", (d, w) -> bg(out[5], "改口令…", () -> {
-                        JSONObject r = cpe.setPassword(u.getText().toString(), o.getText().toString(), n.getText().toString());
-                        return "返回 " + r + "\n（未认证也能改，这正是要修的洞）";
+                        JSONObject r = cpe.setPassword(u.getText().toString(),
+                                o.getText().toString(), n.getText().toString());
+                        return "返回 " + r + "\n（未认证也能改 —— 这正是该修的洞）";
                     }))
                     .setNegativeButton("取消", null).show();
         });
@@ -272,19 +308,64 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.b_factory).setOnClickListener(v -> {
             if (!ready(5)) return;
-            confirm("恢复出厂设置", "会清空全部配置（含无线名/口令）并重启！\n"
-                            + "除非你有 easyconfig 备份和网线兜底，否则别点。确认？",
+            confirm("恢复出厂设置", "会清空全部配置（含无线名 / 口令）并重启！\n"
+                            + "除非你手里有配置备份和网线兜底，否则别点。确认？",
                     () -> bg(out[5], "下发恢复出厂…", () -> {
                         cpe.factoryReset();
                         return "已下发恢复出厂。设备将重启并回到出厂配置。";
                     }));
         });
+
+        // -------- 看门狗 --------
+        findViewById(R.id.b_g5).setOnClickListener(v -> guardMin.setText("5"));
+        findViewById(R.id.b_g10).setOnClickListener(v -> guardMin.setText("10"));
+        findViewById(R.id.b_g20).setOnClickListener(v -> guardMin.setText("20"));
+        findViewById(R.id.b_guard_on).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            final int m = Math.max(2, num(guardMin.getText().toString(), 10));
+            confirm("开启断网看门狗",
+                    "从现在起：设备每 2 分钟探测一次外网，连续 " + m + " 分钟不通就自动重启它自己"
+                            + "（30 分钟内最多重启一次）。\n\n"
+                            + "它和「定时重启」互不干扰；想停就点「停用」。确认开启？",
+                    () -> bg(guardState(), "安装并开启看门狗（阈值 " + m + " 分钟）…", () -> {
+                        byte[] sh = asset("netguard.sh");
+                        return cpe.guardInstall(sh, m, "reboot", "", true);
+                    }));
+        });
+        findViewById(R.id.b_guard_off).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(guardState(), "停用看门狗…", () -> {
+                cpe.guardOff();
+                return "已停用（脚本还留着，随时能再开）。\n\n" + cpe.guardStatus();
+            });
+        });
+        findViewById(R.id.b_guard_status).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(guardState(), "读看门狗状态…", () -> cpe.guardStatus());
+        });
+        findViewById(R.id.b_guard_log).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(guardState(), "读看门狗日志…", () -> cpe.guardLog());
+        });
+        findViewById(R.id.b_guard_test).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(guardState(), "干跑（只算，不重启）…", () -> cpe.guardTest()
+                    + "\n\n说明：这一步不会重启设备，只是把「现在断网的话它会怎么判」算给你看。");
+        });
+        findViewById(R.id.b_guard_uninstall).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            confirm("卸载看门狗", "删除设备上的 /etc/netguard.sh 和参数文件，并摘掉定时任务。\n"
+                    + "设备回到没装过的状态。确认？", () -> bg(guardState(), "卸载…",
+                    () -> cpe.guardUninstall() + "\n" + cpe.guardStatus()));
+        });
+
+        // -------- 定时重启 --------
         findViewById(R.id.b_read_sch).setOnClickListener(v -> bg(out[5], "读定时重启…", () -> {
             JSONObject s = cpe.sched();
-            String t = "启用=" + s.optString("AUTO_REBOOT_ENABLED")
-                    + " 周=" + s.optString("AUTO_REBOOT_WEEK")
-                    + " 时=" + s.optString("AUTO_REBOOT_HOUR")
-                    + " 分=" + s.optString("AUTO_REBOOT_MIN");
+            final String t = "启用=" + s.optString("AUTO_REBOOT_ENABLED")
+                    + "  周=" + s.optString("AUTO_REBOOT_WEEK")
+                    + "（0=每天）  时=" + s.optString("AUTO_REBOOT_HOUR")
+                    + "  分=" + s.optString("AUTO_REBOOT_MIN");
             ui.post(() -> {
                 schEn.setChecked("1".equals(s.optString("AUTO_REBOOT_ENABLED")));
                 schW.setText(s.optString("AUTO_REBOOT_WEEK"));
@@ -295,10 +376,14 @@ public class MainActivity extends AppCompatActivity {
         }));
         findViewById(R.id.b_sched).setOnClickListener(v -> {
             if (!ready(5)) return;
-            int w = num(schW.getText().toString(), 0), h = num(schH.getText().toString(), 4), m = num(schM.getText().toString(), 0);
+            hideKeyboard();
+            final int w = num(schW.getText().toString(), 0);
+            final int h = num(schH.getText().toString(), 4);
+            final int m = num(schM.getText().toString(), 0);
             bg(out[5], "写定时重启…", () -> {
                 cpe.setSchedule(schEn.isChecked(), w, h, m);
-                return "已设置：启用=" + schEn.isChecked() + " 周=" + w + " 时=" + h + " 分=" + m;
+                return "已设置：启用=" + schEn.isChecked() + " 周=" + w + " 时=" + h + " 分=" + m
+                        + "\n（每周 " + w + " 的 " + h + ":" + m + " 重启；0 表示每天）";
             });
         });
 
@@ -310,12 +395,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         ex.execute(() -> {
-            if (cpe != null) cpe.clean();
+            if (cpe != null) {
+                cpe.clean();
+            }
         });
         ex.shutdown();
     }
 
-    // -------------------------------------------------------------- 小工具
+    // ============================================================== 小工具
 
     private static int num(String s, int def) {
         try {
@@ -345,23 +432,50 @@ public class MainActivity extends AppCompatActivity {
         return e;
     }
 
+    private TextView guardState() {
+        return guardState;
+    }
+
+    private void toast(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    }
+
+    private void hideKeyboard() {
+        View v = getCurrentFocus();
+        if (v == null) {
+            return;
+        }
+        InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (im != null) {
+            im.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        }
+        v.clearFocus();
+    }
+
     private void selectTab(int n) {
         tab = n;
         for (int i = 1; i <= 5; i++) {
-            panels[i].setVisibility(i == n ? View.VISIBLE : View.GONE);
-            tabs[i].setBackgroundResource(i == n ? R.drawable.bg_tab_on : R.drawable.bg_tab);
-            tabs[i].setTextColor(ContextCompat.getColor(this, i == n ? R.color.cyan : R.color.tab_text));
+            boolean on = i == n;
+            panels[i].setVisibility(on ? View.VISIBLE : View.GONE);
+            navs[i].setBackgroundResource(on ? R.drawable.bg_nav_on : R.drawable.bg_nav);
+            navIcons[i].setColorFilter(ContextCompat.getColor(this, on ? R.color.cyan : R.color.tab_text));
+            navLabels[i].setTextColor(ContextCompat.getColor(this, on ? R.color.cyan : R.color.tab_text));
         }
     }
 
-    private void quick(int id, String cmd) {
+    /** 快捷命令 chip：点 = 填入并执行；长按 = 只填入。 */
+    private void quick(int id, String cmd, String label) {
         Button b = findViewById(id);
+        b.setText(label);
         b.setOnClickListener(v -> {
+            hideKeyboard();
             cmdBox.setText(cmd);
             if (ready(4)) runCmd(cmd);
         });
         b.setOnLongClickListener(v -> {
             cmdBox.setText(cmd);
+            cmdBox.setSelection(cmd.length());
+            toast("已填入，可改完再点「运行」");
             return true;
         });
     }
@@ -374,7 +488,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean ready(int panel) {
         if (cpe == null) {
-            Toast.makeText(this, "先点「连接」", Toast.LENGTH_SHORT).show();
+            toast("先点顶部「连接」");
             selectTab(1);
             return false;
         }
@@ -382,11 +496,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void runCmd(String cmd) {
-        String c = cmd.trim();
-        if (c.isEmpty()) return;
+        final String c = cmd == null ? "" : cmd.trim();
+        if (c.isEmpty()) {
+            return;
+        }
+        hist.add(c);
+        histPos = -1;
         bg(out[4], "$ " + c, () -> {
             String r = cpe.run(c);
-            return r == null || r.trim().isEmpty() ? "（无输出）" : r;
+            return r == null || r.trim().isEmpty() ? "（这条命令没有输出）" : r;
         });
     }
 
@@ -426,26 +544,30 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton("取消", null).show();
     }
 
-    // ------------------------------------------------------------- 连接
+    // ================================================================ 连接
 
     private void connect() {
         final String h = hostBox.getText().toString().trim();
         if (h.isEmpty()) {
-            Toast.makeText(this, "填设备地址", Toast.LENGTH_SHORT).show();
+            toast("填设备地址");
             return;
         }
         cpe = new Cpe(h);
+        pill.setText("● 连接中");
+        pill.setTextColor(ContextCompat.getColor(this, R.color.amber));
         status.setTextColor(ContextCompat.getColor(this, R.color.amber));
-        status.setText("连接 " + h + " …");
+        status.setText("正在连 " + h + " …");
         ex.execute(() -> {
             try {
                 JSONObject si = cpe.sysinfo();
                 JSONObject cfg = cpe.cfgAll();
-                final String msg = si.optString("PRODUCTNAME", "?") + " · " + si.optString("FIRMVERSION", "?")
-                        + " · 未认证可读 " + cfg.length() + " 项配置";
                 JSONObject wl = cpe.wirelessStatus();
-                final String link = "上游 " + wl.optString("ssid") + " ch" + wl.optString("channel")
-                        + " rssi " + wl.optString("rssi") + "dBm";
+                final String dev = si.optString("PRODUCTNAME", "?");
+                final String fw = si.optString("FIRMVERSION", "?");
+                final String link = wl.optString("ssid", "?") + "  ch" + wl.optString("channel")
+                        + "  " + wl.optString("rssi") + "dBm";
+                final String ap = cpe.cfgGet("WLAN0_VAP0_SSID");
+                final int n = cfg.length();
                 try {
                     JSONObject s = cpe.sched();
                     ui.post(() -> {
@@ -456,21 +578,53 @@ public class MainActivity extends AppCompatActivity {
                     });
                 } catch (Exception ignored) {
                 }
+                String gs;
+                try {
+                    gs = cpe.guardStatus();
+                } catch (Throwable t) {
+                    gs = "（读看门狗状态失败：" + t.getMessage() + "）";
+                }
+                final String guard = gs;
                 ui.post(() -> {
-                    status.setTextColor(ContextCompat.getColor(this, R.color.cyan));
-                    status.setText("已连接 " + msg + "\n" + link);
+                    pill.setText("● 已连接");
+                    pill.setTextColor(ContextCompat.getColor(this, R.color.green));
+                    status.setTextColor(ContextCompat.getColor(this, R.color.dim));
+                    status.setText("root 通道就绪（未认证可读 " + n + " 项配置）\n"
+                            + "上行 " + link);
+                    ((TextView) findViewById(R.id.k_dev)).setText(dev);
+                    ((TextView) findViewById(R.id.k_fw)).setText(fw);
+                    ((TextView) findViewById(R.id.k_link)).setText(link);
+                    ((TextView) findViewById(R.id.k_ap)).setText(ap == null ? "—" : ap);
+                    guardState.setText(guard);
                     out[1].setText("设备可达。点上面按钮看数据，或去「终端」以 root 跑命令。");
                 });
             } catch (Throwable e) {
                 ui.post(() -> {
+                    pill.setText("● 未连接");
+                    pill.setTextColor(ContextCompat.getColor(this, R.color.red));
                     status.setTextColor(ContextCompat.getColor(this, R.color.red));
-                    status.setText("连接失败：" + e.getMessage() + "\n（手机要连到中继器自己的 WiFi 或其后级网络）");
+                    status.setText("连接失败：" + e.getMessage()
+                            + "\n（手机要连到中继器自己的 WiFi，或它后级的网络）");
                 });
             }
         });
     }
 
-    // ------------------------------------------------------------- SAF IO
+    // =============================================================== 资源
+
+    private byte[] asset(String name) throws Exception {
+        InputStream in = getAssets().open(name);
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        byte[] buf = new byte[1 << 13];
+        int n;
+        while ((n = in.read(buf)) > 0) {
+            bo.write(buf, 0, n);
+        }
+        in.close();
+        return bo.toByteArray();
+    }
+
+    // ============================================================= SAF IO
 
     private void writeUri(Uri u, byte[] d) throws Exception {
         OutputStream o = getContentResolver().openOutputStream(u);

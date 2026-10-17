@@ -184,14 +184,46 @@
     </div>
   </section>
 
-  <!-- ======================== 散装（现成模块） ======================== -->
+  <!-- ======================== 散装 / 清单（数据来自方案包 pack.js） ======================== -->
   <section class="tab" data-tab="diy">
+    <!-- 方案包：导入 / 导出 / 规范 -->
     <div class="card">
-      <h2>方案 A · 散装采购清单 <small>全部买现成模块，不画板不贴片</small></h2>
+      <h2>清单方案包 <small>换个产品就换一份数据</small></h2>
+      <p class="hint" id="packMeta"></p>
+      <div class="row">
+        <button id="btnPackOpen" class="primary">导入方案</button>
+        <button id="btnPackExport">导出方案</button>
+      </div>
+      <div class="row tight">
+        <button id="btnPackSpec">复制格式说明（发给 AI）</button>
+        <button id="btnPackReset">恢复内置</button>
+      </div>
       <p class="hint">
-        点一行 = 勾上「已买」，勾选存在手机里。<b>约 ¥220</b> 就能凑出和这块 PCB 一样的功能，
-        而且用的是<b>同一套固件</b>（只改下面那张引脚表），所以这个 App 直接能用。
+        把「复制格式说明」粘给别的 AI（ChatGPT / Claude / 豆包都行），补上你要做的产品，
+        它会给一份 JSON；回到这里点<b>导入方案</b>粘进去，整页清单/接线/步骤就换成新产品的了。<br />
+        文件也行：AI 把 JSON 存成文件发你 → 存到手机 → <b>导入方案 → 选文件</b>。
       </p>
+      <div id="packErr" class="packerr"></div>
+
+      <div id="packDrawer" class="drawer">
+        <div class="dhead">
+          <b>粘贴方案 JSON</b>
+          <button id="btnPackClose">关闭</button>
+        </div>
+        <textarea id="packIn" class="packin" spellcheck="false"
+          placeholder='&#10;{"format":"sunnet.pack","ver":1,"meta":{"title":"..."},"groups":[{"id":"A","title":"采购清单","kind":"check","items":[{"id":"x","name":"零件名","qty":1,"price":12,"kw":"搜索词","volt":"5V","spec":"规格","why":"干嘛用"}]}]}'></textarea>
+        <div class="row tight">
+          <button id="btnPackPaste">从剪贴板粘贴</button>
+          <button id="btnPackFile">选文件…</button>
+          <button id="btnPackDo" class="primary">导入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主采购清单（kind=check 的那一组） -->
+    <div class="card">
+      <h2 id="bomTitle">采购清单 <small>点一行 = 已买</small></h2>
+      <p class="hint" id="bomIntro"></p>
       <div class="row">
         <button id="btnCopyBom" class="primary">复制清单</button>
         <button id="btnCopyKw">复制全部搜索词</button>
@@ -201,42 +233,32 @@
         <button id="btnClearBom">清空勾选</button>
       </div>
       <div class="bomhead">
-        <span id="bomCount">0/17 已买</span>
+        <span id="bomCount">0/0 已买</span>
         <b id="bomTotal">合计 ≈ ¥0</b>
       </div>
       <div class="bom" id="bomList"></div>
       <p class="hint">
-        每行都写了<b>该买多少电压</b>（⚡ 那个黄标）和具体规格，买的时候对着看。<br />
         每行右边：<b>复制关键词</b>（粘到任意搜索框）+ <b>淘宝 / 拼多多 / 1688</b>
-        三个直跳按钮（点一下直接开对应 App 搜这个零件；没装就退到网页版）。<br />
-        「只买最小集」= 先不买风速开关、急停、模式旋钮，约 <b>¥178</b>，
-        先把电机和光/雨/限位跑通，再补安全链。
+        三个直跳按钮（点了直接开对应 App 搜这个零件；没装就退到网页版）。
       </p>
     </div>
 
+    <!-- 其余方案（kind=plain 的分组，由数据生成） -->
+    <div id="altCards"></div>
+
     <div class="card">
       <h2>电压怎么分 <small>哪一层用多少 V</small></h2>
+      <p class="hint" id="voltNote"></p>
       <div id="voltTable" class="wires"></div>
     </div>
 
     <div class="card">
       <h2>电源怎么走 <small>先搭电，再上信号</small></h2>
-      <pre class="out">【12V 母线】12V 电源 ─┬─ 3A 保险 ─┬─ 急停常闭(硬断电) ── MOS 开关模块 ── DRV8871 VM
-                      │            └─ LM2596 降压 ── 【5V】── 开发板 5V/VIN
-                      └─ GND ───────────────────── 所有模块 GND 共地
-
-【5V】  LM2596 输出（空载先调到 5.0V 再插板子）
-【3.3V】开发板 3V3 脚 ── 光敏 VCC / 雨滴 VCC / 电位器两端 / ACS712(3.3V 版)
-【干接点】限位A 限位B / 急停 / 风速开关 / 旋钮 / 按键  ── 一端 GPIO、一端 GND
-
-DRV8871  OUT1 ── 网机(电机) 一根线          ┐ 12V 换向
-DRV8871  OUT2 ── 网机(电机) 另一根线        ┘
-急停按钮【第一组常闭】串在 12V → MOS 开关 之间（硬断电）
-急停按钮【第二组常闭】接 GPIO12（固件回读）</pre>
+      <pre class="out" id="powerText"></pre>
     </div>
 
     <div class="card">
-      <h2>接线表 <small>板上位号 → 模块 → GPIO → 电压</small></h2>
+      <h2>接线表 <small>位号 → 模块 → GPIO → 电压</small></h2>
       <div class="row">
         <button id="btnCopyWire">复制接线表</button>
       </div>
@@ -244,7 +266,7 @@ DRV8871  OUT2 ── 网机(电机) 另一根线        ┘
     </div>
 
     <div class="card">
-      <h2>组装步骤 <small>照着做</small></h2>
+      <h2 id="stepTitle">组装步骤</h2>
       <div id="stepList" class="steps"></div>
     </div>
 
@@ -259,39 +281,17 @@ pio run -t uploadfs    # 烧 WebUI（不做这步浏览器打开会 404）</pre>
     </div>
 
     <div class="card">
-      <h2>六条硬注意 <small>踩了会烧板子</small></h2>
+      <h2 id="noteTitle">硬注意</h2>
       <div id="noteList"></div>
     </div>
 
     <div class="card">
-      <h2>方案 B · 室外长年运行 <small>约 ¥380</small></h2>
-      <div id="bomB" class="bom"></div>
+      <h2>为什么走这条路 <small>钱和时间</small></h2>
+      <div class="tbl" id="cmpTable"></div>
     </div>
 
-    <div class="card">
-      <h2>方案 C · 网机是 220V 交流 <small>别用 DRV8871</small></h2>
-      <div id="bomC" class="bom"></div>
-      <p class="hint">换成继电器/接触器后，电机就是「有/无」两态，需要把 <code>motor_drv8871.cpp</code>
-        换成一个继电器输出实现（约 30 行）。220V 侧单独走电器盒 + 漏保。</p>
-    </div>
-
-    <div class="card">
-      <h2>方案 D · 完全不动手 <small>买成品</small></h2>
-      <div id="bomD" class="bom"></div>
-      <p class="hint">优点：0 开发。缺点：协议不开放，<b>这个 App 连不上它</b>。</p>
-    </div>
-
-    <div class="card">
-      <h2>为什么先散装 <small>钱和时间</small></h2>
-      <div class="tbl">
-        <div class="tr head"><span>项目</span><span>自制 PCB（现在路线）</span><span>散装模块</span></div>
-        <div class="tr"><span>一次投入</span><span>¥450~800</span><span class="ok">¥220</span></div>
-        <div class="tr"><span>要买多少东西</span><span>105 个位号元件 + 板 + 钢网</span><span class="ok">17 项模块</span></div>
-        <div class="tr"><span>到货</span><span>打样 3-5 天 + 贴片 3-7 天</span><span class="ok">当天~3 天</span></div>
-        <div class="tr"><span>改一版</span><span>重画重贴，再等一轮</span><span class="ok">重插一根线</span></div>
-        <div class="tr"><span>风险</span><span>贴片起订、虚焊、天线禁布</span><span class="ok">插错线</span></div>
-      </div>
-    </div>
+    <!-- 方案包里 extraCards 的自定义卡片 -->
+    <div id="extraCards"></div>
   </section>
 
   <!-- ============================ 诊断 ============================ -->
@@ -343,6 +343,7 @@ pio run -t uploadfs    # 烧 WebUI（不做这步浏览器打开会 404）</pre>
 </main>
 <script src="transport.js"></script>
 <script src="bom.js"></script>
+<script src="pack.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

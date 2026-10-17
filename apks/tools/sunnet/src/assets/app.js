@@ -398,19 +398,27 @@ function showTab(name) {
 }
 
 // ---------------------------------------------------------------- 散装页（清单/接线/组装）
-const BOM_KEY = 'sunnet.bom.got';
-let bomGot = {};
-try { bomGot = JSON.parse(localStorage.getItem(BOM_KEY) || '{}') || {}; } catch (e) { bomGot = {}; }
+// 这一页的所有内容都由 PACK（方案包，见 pack.js）驱动，不再写死在代码里。
+// 换产品 = 导入一份新的方案包 JSON。
 
-function bomSave() { try { localStorage.setItem(BOM_KEY, JSON.stringify(bomGot)); } catch (e) {} }
+const GOT_KEY = () => 'sunnet.got.' + (activePack().meta.id || 'custom');
+let bomGot = {};
+function bomLoadGot() {
+  try { bomGot = JSON.parse(localStorage.getItem(GOT_KEY()) || '{}') || {}; } catch (e) { bomGot = {}; }
+}
+function bomSave() { try { localStorage.setItem(GOT_KEY(), JSON.stringify(bomGot)); } catch (e) {} }
+
+const checkGroup = () => activePack().groups.find((g) => g.kind === 'check') || activePack().groups[0];
 
 function bomTotalText() {
-  let sum = 0, have = 0;
-  for (const it of BOM_A) {
-    sum += it.price * it.qty;
-    if (bomGot[it.id]) have += it.price * it.qty;
+  const g = checkGroup();
+  let sum = 0, have = 0, got = 0;
+  for (const it of g.items) {
+    const n = typeof it.price === 'number' ? it.price * it.qty : 0;
+    sum += n;
+    if (bomGot[it.id]) { have += n; got++; }
   }
-  return { sum: Math.round(sum), have: Math.round(have), got: BOM_A.filter((i) => bomGot[i.id]).length };
+  return { sum: Math.round(sum), have: Math.round(have), got: got, total: g.items.length };
 }
 
 // 一行清单：checkbox(可省) + 名称 + ⚡电压 + 板上位号 + 详细规格 + 搜索词 + 单价
@@ -418,16 +426,19 @@ function itemRow(it, plain) {
   const got = !!bomGot[it.id];
   const row = document.createElement('div');
   row.className = 'bomrow' + (got ? ' got' : '') + (plain ? ' plain' : '');
-  const price = typeof it.price === 'number' ? '¥' + (it.price * it.qty).toFixed(1) : it.price;
+  const price = typeof it.price === 'number'
+    ? '¥' + (it.price * it.qty).toFixed(1)
+    : richText(it.price);
   row.innerHTML =
     (plain ? '' : '<div class="bx">' + (got ? '✔' : '○') + '</div>') +
     '<div>' +
-      '<div class="bn">' + it.name + ' <em>×' + it.qty + '</em></div>' +
+      '<div class="bn">' + richText(it.name) + ' <em>×' + it.qty + '</em></div>' +
       '<div class="bs">' +
-        '<i class="bv">⚡ ' + (it.volt || '无源') + '</i>' +
-        '<span class="bq">' + (it.part ? '对应板上 <b>' + it.part + '</b> · ' : '') + (it.why || '') + '</span>' +
+        '<i class="bv">⚡ ' + richText(it.volt || '无源') + '</i>' +
+        '<span class="bq">' + (it.part ? '对应板上 <b>' + richText(it.part) + '</b> · ' : '') +
+          richText(it.why) + '</span>' +
       '</div>' +
-      (it.spec ? '<div class="bsp">买什么规格：' + it.spec + '</div>' : '') +
+      (it.spec ? '<div class="bsp">买什么规格：' + richText(it.spec) + '</div>' : '') +
       (it.kw ? shopBar(it.kw) : '') +
     '</div>' +
     '<div class="bp">' + price + '<small>' + it.qty + ' 件</small></div>';
@@ -440,7 +451,7 @@ function itemRow(it, plain) {
     };
   }
   row.querySelectorAll('button.shop').forEach((b) => {
-    b.onclick = (ev) => { ev.stopPropagation(); openShop(b.dataset.shop, b.dataset.kw); };
+    b.onclick = (ev) => { ev.stopPropagation(); openShop(b.dataset.shop, b.dataset.kw, b.dataset.url); };
   });
   if (!plain) {
     row.onclick = () => {
@@ -454,135 +465,294 @@ function itemRow(it, plain) {
 function renderBom() {
   const box = $('bomList');
   if (!box) return;
+  const g = checkGroup();
+  const t = activePack().meta;
+  if ($('bomTitle')) $('bomTitle').innerHTML = richText(g.title) +
+    (g.sub ? ' <small>' + richText(g.sub) + '</small>' : '');
+  if ($('bomIntro')) $('bomIntro').innerHTML = richText(g.intro) +
+    (t.note ? '<br /><span class="dim">' + richText(t.note) + (t.updated ? '（' + t.updated + '）' : '') + '</span>' : '');
   box.innerHTML = '';
-  for (const it of BOM_A) box.appendChild(itemRow(it, false));
+  for (const it of g.items) box.appendChild(itemRow(it, false));
   renderBomHead();
 }
 
 function renderBomHead() {
   const t = bomTotalText();
-  const c = $('bomCount'); if (c) c.textContent = t.got + '/' + BOM_A.length + ' 已买';
+  const c = $('bomCount'); if (c) c.textContent = t.got + '/' + t.total + ' 已买';
   const b = $('bomTotal'); if (b) b.textContent = '合计 ≈ ¥' + t.sum + '（已买 ¥' + t.have + '）';
 }
 
 function bomText() {
-  const L = ['太阳网控制器 · 散装模块采购清单（方案 A）', ''];
-  for (const it of BOM_A) {
-    L.push((bomGot[it.id] ? '[x] ' : '[ ] ') + it.name + ' ×' + it.qty +
-            '  ¥' + (it.price * it.qty).toFixed(1) + '  （对应板上 ' + (it.part || '—') + '）');
-    L.push('    电压：' + (it.volt || '无源'));
-    if (it.spec) L.push('    规格：' + it.spec);
-    L.push('    搜索：' + it.kw);
+  const p = activePack();
+  const g = checkGroup();
+  const L = [p.meta.title + ' · ' + g.title, ''];
+  for (const it of g.items) {
+    L.push((bomGot[it.id] ? '[x] ' : '[ ] ') + it.name + ' ×' + it.qty + '  ¥' +
+      (typeof it.price === 'number' ? (it.price * it.qty).toFixed(1) : it.price) +
+      (it.part ? '  （对应板上 ' + it.part + '）' : ''));
+    if (it.volt) L.push('      电压：' + it.volt);
+    if (it.spec) L.push('      规格：' + String(it.spec).replace(/<[^>]+>/g, ''));
+    if (it.kw) L.push('      搜索：' + it.kw);
   }
-  L.push('', '合计 ≈ ¥' + bomTotalText().sum + '（不含运费）');
-  L.push('固件与 App 不变，只改 board.h 引脚表。');
+  const t = bomTotalText();
+  L.push('', '合计 ≈ ¥' + t.sum);
   return L.join('\n');
 }
 
-// 只导出搜索词，一行一个，方便在淘宝/1688 直接粘
 function bomKwText() {
   const L = [];
-  for (const it of BOM_A) L.push(it.kw + (it.qty > 1 ? ' x' + it.qty : ''));
+  for (const it of checkGroup().items) if (it.kw) L.push(it.kw + (it.qty > 1 ? ' x' + it.qty : ''));
   return L.join('\n');
 }
 
-// 电压层级 + 接线表（同一套卡片样式）
 function wireRows(list) {
   return list.map((w) =>
     '<div class="wirerow">' +
-      '<div class="wp">' + w.part + '</div>' +
+      '<div class="wp">' + richText(w.part) + '</div>' +
       '<div>' +
-        '<div class="wn">' + (w.mod || w.why || '') + '</div>' +
-        (w.gpio ? '<div class="wg"><i class="gpio">' + w.gpio + '</i>' +
-                  '<i class="bv">⚡ ' + w.volt + '</i></div>'
-                : '<div class="wnote">' + w.volt + '</div>') +
-        (w.gpio && w.note ? '<div class="wnote">' + w.note + '</div>' : '') +
+        '<div class="wn">' + richText(w.mod) + '</div>' +
+        (w.gpio ? '<div class="wg"><i class="gpio">' + richText(w.gpio) + '</i>' +
+                  '<i class="bv">⚡ ' + richText(w.volt) + '</i></div>'
+                : '<div class="wnote">' + richText(w.volt) + '</div>') +
+        (w.gpio && w.note ? '<div class="wnote">' + richText(w.note) + '</div>' : '') +
       '</div>' +
     '</div>').join('');
 }
 
 function renderVolt() {
   const box = $('voltTable');
-  if (!box || typeof VOLT_SYS === 'undefined') return;
-  box.innerHTML = VOLT_SYS.map((r) =>
+  const v = activePack().volt;
+  if ($('voltNote')) $('voltNote').innerHTML = richText(v.note);
+  if (!box) return;
+  box.innerHTML = v.rows.map((r) =>
     '<div class="wirerow">' +
-      '<div class="wp">' + r[0] + '</div>' +
+      '<div class="wp">' + richText(r.v) + '</div>' +
       '<div>' +
-        '<div class="wn">' + r[1] + '</div>' +
-        '<div class="wnote">' + r[2] + '</div>' +
-        '<div class="wnote">⚠ ' + r[3] + '</div>' +
+        '<div class="wn">' + richText(r.who) + '</div>' +
+        '<div class="wnote">' + richText(r.how) + '</div>' +
+        (r.warn ? '<div class="wnote">⚠ ' + richText(r.warn) + '</div>' : '') +
       '</div>' +
     '</div>').join('');
 }
 
 function wireText() {
-  const L = ['太阳网散装 · 接线表（板上位号 → 模块 → GPIO → 电压）', ''];
-  for (const w of WIRING) {
-    L.push(w.part + ' → ' + w.mod + ' | ' + w.gpio + ' | ' + w.volt + (w.note ? ' | ' + w.note : ''));
+  const p = activePack();
+  const L = [p.meta.title + ' · 接线表（位号 → 模块 → GPIO → 电压）', ''];
+  for (const w of p.wiring) {
+    L.push(w.part + ' → ' + w.mod + (w.gpio ? ' | ' + w.gpio : '') + (w.volt ? ' | ' + w.volt : '') +
+      (w.note ? ' | ' + w.note : ''));
   }
-  L.push('');
-  L.push('干接点：一端接 GPIO、一端接 GND，固件开内部上拉。模拟量只能 GPIO1-GPIO10（ADC1），输入 0-3.3V。');
   return L.join('\n');
 }
 
-function renderAlt(el, arr) {
-  if (!el || !arr) return;
-  el.innerHTML = '';
-  for (const it of arr) el.appendChild(itemRow(normAlt(it), true));
+// 方案 B/C/D …（kind=plain 的分组）按顺序生成卡片
+function renderAltCards() {
+  const box = $('altCards');
+  if (!box) return;
+  box.innerHTML = '';
+  for (const g of activePack().groups) {
+    if (g.kind === 'check') continue;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = '<h2>' + richText(g.title) +
+      (g.sub ? ' <small>' + richText(g.sub) + '</small>' : '') + '</h2>' +
+      (g.intro ? '<p class="hint">' + richText(g.intro) + '</p>' : '');
+    const list = document.createElement('div');
+    list.className = 'bom';
+    for (const it of g.items) list.appendChild(itemRow(it, true));
+    card.appendChild(list);
+    if (g.foot) {
+      const f = document.createElement('p');
+      f.className = 'hint';
+      f.innerHTML = richText(g.foot);
+      card.appendChild(f);
+    }
+    box.appendChild(card);
+  }
 }
 
-// 方案 B/C/D 的条目是数组：[名称, 搜索词, 数量, 价格, 规格]
-function normAlt(a) {
-  if (!Array.isArray(a)) return a;
-  return { name: a[0], kw: a[1], qty: a[2], price: a[3], spec: a[4] };
+function renderCompare() {
+  const box = $('cmpTable');
+  if (!box) return;
+  const c = activePack().compare;
+  if (!c.rows.length) { box.innerHTML = ''; return; }
+  const cell = (s, good) => '<span' + (good ? ' class="ok"' : '') + '>' + richText(s) + '</span>';
+  box.innerHTML = '<div class="tr head">' + c.head.map((h) => '<span>' + richText(h) + '</span>').join('') + '</div>' +
+    c.rows.map((r) => '<div class="tr">' + cell(r.k) + cell(r.a, r.good === 'a') + cell(r.b, r.good === 'b') + '</div>').join('');
+}
+
+function renderExtra() {
+  const box = $('extraCards');
+  if (!box) return;
+  box.innerHTML = '';
+  for (const c of activePack().extraCards) {
+    const d = document.createElement('div');
+    d.className = 'card';
+    d.innerHTML = '<h2>' + richText(c.title) + '</h2>' + richText(c.html);
+    box.appendChild(d);
+  }
+}
+
+function renderSteps() {
+  const sl = $('stepList');
+  if (!sl) return;
+  sl.innerHTML = '';
+  activePack().steps.forEach((s, i) => {
+    const e = document.createElement('div');
+    e.className = 'step';
+    e.innerHTML = '<div class="n"></div><div><div class="t">' + richText(s.t) + '</div>' +
+      '<div class="d">' + richText(s.d) + '</div></div>';
+    e.onclick = () => e.classList.toggle('fold');
+    sl.appendChild(e);
+  });
+  const h = $('stepTitle');
+  if (h) h.textContent = '组装步骤（' + activePack().steps.length + ' 步）';
+}
+
+function renderNotes() {
+  const nl = $('noteList');
+  if (!nl) return;
+  const ns = activePack().notes;
+  nl.innerHTML = ns.map((n) =>
+    '<div class="note' + (n.level === 'info' ? ' info' : '') + '"><i>⚠</i><div>' + richText(n.text) + '</div></div>').join('');
+  const h = $('noteTitle');
+  if (h) h.textContent = (ns[0] && ns[0].level === 'info' ? '注意' : '硬注意') + '（' + ns.length + ' 条）';
+}
+
+function renderPackMeta() {
+  const p = activePack();
+  const el = $('packMeta');
+  if (!el) return;
+  const n = p.groups.reduce((a, g) => a + g.items.length, 0);
+  el.innerHTML = '<b>' + richText(p.meta.title) + '</b>' +
+    (p.meta.product ? ' · ' + richText(p.meta.product) : '') +
+    '<br /><span class="dim">' + p.groups.length + ' 个方案 / ' + n + ' 条目 / ' +
+    p.wiring.length + ' 行接线 / ' + p.steps.length + ' 步组装 · id=' + richText(p.meta.id) +
+    (p.meta.id === 'sunnet' ? '（内置）' : '（导入的）') + '</span>';
 }
 
 function renderDiy() {
   renderBom();
   renderVolt();
-  const wb = $('wireTable'); if (wb) wb.innerHTML = wireRows(WIRING);
-  renderAlt($('bomB'), BOM_B);
-  renderAlt($('bomC'), BOM_C);
-  renderAlt($('bomD'), BOM_D);
-
-  const sl = $('stepList');
-  if (sl) {
-    sl.innerHTML = '';
-    for (const [t, d] of STEPS) {
-      const e = document.createElement('div');
-      e.className = 'step';
-      e.innerHTML = '<div class="n"></div><div><div class="t">' + t + '</div><div class="d">' + d + '</div></div>';
-      e.onclick = () => e.classList.toggle('fold');
-      sl.appendChild(e);
-    }
-  }
-
-  const nl = $('noteList');
-  if (nl) nl.innerHTML = NOTES.map((s) => '<div class="note"><i>⚠</i><div>' + s + '</div></div>').join('');
-
-  const pp = $('pinPatch'); if (pp) pp.textContent = PIN_PATCH;
+  const wb = $('wireTable'); if (wb) wb.innerHTML = wireRows(activePack().wiring);
+  if ($('powerText')) $('powerText').textContent = activePack().power;
+  renderSteps();
+  renderNotes();
+  renderCompare();
+  renderAltCards();
+  renderExtra();
+  renderPackMeta();
+  if ($('pinPatch')) $('pinPatch').textContent = activePack().pinPatch;
 
   $('btnCopyBom').onclick = () => copy(bomText(), '清单已复制（含电压和规格）');
-  $('btnCopyKw').onclick = () => copy(bomKwText(), '17 个搜索词已复制，一行一个');
+  $('btnCopyKw').onclick = () => copy(bomKwText(), '搜索词已复制，一行一个');
   $('btnCopyWire').onclick = () => copy(wireText(), '接线表已复制');
-  $('btnCopyPin').onclick = () => copy(PIN_PATCH, '引脚表已复制');
+  $('btnCopyPin').onclick = () => copy(activePack().pinPatch, '引脚表已复制');
   $('btnClearBom').onclick = () => { bomGot = {}; bomSave(); renderBom(); toast('已清空勾选'); };
   $('btnSkipBom').onclick = () => {
+    const g = checkGroup();
+    if (!g.skip.length) { toast('这套方案没有「最小集」定义'); return; }
     bomGot = {};
-    for (const it of BOM_A) if (BOM_MIN_SKIP.indexOf(it.id) < 0) bomGot[it.id] = 1;
+    for (const it of g.items) if (g.skip.indexOf(it.id) < 0) bomGot[it.id] = 1;
     bomSave(); renderBom();
-    toast('已标记最小集（跳过大风/急停/模式开关）');
+    toast('已标记最小集（跳过 ' + g.skip.length + ' 项）');
   };
 }
 
-// 一行搜索条：关键词 + 复制 + 三个平台直接跳搜
+// ---------------------------------------------------------------- 导入 / 导出
+function packMsg(html, bad) {
+  const el = $('packErr');
+  if (!el) return;
+  el.innerHTML = html || '';
+  el.className = 'packerr' + (bad ? ' bad' : '');
+}
+
+function doImport(text, from) {
+  try {
+    const p = packImport(text);
+    bomLoadGot();
+    renderDiy();
+    packMsg('✔ 导入成功（' + from + '）：<b>' + richText(p.meta.title) + '</b> · ' +
+      p.groups.length + ' 个方案 · ' +
+      p.groups.reduce((a, g) => a + g.items.length, 0) + ' 个条目<br />' +
+      '已经替换「散装」页的内容，勾选进度是新的（旧的按原方案 id 各自保留）。', false);
+    toast('方案已导入：' + p.meta.title);
+  } catch (e) {
+    packMsg('✘ 导入失败：' + richText(e.message || String(e)) +
+      (e.packErr ? '' : '<br />（意外的错误，可以把内容发我看下）'), true);
+    toast('导入失败', true);
+  }
+}
+
+function bindPackTools() {
+  const drawer = $('packDrawer');
+  const open = (on) => { if (drawer) drawer.classList.toggle('on', on); };
+  $('btnPackOpen').onclick = () => { open(true); packMsg(''); };
+  $('btnPackClose').onclick = () => open(false);
+
+  $('btnPackPaste').onclick = () => {
+    API.invoke('paste', {}).then((r) => {
+      if (r && r.ok && r.text) { $('packIn').value = r.text; packMsg('已从剪贴板读入 ' + r.text.length + ' 字符，点「导入」'); }
+      else packMsg('剪贴板是空的（或没给剪贴板权限）', true);
+    }).catch(() => packMsg('读剪贴板失败', true));
+  };
+
+  $('btnPackFile').onclick = () => {
+    packMsg('正在选文件…');
+    API.invoke('pick', { mime: 'application/json' }).then((r) => {
+      if (r && r.ok && r.text) { $('packIn').value = r.text; packMsg('已读入文件 ' + (r.name || '') + '（' + r.text.length + ' 字符），点「导入」'); }
+      else packMsg('没选文件（或读不出来）：' + ((r && r.err) || '已取消'));
+    }).catch((e) => packMsg('选文件失败：' + e.message, true));
+  };
+
+  $('btnPackDo').onclick = () => {
+    const t = $('packIn').value || '';
+    if (!t.trim()) { packMsg('先粘贴 JSON 或选个文件', true); return; }
+    doImport(t, '粘贴内容');
+  };
+
+  $('btnPackExport').onclick = () => copy(packJson(packExportable()), '当前方案已复制成规范 JSON，可以交给 AI 改');
+  $('btnPackReset').onclick = () => {
+    packReset(); bomLoadGot(); renderDiy();
+    $('packIn').value = '';
+    packMsg('已恢复内置方案（太阳网）');
+    toast('已恢复内置方案');
+  };
+  $('btnPackSpec').onclick = () => copy(PACK_SPEC_PROMPT(), '规范 + 给 AI 的提示词已复制');
+}
+
+// 一键把「规范摘要 + 提示词」复制走，直接发给别的 AI
+function PACK_SPEC_PROMPT() {
+  return [
+    '请按下面这个 JSON 格式，给我做一份采购/组装清单（只输出 JSON，不要解释、不要 markdown 代码围栏之外的字）。',
+    '',
+    '格式：sunnet.pack v1（把这个 App 的「散装」页整页换掉）',
+    '必填：format="sunnet.pack", ver=1, meta.title, groups[≥1]；',
+    'groups[].items[≥1]，每项至少 name；建议同时给 kw（搜索词）、qty、price、volt、spec、part、why；',
+    '可选：groups[].kind="check"（可勾选采购清单，默认第一组）、skip（最小集跳过的 item id）、',
+    'volt{note,rows[{v,who,how,warn}]}、power（纯文本走线图）、',
+    'wiring[{part,mod,gpio,volt,note}]、steps[{t,d}]、notes[{level:"warn|info",text}]、pinPatch、',
+    'compare{head[3],rows[{k,a,b,good:"a|b"}]}、extraCards[{title,html}]。',
+    '规则：price 数字=单价（字符串则原样显示）；文本里只允许 <b> <i> <code> <br> 这几个行内标签；',
+    '不要写注释、不要用尾逗号；id 组内唯一（用于勾选记忆）。',
+    '',
+    '【我要做的产品】',
+    '（这里写：产品名 + 用途 + 供电/电机类型 + 要哪些传感器 + 预算 + 是否要能手机连）',
+    '',
+    '参考一个完整示例（照这个详细程度写）：',
+    '（见项目里 示例-阳台自动浇花.json，或 App 里「导出方案」得到的内置方案）',
+  ].join('\n');
+}
+
+// ---------------------------------------------------------------- 搜索条 & 平台跳转
 function shopBar(kw) {
-  return '<div class="bk">搜：<em>' + kw + '</em></div>' +
+  const k = richText(kw);
+  return '<div class="bk">搜：<em>' + k + '</em></div>' +
     '<div class="bbar">' +
-      '<button class="kw" data-kw="' + kw + '">复制关键词</button>' +
-      '<button class="shop tb" data-shop="taobao" data-kw="' + kw + '">淘宝</button>' +
-      '<button class="shop pdd" data-shop="pdd" data-kw="' + kw + '">拼多多</button>' +
-      '<button class="shop ali" data-shop="1688" data-kw="' + kw + '">1688</button>' +
+      '<button class="kw" data-kw="' + k + '">复制关键词</button>' +
+      '<button class="shop tb" data-shop="taobao" data-kw="' + k + '">淘宝</button>' +
+      '<button class="shop pdd" data-shop="pdd" data-kw="' + k + '">拼多多</button>' +
+      '<button class="shop ali" data-shop="1688" data-kw="' + k + '">1688</button>' +
     '</div>';
 }
 
@@ -609,10 +779,10 @@ const SHOPS = {
   },
 };
 
-function openShop(shop, kw) {
+function openShop(shop, kw, override) {
   const s = SHOPS[shop];
   if (!s) return;
-  const list = s.urls(encodeURIComponent(kw));
+  const list = override ? [override] : s.urls(encodeURIComponent(kw));
   if (!API.hasBridge) { window.open(list[list.length - 1], '_blank'); return; }
   API.invoke('open', { urls: list }).then((r) => {
     if (r && r.ok) toast('已跳' + s.name + '搜：' + kw);
@@ -622,16 +792,16 @@ function openShop(shop, kw) {
 
 function copy(text, okMsg) {
   if (API.hasBridge) {
-    API.invoke('copy', { text: text }).then((r) => {
+    API.invoke('copy', { text: String(text == null ? '' : text) }).then((r) => {
       toast(r && r.ok ? okMsg : '复制失败', !(r && r.ok));
     }).catch(() => toast('复制失败', true));
     return;
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => toast(okMsg)).catch(() => toast('复制失败', true));
+    navigator.clipboard.writeText(String(text)).then(() => toast(okMsg)).catch(() => toast('复制失败', true));
   } else {
     const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
+    ta.value = String(text); document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); toast(okMsg); } catch (e) { toast('复制失败', true); }
     ta.remove();
   }
@@ -655,6 +825,8 @@ window.__back = function () {
   bindLeds();
   bindScanMap();
   $('btnSaveCfg').onclick = saveConfig;
+  bomLoadGot();
+  bindPackTools();
   renderDiy();
   $('btnReload').onclick = () => { renderCfgGrid(); toast('已重新读取'); };
   $('duty').oninput(); $('jogMs').oninput();

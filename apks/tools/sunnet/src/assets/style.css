@@ -207,3 +207,27 @@ footer { color: var(--dim); font-size: 12px; text-align: center; padding: 8px 0 
 }
 .note b { color: #fff; }
 .note i { font-style: normal; }
+
+/* ---- 方案包：导入抽屉 / 错误提示 / 说明 ---- */
+.drawer { display: none; margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; background: #0b0f14; overflow: hidden; }
+.drawer.on { display: block; }
+.drawer .dhead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 10px; background: #111820; border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.drawer .dhead button { font-size: 12px; padding: 4px 10px; }
+.packin {
+  width: 100%; box-sizing: border-box; min-height: 170px; resize: vertical;
+  background: #0d1117; color: #c9d1d9; border: 0; border-bottom: 1px solid var(--line);
+  padding: 10px; font: 11.5px/1.5 ui-monospace, Consolas, monospace; outline: none;
+}
+.drawer .row.tight { margin: 0; padding: 8px 10px 10px; }
+.packerr {
+  margin-top: 9px; padding: 8px 10px; border-radius: 8px; font-size: 12px; line-height: 1.55;
+  background: #0e1a12; border: 1px solid #1f6f2e; color: #7ee787; word-break: break-word;
+}
+.packerr:empty { display: none; }
+.packerr.bad { background: #1d1013; border-color: #7a1f2a; color: #ff9aa2; }
+.packerr b { color: #fff; }
+.dim { color: var(--dim); }
+.note.info { background: #0d1a2b; border-color: #2a4a72; color: #79c0ff; }

@@ -38,6 +38,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   ble.disconnect                      断 BLE
  *   get  {"path":"/api/state"}          读接口
  *   post {"path":"/api/cmd","body":"{…}"} 发命令
+ *   copy {"text":"…"}                   写剪贴板
+ *   paste                               读剪贴板 → {ok,text}
+ *   pick {"mime":"application/json"}     选文件读文本 → {ok,name,text}
  */
 public class Bridge {
 
@@ -50,6 +53,9 @@ public class Bridge {
     private String mode = "none";     // none | http | ble
     private String host = "192.168.4.1";
     private int port = 80;
+
+    static final int REQ_PICK = 9002;      // 选文件
+    private ResultCb pickCb;
 
     public Bridge(MainActivity a) {
         this.act = a;
@@ -190,6 +196,45 @@ public class Bridge {
                     });
                     return;
                 }
+                case "paste": {
+                    act.runOnUiThread(() -> {
+                        try {
+                            ClipboardManager cm = (ClipboardManager)
+                                    act.getSystemService(Context.CLIPBOARD_SERVICE);
+                            if (cm == null || !cm.hasPrimaryClip() || cm.getPrimaryClip().getItemCount() <= 0) {
+                                cb.err("剪贴板是空的");
+                                return;
+                            }
+                            CharSequence cs = cm.getPrimaryClip().getItemAt(0).coerceToText(act);
+                            String t = cs == null ? "" : cs.toString();
+                            if (t.isEmpty()) { cb.err("剪贴板里没有文字"); return; }
+                            cb.ok("{\"ok\":true,\"text\":" + JSONObject.quote(t) + "}");
+                        } catch (Throwable e) {
+                            cb.err("读剪贴板失败: " + e.getMessage());
+                        }
+                    });
+                    return;
+                }
+                case "pick": {
+                    final String mime = new JSONObject(argsJson == null ? "{}" : argsJson)
+                            .optString("mime", "*/*");
+                    act.runOnUiThread(() -> {
+                        if (pickCb != null) { pickCb.err("已经有一个选文件的框开着了"); pickCb = null; }
+                        try {
+                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                            i.addCategory(Intent.CATEGORY_OPENABLE);
+                            i.setType(mime.isEmpty() ? "*/*" : mime);
+                            i.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
+                                    "application/json", "text/plain", "application/octet-stream", "*/*" });
+                            pickCb = cb;
+                            act.startActivityForResult(i, REQ_PICK);
+                        } catch (Throwable e) {
+                            pickCb = null;
+                            cb.err("打不开文件选择器: " + e.getMessage());
+                        }
+                    });
+                    return;
+                }
                 case "ble.perm": {
                     act.requestBlePermissions();
                     cb.ok("{\"ok\":true}");
@@ -267,6 +312,41 @@ public class Bridge {
         } finally {
             c.disconnect();
         }
+    }
+
+    /** 选文件回来后把文本交给 JS（在 MainActivity.onActivityResult 里调）*/
+    public void onActivityResult(int req, int res, Intent data) {
+        if (req != REQ_PICK || pickCb == null) return;
+        final ResultCb cb = pickCb;
+        pickCb = null;
+        if (res != android.app.Activity.RESULT_OK || data == null || data.getData() == null) {
+            cb.err("已取消");
+            return;
+        }
+        final Uri uri = data.getData();
+        String name = uri.getLastPathSegment() == null ? "" : uri.getLastPathSegment();
+        try {
+            String t = readText(uri, 2 * 1024 * 1024);
+            cb.ok("{\"ok\":true,\"name\":" + JSONObject.quote(name) +
+                    ",\"text\":" + JSONObject.quote(t) + "}");
+        } catch (Throwable e) {
+            cb.err("读文件失败: " + e.getMessage());
+        }
+    }
+
+    private String readText(Uri uri, int limit) throws Exception {
+        InputStream in = act.getContentResolver().openInputStream(uri);
+        if (in == null) throw new Exception("打不开");
+        java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n, total = 0;
+        while ((n = in.read(buf)) > 0) {
+            total += n;
+            if (total > limit) { in.close(); throw new Exception("文件太大（限 2MB）"); }
+            bo.write(buf, 0, n);
+        }
+        in.close();
+        return new String(bo.toByteArray(), "UTF-8");
     }
 
     private boolean openUrl(String url) {

@@ -112,7 +112,7 @@ show_status() {
 	echo "探测目标  : $WAN_TARGETS  (网关 $GW)"
 	echo "当前计数  : $f / $FAIL_NEED"
 	if net_ok; then echo '当前网络  : 通'; else echo "当前网络  : 不通 (网关 $(gw_state))"; fi
-	[ -f $UP_FILE ] && echo '本次开机  : 通过过（计数可信）' || echo '本次开机  : 还没通过'
+	[ -f $UP_FILE ] && echo '本次开机  : 已经通过（计数可信）' || echo '本次开机  : 还没通过'
 	if [ -f $LAST_FILE ] && [ -n "$(cat $LAST_FILE 2>/dev/null)" ]; then
 		e=$(cat $LAST_FILE 2>/dev/null)
 		h=$(date -d @$e '+%Y-%m-%d %H:%M:%S' 2>/dev/null)

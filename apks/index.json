@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17 09:01:53",
+  "generatedAt": "2026-10-17 09:24:30",
   "count": 12,
-  "totalApkBytes": 49062779,
+  "totalApkBytes": 49100011,
   "categories": [
     {
       "id": "design",
@@ -99,24 +99,24 @@
         {
           "slug": "cpe140-ctrl",
           "title": "CPE140 控制台 (PC)",
-          "version": "1.0.0",
+          "version": "1.1.0",
           "apk": "",
           "source": "tools/cpe140-ctrl/src/",
           "size": 0,
           "sha256": "",
           "builtAt": "",
-          "notes": "易阔CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免登录，CLI+tkinter GUI，纯标准库；含脱敏逆向报告"
+          "notes": "逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI；断网看门狗（断网 N 分钟自动重启）；命令手册 howto；含脱敏报告"
         },
         {
           "slug": "cpe140-ctrl-android",
           "title": "CPE140 控制台 (安卓)",
-          "version": "1.0.0",
+          "version": "1.1.0",
           "apk": "tools/cpe140-ctrl-android/cpe140-ctrl-android.apk",
           "source": "tools/cpe140-ctrl-android/src/",
-          "size": 5496386,
-          "sha256": "0766533c8c270cf0dd61d003a5d11497b3d86fb15df6e21d8addbecdaa497283",
-          "builtAt": "2026-10-17 01:28:47",
-          "notes": "同上手机版：概览/客户端/配置/root终端/维护(备份整片flash)，纯 Java + SAF，免存储权限"
+          "size": 5525366,
+          "sha256": "fcd91d2f3a4804fab06ac4e57f3be2959db6acb1a05cc74ceaaffab0752a3137",
+          "builtAt": "2026-10-17 09:20:10",
+          "notes": "手机版完全控制台：概览/客户端/配置/root 终端/维护（整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；纯 Java + SAF 零存储权限；深色自绘 UI"
         },
         {
           "slug": "pilink",
@@ -135,9 +135,9 @@
           "version": "1.0",
           "apk": "tools/sunnet/sunnet.apk",
           "source": "tools/sunnet/src/",
-          "size": 58457,
-          "sha256": "9a6468c3ad47ebcc187e91dd87bb0743f44289862246a61d11d6aa3285f65a12",
-          "builtAt": "2026-10-16 23:46:21",
+          "size": 66709,
+          "sha256": "14c07dc87e47ceccb47747ebf4b484040eaf0ecf195949279d5271cbf8ec180c",
+          "builtAt": "2026-10-17 09:19:10",
           "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
         },
         {
