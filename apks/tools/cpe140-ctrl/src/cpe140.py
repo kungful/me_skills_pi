@@ -46,7 +46,79 @@ import time
 import urllib.error
 import urllib.request
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
+
+HOWTO = r"""
+==============================================================================
+ 使用教程（先看这里，3 分钟看懂）
+==============================================================================
+
+【1】现在是什么权限？—— 设备上的 root（最高权限）
+
+  本工具不需要登录。它走设备固件里的两个漏洞：
+    A. Web API   /cgi-bin/* 不校验 Cookie  -> 读全量配置、改配置、改口令、重启、恢复出厂
+    B. root RCE  /cgi-bin/timectrl 的值被直接拼进 sh -c "..."  -> 以 uid=0 执行任意命令
+  所以：你能做 SSH 登进去的 root 能做的任何事 —— 读写任意文件、装脚本、
+  改 crontab、刷 flash、重启。
+
+  一句话验证：  python cpe140.py sh "id; uname -a"
+                -> uid=0(root) gid=0(root) …Linux BHU 4.14.149 mips
+
+  这靠的是固件漏洞：万一厂家出了新固件把这个洞修了，本工具就失效了。
+  另一种更稳的路是 SSH root（dropbear 22 端口，厂默认口令），
+  本工具不硬编码口令，把口令写到 ~/.cpe140pw 就能用 doctor 看到。
+
+【2】最常用的几条（照抄即可）
+
+  python cpe140.py doctor                  自检：现在能不能控制、漏洞在不在
+  python cpe140.py status                  概览：上行链路 / WAN / LAN
+  python cpe140.py clients                 现在谁连着这台中继器
+  python cpe140.py shell                   交互式 root shell（最像 Linux）
+  python cpe140.py sh "cat /proc/net/arp"  单条命令
+  python cpe140.py dump-flash bak.bin      整片 flash 备份（8MB，救砖的底牌）
+  python cpe140.py gui                     图形界面（不想打命令就用这个）
+
+【3】看门狗：断网 5/10 分钟就自动重启（你要的自动化）
+
+  设备上跑的小脚本 /etc/netguard.sh，由 crontab 每 2 分钟叫一次：
+    网络通       -> 计数清零，什么都不做
+    网络不通     -> 计数 +1；连续 N 次（默认 5 次 = 10 分钟）才认定「真断网」
+    真的断网     -> 写日志 + 重启设备；但如果 30 分钟内已经重启过，就跳过
+                    （防「上游光猫坏了」导致无限重启）
+  它不是「定时重启」：不管几点，只看网络通不通；也不碰定时重启那条规则。
+
+  python cpe140.py guard install            装上并开启（默认 10 分钟阈值）
+  python cpe140.py guard install --minutes 5
+  python cpe140.py guard install --mode log 只监控不重启（先观察几天再用）
+  python cpe140.py guard status             看状态（当前计数 / 上次自重启时间）
+  python cpe140.py guard log                看日志
+  python cpe140.py guard test               干跑：只告知「现在断网的话会怎样」
+  python cpe140.py guard off / on           停用 / 启用
+  python cpe140.py guard reset              计数清零
+  python cpe140.py guard uninstall          彻底卸载（设备回到没装过的状态）
+
+  建议：先 `guard install --mode log` 观察一两天，确认它只在真断网时计数，
+  再 `guard install`（模式改回 reboot）正式启用。
+
+【4】底层命令（前面带 guard 的都不用记，这里只是备查）
+
+  sh "<命令>"          以 root 跑命令（长的/带引号的自动走上传脚本方式）
+  cat  <设备路径>      读任意文件到屏幕，-o 存本地
+  push <本地> <设备>   上传文件；  pull <设备> <本地> 下载
+  cfg / set K=V        读 / 写全量配置（改变 SSID/密码/工作模式的键默认拦下）
+  mode <模式>          切工作模式（gateway/repeater/wisp/ap/wds，危险）
+  schedule --hour 4    定时重启（周几/几点几分）
+  password <新口令>    改 Web 管理员口令（免密就能改）
+  clean                清掉设备上工具留下的临时文件
+
+【5】红线（工具已默认守住，请你也不要去碰）
+
+  * 不要改 WLAN0_VAP0_* / WLAN0_VAP5_*（本机 AP 和上行无线）：改错了自己失联。
+  * 不要碰 devmanage opcode 3/4/5（恢复出厂 / 刷固件 / 重启）—— 除非真需要。
+  * 看门狗不要同时开两条（工具会去重，手改 crontab 请保持一条）。
+  * 说“重启”就真的是重启：会断网 30～60 秒。先 `guard test` 确认判断正确。
+==============================================================================
+"""
 
 DEFAULT_HOST = "192.168.188.254"
 
@@ -81,6 +153,22 @@ DANGEROUS_KEYS = {
     "WLAN0_VAP0_CHANNEL", "REG_DOMAIN", "HW_NAT_ENABLED",
 }
 MODE_MAP = {"gateway": 0, "repeater": 1, "wisp": 2, "ap": 3, "wds": 4}
+
+# 断网看门狗（netguard）在设备上的落点
+GUARD_SH = "/etc/netguard.sh"      # 巡检脚本本体
+GUARD_CONF = "/etc/netguard.conf"  # 参数（分钟数/模式/恢复命令）
+
+
+def guard_script_path() -> str:
+    """找 netguard.sh：cpe140.py 同级的 device/ 目录，或当前目录。"""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for c in (os.path.join(here, "device", "netguard.sh"),
+              os.path.join(here, "netguard.sh"),
+              os.path.join(os.getcwd(), "device", "netguard.sh"),
+              os.path.join(os.getcwd(), "netguard.sh")):
+        if os.path.isfile(c):
+            return c
+    raise CpeError("找不到 netguard.sh（它应放在 cpe140.py 同级的 device/ 目录里）")
 
 
 class CpeError(Exception):
@@ -308,22 +396,34 @@ class Cpe:
         self._exec(cmd.strip(), timeout)
 
     # --------------------------- 文件传输 --------------------------- #
-    def push_bytes(self, data: bytes, remote: str, verify: bool = True) -> int:
-        """任意二进制上传: 裸 body → /tmp/upload.img → 目标路径。"""
-        self._ensure_link()
-        self.request("/cgi-bin/upload", data, ctype="application/octet-stream",
-                     timeout=max(60.0, len(data) / 15000.0 + 30))
-        q = shlex.quote(remote)
-        self._exec(f"mv -f {UP_TMP} {q} 2>/dev/null || cp {UP_TMP} {q}", timeout=90)
-        if verify:
-            n = -1
+    def push_bytes(self, data: bytes, remote: str, verify: bool = True,
+                   tries: int = 3) -> int:
+        """任意二进制上传: 裸 body → /tmp/upload.img → 目标路径。
+
+        设备 CGI 偶发竞态（头一次回读可能拿到空内容），所以默认重试 3 次。
+        """
+        last = ""
+        for i in range(max(1, tries)):
+            if i:
+                self._log(f"   重试上传 ({i + 1}/{tries}) …")
+                self._link_ok = False          # 重新铺一遍回读通道
+            self._ensure_link()
+            self.request("/cgi-bin/upload", data, ctype="application/octet-stream",
+                         timeout=max(60.0, len(data) / 15000.0 + 30))
+            q = shlex.quote(remote)
+            self._exec(f"mv -f {UP_TMP} {q} 2>/dev/null || cp {UP_TMP} {q}", timeout=90)
+            if not verify:
+                return len(data)
+            got = self.run(f"wc -c < {q}", timeout=60).strip().split()
             try:
-                n = int(self.run(f"wc -c < {q}", timeout=60).strip().split()[0])
+                n = int(got[0])
             except (ValueError, IndexError):
-                pass
-            if n != len(data):
-                raise CpeError(f"上传校验失败: 期望 {len(data)} 实际 {n}")
-        return len(data)
+                last = "回读拿到空内容"
+                continue
+            if n == len(data):
+                return len(data)
+            last = f"设备端只有 {n} 字节"
+        raise CpeError(f"上传校验失败: 期望 {len(data)} 字节，{last}（已重试 {tries} 次）")
 
     def push(self, local: str, remote: str) -> int:
         with open(local, "rb") as f:
@@ -524,6 +624,56 @@ class Cpe:
         except Exception:                                # noqa: BLE001
             pass
 
+    # ------------------------- 断网看门狗 netguard ------------------------- #
+
+    def guard_status(self) -> str:
+        return self.run(f"sh {GUARD_SH} status 2>&1")
+
+    def guard_log(self, n: int = 60) -> str:
+        return self.run(f"sh {GUARD_SH} log 2>&1 | tail -n {n}")
+
+    def guard_test(self) -> str:
+        """干跑：只判断，不重启、不执行恢复。"""
+        return self.run(f"sh {GUARD_SH} test 2>&1")
+
+    def guard_reset(self) -> str:
+        return self.run(f"sh {GUARD_SH} reset 2>&1")
+
+    def guard_on(self) -> str:
+        return self.run(f"sh {GUARD_SH} cron on 2>&1")
+
+    def guard_off(self) -> str:
+        return self.run(f"sh {GUARD_SH} cron off 2>&1")
+
+    def guard_install(self, minutes: int = 10, mode: str = "reboot",
+                      recover: str = "", enable: bool = True) -> str:
+        """把看门狗脚本 + 参数装到设备上（enable=True 同时挂上 crontab）。"""
+        if mode not in ("reboot", "log"):
+            raise CpeError("mode 只能是 reboot 或 log")
+        if minutes < 2:
+            raise CpeError("分钟数至少 2（脚本每 2 分钟巡检一次）")
+        if re.search(r"[\n\r'\"`$\\]", recover):
+            raise CpeError("recover 里有危险字符（换行/引号/反引号/$/反斜杠）")
+        src = guard_script_path()
+        with open(src, "rb") as f:
+            self.push_bytes(f.read(), GUARD_SH)
+        self.run(f"chmod 755 {GUARD_SH}")
+        conf = ("# 由 cpe140 控制台写入：断网看门狗参数\n"
+                f"MINUTES={minutes}\n"
+                f"FAIL_NEED={max(1, int(round(minutes / 2.0)))}\n"
+                f"MODE={mode}\n"
+                f"RECOVER={recover}\n")
+        self.push_bytes(conf.encode(), GUARD_CONF)
+        self.run(f"chmod 644 {GUARD_CONF}")
+        self.guard_on() if enable else self.guard_off()
+        return self.guard_status()
+
+    def guard_uninstall(self) -> str:
+        """停用并擦掉脚本/参数（设备回到没装过的状态）。"""
+        self.run(f"sh {GUARD_SH} cron off 2>&1")
+        return self.run(f"rm -f {GUARD_SH} {GUARD_CONF} /tmp/netguard.* /tmp/netguard.log; "
+                        f"echo 已卸载看门狗")
+
 
 # --------------------------------------------------------------------------- #
 def gui(host: str, port: int) -> None:                   # pragma: no cover
@@ -702,6 +852,7 @@ def main(argv=None) -> int:
                            ("channels", "信道占用"), ("wifi", "本机 AP + 上行无线配置"),
                            ("sessions", "Web 会话"), ("doctor", "自检 + 漏洞确认"),
                            ("gui", "图形界面"), ("shell", "交互式 root shell"),
+                           ("howto", "使用教程（先看这个）"),
                            ("uci", "uci show 全量"), ("clean", "清理设备上的临时文件"),
                            ("reboot", "重启设备")):
         sp = sub.add_parser(name, help=helptext)
@@ -730,6 +881,15 @@ def main(argv=None) -> int:
     sp = sub.add_parser("schedule", help="定时重启设置")
     sp.add_argument("--off", action="store_true"); sp.add_argument("--week", type=int, default=0)
     sp.add_argument("--hour", type=int, default=4); sp.add_argument("--minute", type=int, default=0)
+    sp = sub.add_parser("guard", help="断网看门狗：持续断网自动重启")
+    sp.add_argument("action", nargs="?", default="status",
+                    choices=["status", "on", "off", "log", "test", "reset",
+                             "install", "uninstall"])
+    sp.add_argument("--minutes", type=int, default=10, help="连续断网多少分钟算断网（默认 10）")
+    sp.add_argument("--mode", choices=["reboot", "log"], default="reboot",
+                    help="reboot=到点重启（默认）/ log=只记录不重启")
+    sp.add_argument("--recover", default="", help="可选轻量恢复命令，例如 'wifi down; sleep 3; wifi up'")
+    sp.add_argument("--no-enable", action="store_true", help="只装不启用")
     sp = sub.add_parser("mode", help="工作模式切换 (危险)")
     sp.add_argument("mode", choices=list(MODE_MAP)); sp.add_argument("--force", action="store_true")
     sp = sub.add_parser("factory-reset", help="恢复出厂 (危险!)"); sp.add_argument("--yes", action="store_true")
@@ -739,9 +899,29 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     if not a.cmd:
         p.print_help(); return 0
+    if a.cmd == "howto":
+        print(HOWTO); return 0
     cpe = Cpe(a.host, a.port, getattr(a, "timeout", 30.0) or 30.0, a.verbose)
 
     try:
+        if a.cmd == "guard":
+            if a.action == "status":
+                print(cpe.guard_status())
+            elif a.action == "on":
+                print(cpe.guard_on(), "\n" + cpe.guard_status())
+            elif a.action == "off":
+                print(cpe.guard_off(), "\n" + cpe.guard_status())
+            elif a.action == "log":
+                print(cpe.guard_log())
+            elif a.action == "test":
+                print(cpe.guard_test())
+            elif a.action == "reset":
+                print(cpe.guard_reset())
+            elif a.action == "install":
+                print(cpe.guard_install(a.minutes, a.mode, a.recover, not a.no_enable))
+            elif a.action == "uninstall":
+                print(cpe.guard_uninstall())
+            return 0
         if a.cmd == "gui":
             gui(a.host, a.port); return 0
         if a.cmd == "shell":

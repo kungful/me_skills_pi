@@ -7,9 +7,62 @@
         <item name="android:navigationBarColor">@color/bg</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorAccent">@color/cyan</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorHint">@color/dim</item>
     </style>
 
-    <style name="Btn" parent="">
+    <!-- ============================ 卡片 ============================ -->
+    <style name="Card">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">14dp</item>
+        <item name="android:layout_marginBottom">10dp</item>
+    </style>
+
+    <style name="CardHi" parent="Card">
+        <item name="android:background">@drawable/bg_card_hi</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="Sect">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/cyan</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="Note">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/dim</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="KvKey">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">@color/dim</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">monospace</item>
+    </style>
+
+    <style name="KvVal" parent="KvKey">
+        <item name="android:layout_weight">1.7</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- ============================ 按钮 ============================ -->
+    <style name="Btn">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_btn</item>
@@ -19,28 +72,72 @@
         <item name="android:textAllCaps">false</item>
         <item name="android:minWidth">0dp</item>
         <item name="android:minHeight">0dp</item>
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
         <item name="android:stateListAnimator">@null</item>
         <item name="android:layout_marginEnd">6dp</item>
         <item name="android:layout_marginBottom">6dp</item>
     </style>
 
-    <style name="Tab" parent="Btn">
-        <item name="android:textColor">@color/tab_text</item>
-        <item name="android:background">@drawable/bg_tab</item>
-        <item name="android:layout_marginEnd">2dp</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
+    <style name="BtnWide" parent="Btn">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
     </style>
 
-    <style name="Tab.On" parent="Tab">
-        <item name="android:background">@drawable/bg_tab_on</item>
+    <style name="BtnPri" parent="BtnWide">
+        <item name="android:background">@drawable/bg_btn_pri</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="Input" parent="">
+    <style name="BtnDanger" parent="BtnWide">
+        <item name="android:background">@drawable/bg_btn_danger</item>
+        <item name="android:textColor">@color/red</item>
+    </style>
+
+    <style name="BtnGhost">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_btn_ghost</item>
+        <item name="android:textColor">@color/text2</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
+    </style>
+
+    <!-- 快捷命令 chip -->
+    <style name="Chip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:textColor">@color/text2</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">7dp</item>
+        <item name="android:paddingBottom">7dp</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- ============================ 输入 / 输出 ============================ -->
+    <style name="Input">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_input</item>
@@ -48,24 +145,63 @@
         <item name="android:textColorHint">@color/dim</item>
         <item name="android:textSize">13sp</item>
         <item name="android:fontFamily">monospace</item>
-        <item name="android:padding">10dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
         <item name="android:inputType">text</item>
-        <item name="android:layout_marginBottom">6dp</item>
+        <item name="android:minHeight">0dp</item>
     </style>
 
-    <style name="Out" parent="">
+    <style name="InputS" parent="Input">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="Out">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_out</item>
         <item name="android:textColor">@color/text</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:fontFamily">monospace</item>
-        <item name="android:lineSpacingMultiplier">1.1</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
         <item name="android:textIsSelectable">true</item>
-        <item name="android:paddingTop">8dp</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:minHeight">60dp</item>
     </style>
 
-    <style name="Kv" parent="Out">
-        <item name="android:textColor">@color/cyan</item>
-        <item name="android:textSize">11sp</item>
+    <style name="Pill">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_pill</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">@color/dim</item>
+        <item name="android:paddingStart">9dp</item>
+        <item name="android:paddingEnd">9dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
+    <style name="NavItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/bg_nav</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="NavLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/tab_text</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:layout_marginTop">3dp</item>
     </style>
 </resources>
