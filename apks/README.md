@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-17 15:31:52**　|　共 **13** 个应用　|　APK 合计 **46.9 MB**
+最后同步：**2026-10-17 15:50:55**　|　共 **13** 个应用　|　APK 合计 **46.9 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -36,8 +36,8 @@ apks/<分类>/<应用>/
 
 | 应用 | 版本 | APK | 源码 | 体积 | 说明 |
 |---|---|---|---|---|---|
-| **CPE140 控制台 (PC)** | 1.4.0 | - | [`src/`](tools/cpe140-ctrl/src/) | 0 B | 逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI（六标签）；断网取证诊断 diagnose（逐层盘点 + 判定假断网/上行/宽带/DNS）+ 分级软修复 fix（六级阶梯从轻到重，一通就停）+ 断网看门狗（重启前先软修；30 分钟冷却 + 单次断网最多重启 3 次，超限转 6 小时长退避，不会无限重启）；新机器一键部署 provision（验注入通道 + 备份整片 flash + 装软修/看门狗 + 回读核对 + 可选挂 cron）；修回显通道丢失（/tmp/.cpeout 被清而 /www/.cpeout 符号链接还在 -> GET 回 404 网页，旧版会把 HTML 当命令输出）；命令手册 howto；含脱敏报告 |
-| **CPE140 控制台 (安卓)** | 1.4.0 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.3 MB | 手机版完全控制台：概览/客户端/配置/root 终端/维护（一键断网诊断 + 分级软修救网 + 整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；看门狗重启前先软修、带重启上限防无限重启；v1.4.0 修回显通道丢失（设备重启后 /tmp 被清、/www/.cpeout 断链，GET /.cpeout 回 404 网页而旧版当成命令输出显示）—— 现在认得出来并自动重铺通道、重读、必要时重跑命令，另加「重铺连接通道」与「看请求日志」两个手动按钮；纯 Java + SAF 零存储权限；深色自绘 UI |
+| **CPE140 控制台 (PC)** | 1.4.0 | - | [`src/`](tools/cpe140-ctrl/src/) | 0 B | 逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI（六标签）；断网取证诊断 diagnose（逐层盘点 + 判定假断网/上行/宽带/DNS）+ 分级软修复 fix（六级阶梯从轻到重，一通就停）+ 断网看门狗（重启前先软修；30 分钟冷却 + 单次断网最多重启 3 次，超限转 6 小时长退避，不会无限重启）；新机器一键部署 provision（验注入通道 + 备份整片 flash + 装软修/看门狗 + 回读核对 + 可选挂 cron）；修回显通道丢失（/tmp/.cpeout 被清而 /www/.cpeout 符号链接还在 -> GET 回 404 网页，旧版会把 HTML 当命令输出；注意本工具 close() 退出时自己也会拆这条通道，手机 App 那头会因此撞上 404）；命令手册 howto；含脱敏报告 |
+| **CPE140 控制台 (安卓)** | 1.4.1 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.3 MB | 手机版完全控制台：概览/客户端/配置/root 终端/维护（换新机器一键部署 + 一键断网诊断 + 分级软修救网 + 整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；v1.4.1 加「一键部署」（验型号/验注入通道/验 uid=0 → 装不加 flash 自分级软修+看门狗 → ls -l 回读核对 → 看连通性，默认落到只记录模式）；v1.4.0 修回显通道丢失（设备重启后 /tmp 被清、或 PC 工具退出时 rm -f /www/.cpeout，断链后 GET /.cpeout 回 404 网页而旧版当成命令输出显示）—— 现在认得出来并自动重铺通道、重读、必要时重跑命令，另加「重铺连接通道」与「看请求日志」两个手动按钮；看门狗重启前先软修、带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI |
 | **Pi 通知 (piLink)** | 0.7.0 | [`pilink.apk`](tools/pilink/pilink.apk) | [`src/`](tools/pilink/src/) | 1.9 MB | 把 pi / pi-web 的通知与派发链路接到安卓手机 |
 | **三角力学计算器** | 1.0 | [`trig-mech.apk`](tools/trig-mech/trig-mech.apk) | [`src/`](tools/trig-mech/src/) | 77.1 KB | 三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线 |
 | **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 65.1 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |

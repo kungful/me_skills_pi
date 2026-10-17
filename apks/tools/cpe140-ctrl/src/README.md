@@ -230,11 +230,17 @@ python cpe140.py guard uninstall  # 删掉脚本与定时任务
 * `guard install` 需要 `device/netguard.sh` 与 `cpe140.py` 同级（或当前目录的 `device/`）；
   找不到会明确报错，不会静默装个空脚本上去。
 * **回显通道会丢（v1.4.0 修）**：命令输出靠 `/tmp/.cpeout` + 符号链接 `/www/.cpeout`
-  取回。`/tmp` 是内存盘，**设备一重启就空**；而 `/www/.cpeout` 写在 flash（overlay）上，
-  **重启后还在** → 变成断链，`GET /.cpeout` 回的是 uhttpd 的 404 网页。
-  旧版也会把这张网页当“命令输出”显示给你看；v1.4.0 起会认出来、自己重铺通道并重读
-  （实在不行才重跑命令），真修不好则明确报「回显通道丢了」而不是给你一段 HTML。
-  手动修：`sh ': > /tmp/.cpeout; ln -sf /tmp/.cpeout /www/.cpeout'`。
+  取回。会丢的原因有两个：
+  1. **设备重启**：`/tmp` 是内存盘，重启就空；而 `/www/.cpeout` 写在 flash（overlay）上、
+     重启后还在 → 变成断链；
+  2. **本工具自己**：`Cpe.close()`（每条命令跑完、进程退出时自动调用）会
+     `rm -f /tmp/.cpeout /www/.cpeout`，为的是不留痕迹。
+
+  → 所以你**在电脑上跑一条命令，手机 App 那边的通道就被拆了**：如果 App 是
+  v1.3.0 之前的版本，它会从那一刻起把 uhttpd 的 404 网页当成“命令输出”显示，
+  直到重启 App（这正是「干跑一下结果给我一段网页」的真因）。
+  v1.4.0 起 App 认得出来并自己重铺通道、重读、必要时重跑命令；PC 端同理。
+  手动修：`cpe140.py sh ': > /tmp/.cpeout; ln -sf /tmp/.cpeout /www/.cpeout'`。
 
 ---
 

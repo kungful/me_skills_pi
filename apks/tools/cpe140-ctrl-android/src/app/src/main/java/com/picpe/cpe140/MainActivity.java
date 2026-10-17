@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     private Cpe cpe;
-    private TextView status, pill, guardState, fixState;
+    private TextView status, pill, guardState, fixState, provState;
     private TextView[] out = new TextView[6];
     private ScrollView[] panels = new ScrollView[6];
     private LinearLayout[] navs = new LinearLayout[6];
@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         guardMin = findViewById(R.id.guardMin);
         guardState = findViewById(R.id.guardState);
         fixState = findViewById(R.id.fixState);
+        provState = findViewById(R.id.provState);
 
         out[1] = findViewById(R.id.out1);
         out[2] = findViewById(R.id.out2);
@@ -364,6 +365,22 @@ public class MainActivity extends AppCompatActivity {
                     () -> cpe.netfixInstall(asset("netfix.sh"), Cpe.WAN_TARGETS));
         });
 
+        // -------- 换新机器：一键部署 --------
+        findViewById(R.id.b_provision).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            confirm("一键部署到这台设备",
+                    "按顺序做六件事（每步都回读核对，失败就停）：\n\n"
+                            + "① 读型号/固件 ② 实测注入通道真能执行 ③ 确认 uid=0\n"
+                            + "④ 写入分级软修复 + 断网看门狗 4 个文件\n"
+                            + "⑤ 回读 ls -l 核对真落盘了 ⑥ 看当前连通性\n\n"
+                            + "安全默认：落到「只记录」模式 —— cron 挂上，但断网只写日志、"
+                            + "不会重启机器。观察两天确认不误判，再点「开启看门狗」切真重启。\n\n"
+                            + "（不下载整片 flash：要救砖时单独点「备份整片 flash」）\n\n确认部署？",
+                    () -> bg(provState(), "一键部署中（验通道 → 装软修+看门狗 → 回读核对）…",
+                            () -> cpe.provision(asset("netguard.sh"), asset("netfix.sh"),
+                                    10, "log", true)));
+        });
+
         // -------- 看门狗 --------
         findViewById(R.id.b_g5).setOnClickListener(v -> guardMin.setText("5"));
         findViewById(R.id.b_g10).setOnClickListener(v -> guardMin.setText("10"));
@@ -488,6 +505,10 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView fixState() {
         return fixState;
+    }
+
+    private TextView provState() {
+        return provState;
     }
 
     private void toast(String s) {
