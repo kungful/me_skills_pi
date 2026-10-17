@@ -592,6 +592,22 @@
 
                     <TextView
                         style="@style/Sect"
+                        android:text="// 抓包（按钮操作 · 可导出 pcap）" />
+
+                    <TextView
+                        style="@style/Note"
+                        android:text="选接口、填过滤、设时长，点「开始抓包」就行，不需要打命令。抓完在列表里点「导出」，直接存到手机；导出的是标准 pcap，电脑上用 Wireshark 打开就能看。抓包在设备端以 root 运行。" />
+
+                    <Button
+                        android:id="@+id/b_capture"
+                        style="@style/BtnPri"
+                        android:text="打开抓包页" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/CardHi">
+
+                    <TextView
+                        style="@style/Sect"
                         android:text="// 网页工具箱（抓包 · 命令 · WoL · 加固）" />
 
                     <TextView

@@ -119,6 +119,32 @@ public class Cpe {
         return api(cgi, p, timeout);
     }
 
+    // ------------------------------------------- 网页工具箱 CGI (/cgi-bin/tools)
+
+    /** 调 /cgi-bin/tools（text/plain 的 key=value）。kv 是 键,值,键,值… */
+    public String tools(String op, String... kv) throws Exception {
+        StringBuilder sb = new StringBuilder("op=").append(toolsEnc(op));
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            sb.append('&').append(kv[i]).append('=').append(toolsEnc(kv[i + 1]));
+        }
+        byte[] r = http("/cgi-bin/tools", sb.toString().getBytes("UTF-8"),
+                "application/x-www-form-urlencoded", 30000);
+        return new String(r, "UTF-8");
+    }
+
+    /** 取 /cgi-bin/tools 的二进制响应（下载 pcap 用）。query 不能带 op= 前缀。 */
+    public byte[] toolsBytes(String query) throws Exception {
+        return http("/cgi-bin/tools?" + query, null, null, 180000);
+    }
+
+    public static String toolsEnc(String s) {
+        try {
+            return java.net.URLEncoder.encode(s == null ? "" : s, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     public JSONObject api(String cgi, JSONObject p, int to) throws Exception {
         JSONObject d = p == null ? new JSONObject() : new JSONObject(p.toString());
         if (!d.has("interval")) {

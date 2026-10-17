@@ -251,6 +251,13 @@ public class MainActivity extends AppCompatActivity {
         quick(R.id.q7, "ls -la /www; ls -la /etc/config", "网站目录");
 
         // ---------------------------------------------------------- 5 维护
+        // 原生抓包页（按钮操作 + 导出 pcap）
+        findViewById(R.id.b_capture).setOnClickListener(v -> {
+            String h = (cpe == null) ? DEF_HOST : cpe.host;
+            android.content.Intent it = new android.content.Intent(this, CaptureActivity.class);
+            it.putExtra("host", h);
+            startActivity(it);
+        });
         // 网页工具箱（抓包 / 命令台 / WoL / 加固）—— 直接开设备端 /tools.html
         findViewById(R.id.b_tools).setOnClickListener(v -> {
             String h = (cpe == null) ? DEF_HOST : cpe.host;
