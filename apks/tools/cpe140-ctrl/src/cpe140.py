@@ -1302,6 +1302,13 @@ def main(argv=None) -> int:
     sp.add_argument("--no-enable", action="store_true", help="只装不启用")
     sp.add_argument("--no-softfix", action="store_true",
                     help="不要「先软后硬」：到点直接重启（默认先跑分级软修复）")
+    sp = sub.add_parser("sniff", help="抓包附近 WiFi（monitor 嗅探，边抓边扫全信道）")
+    sp.add_argument("--seconds", type=int, default=12, help="抓包总时长秒（默认 12）")
+    sp.add_argument("--sweep", type=int, default=3,
+                    help="每隔几秒让设备自扫一次（覆盖全信道）；0=只抓当前信道（默认 3）")
+    sp.add_argument("--pcap", default=None, help="把原始 pcap 存到本地（Wireshark 可开）")
+    sp.add_argument("--keep", action="store_true", help="抓完保留 mon0 接口")
+    sp.add_argument("--top", type=int, default=30, help="客户端列出前 N 个")
     sp = sub.add_parser("mode", help="工作模式切换 (危险)")
     sp.add_argument("mode", choices=list(MODE_MAP)); sp.add_argument("--force", action="store_true")
     sp = sub.add_parser("factory-reset", help="恢复出厂 (危险!)"); sp.add_argument("--yes", action="store_true")
