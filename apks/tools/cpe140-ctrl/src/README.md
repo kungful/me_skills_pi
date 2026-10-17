@@ -48,6 +48,11 @@ python cpe140.py dump-flash full.bin   # 整片 8MB flash 备份（救砖底牌�
 python cpe140.py sh 'ps w; df -h'      # 以 root 执行（多命令用引号）
 python cpe140.py cat /etc/config/wireless
 python cpe140.py shell                 # 交互式 root shell
+python cpe140.py howto                 # 命令手册 / 使用教程（不用连设备）
+python cpe140.py guard status          # 断网看门狗状态
+python cpe140.py guard test            # 干跑：只算会不会重启，绝不重启
+python cpe140.py guard install --minutes 10   # 装上看门狗：断网 10 分钟自动重启
+python cpe140.py guard off             # 停用（脚本保留）
 python cpe140.py gui                   # 图形界面（tkinter）
 
 cp cpe140.py /usr/local/bin/ && chmod +x /usr/local/bin/cpe140.py   # 想当命令用
@@ -60,17 +65,49 @@ cp cpe140.py /usr/local/bin/ && chmod +x /usr/local/bin/cpe140.py   # 想当命�
 ```
 info status clients arp channels wifi sessions doctor gui shell uci clean reboot scan
 sh cat cfg set backup restore push pull dump-flash password schedule mode
-factory-reset upgrade
+factory-reset upgrade guard howto
 ```
 
 `mode`（切工作模式）、`factory-reset`、`upgrade` 是**危险操作**，`factory-reset` 需额外 `--yes`。
 
 ---
 
+## 断网看门狗（防卡机自动重启）
+
+设备上跑 `/etc/netguard.sh`（由 `/etc/crontabs/root` 每 2 分钟拉起）：
+
+* 探测 `223.5.5.5` / `114.114.114.114`，任一通 → 计数清零；
+* 连续 `MINUTES/2` 次全不通（默认 10 分钟）→ `sync; sleep 3; reboot`；
+* **30 分钟冷却**：上游光猫真坏了也不会无限重启；
+* **与「定时重启」互不干扰**：脚本名/命令行都不含 `reboot` 子串，
+  不会被 `/etc/init.d/autoreboot` 的 `sed -i '/reboot/d'` 误删；
+* 计数与日志在 `/tmp`（内存盘，零 flash 磨损，重启自然归零）；
+  只有**真重启**才写一次 `/etc/netguard.last`。
+
+```bash
+python cpe140.py guard status     # 状态：装上没 / 计数 / 冷却 / 上次自重启
+python cpe140.py guard test       # 干跑：只算一遍，绝不重启、绝不执行恢复
+python cpe140.py guard log        # 它的日志（记录“上游网关通不通”）
+python cpe140.py guard reset      # 计数清零
+python cpe140.py guard off / on   # 停用 / 启用 cron
+python cpe140.py guard install --minutes 10 --mode reboot
+python cpe140.py guard install --mode log      # 只记录不重启（先观察几天）
+python cpe140.py guard uninstall  # 删掉脚本与定时任务
+```
+
+参数在设备上 `/etc/netguard.conf`（写入后即时生效，无需重启）：
+`MINUTES` / `FAIL_NEED` / `MODE`(reboot|log) / `RECOVER`（轻量恢复命令，留空=直接重启）。
+也可放 `/etc/netguard.local` 覆盖（不会被工具重写）。
+
+> 本仓库**默认只装不启用**：脚本放好了，但 cron 是关的，
+> 要你显式 `guard install`（或 GUI/App 里点「开启看门狗」）才真正生效。
+
+---
+
 ## 图形界面
 
-`python cpe140.py gui` —— 五个标签页：**概览 / 客户端·扫描 / 配置 / 终端(root) / 维护**
-（备份 flash、改 Web 口令、定时重启、重启、恢复出厂）。
+`python cpe140.py gui` —— 六个标签页：**概览 / 客户端·扫描 / 配置 / 终端(root) / 维护 / 看门狗**
+（看门狗页有状态·干跑·日志·重置·开启·停用·卸载；终端页右上角有「命令手册」）。
 
 ---
 
@@ -106,6 +143,10 @@ factory-reset upgrade
 * **`strings` 在 Git Bash 里没有**：离线分析 CGI 请用 Python。
 * 读含中文的 JSON 请 `encoding='utf-8'`，控制台请 `PYTHONIOENCODING=utf-8`。
 * 设备没有 `base64` / `od` / `curl` / `openssl`；有 `gzip/tar/dd/wc/printf/hexdump/awk/sed`。
+* **上传偶发失败是设备 CGI 的竞态**（新会话第一次回读常拿到空内容，报“实际 -1”）：
+  `push_bytes()` 已内置重试 3 次（每次重试前重铺回读通道），看到重试日志不用管。
+* `guard install` 需要 `device/netguard.sh` 与 `cpe140.py` 同级（或当前目录的 `device/`）；
+  找不到会明确报错，不会静默装个空脚本上去。
 
 ---
 
