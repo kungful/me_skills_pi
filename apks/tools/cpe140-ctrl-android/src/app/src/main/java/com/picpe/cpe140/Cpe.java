@@ -489,6 +489,60 @@ public class Cpe {
         return guardInstall(guardScript, minutes, mode, FIX_SH, enable);
     }
 
+    // ------------------------------------------------------ 新机器一键部署
+
+    /**
+     * 一键部署：验通道 → 验 root → 装分级软修复 + 断网看门狗 → 回读核对 → 看连通性。
+     *
+     * <p>不下载整片 flash（8MB 很重，要救砖时单独点「备份整片 flash」按钮）。
+     * 默认 enable=true + mode=log：cron 挂上但只写日志、绝不重启机器，
+     * 观察两天确认不误判，再点「开启看门狗」切真重启。
+     */
+    public String provision(byte[] guardScript, byte[] fixScript, int minutes,
+                            String mode, boolean enable) throws Exception {
+        StringBuilder sb = new StringBuilder("=== 一键部署 ===\n");
+
+        JSONObject si = sysinfo();
+        sb.append("① 设备连通：").append(si.optString("PRODUCTNAME", "?"))
+                .append(" / ").append(si.optString("FIRMVERSION", "?")).append('\n');
+
+        // 注入通道：拿 sleep 的实测耗时证明值真的被 sh 执行了，而不是被忽略
+        long t0 = System.currentTimeMillis();
+        run("true");
+        long base = System.currentTimeMillis() - t0;
+        t0 = System.currentTimeMillis();
+        run("sleep 2");
+        long slow = System.currentTimeMillis() - t0;
+        boolean chan = slow - base > 1500;
+        sb.append("② root 注入通道：").append(chan ? "OK" : "失败")
+                .append("（true=").append(base).append("ms / sleep2=").append(slow).append("ms）\n");
+        if (!chan) {
+            return sb.append("   —— 注入不生效（固件可能已修），别再往下装。\n").toString();
+        }
+
+        sb.append("③ 以 root 执行：").append(run("id").trim()).append('\n');
+
+        netfixInstall(fixScript, WAN_TARGETS);
+        guardInstall(guardScript, minutes, mode, FIX_SH, enable);
+        sb.append("④ 已写入 4 个文件（netfix.sh/.conf + netguard.sh/.conf，mode=").append(mode)
+                .append("，cron ").append(enable ? "已挂上" : "未挂").append("）\n");
+
+        sb.append("⑤ 回读核对：\n").append(run("ls -l " + FIX_SH + " " + FIX_CONF + " "
+                + GUARD_SH + " " + GUARD_CONF + " 2>&1"));
+        sb.append("⑥ 当前连通性：").append(netfixCheck().trim()).append('\n');
+
+        if (!enable) {
+            sb.append("✅ 文件已就位但没挂 cron。去看门狗卡片点「开启看门狗」才会生效。");
+        } else if ("log".equals(mode)) {
+            sb.append("✅ 部署完成。现在是「只记录」模式：断网只写日志，不会重启机器。\n")
+                    .append("   观察 2~3 天（点「看日志」），确认它只在真断网时计数，")
+                    .append("再点「开启看门狗」切真重启。");
+        } else {
+            sb.append("✅ 部署完成，看门狗已启用（真重启）。断网先点「一键诊断」再谈重启。");
+        }
+        return sb.toString();
+    }
+
     // ------------------------------------------- 断网诊断 & 分级软修复 netfix
 
     /** 装分级软修复脚本 + 参数（幂等，不启用任何自动动作）。 */

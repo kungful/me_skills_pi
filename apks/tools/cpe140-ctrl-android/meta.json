@@ -10,10 +10,10 @@
   "apkName": "app-release.apk",
   "apkSize": 5538588,
   "apkSha256": "bb8b2037cc11c77c4a94af3793e761597b3ea3f5e7413425625054306da1ca9d",
-  "srcSha": "b13a8b791ae21f0b0d1b0c1438dc8fe39a9286e0",
+  "srcSha": "0dbb65b848964243967848db7e57f819da78ba1b",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/CPE140Ctrl",
   "builtAt": "2026-10-17 13:44:56",
-  "syncedAt": "2026-10-17 13:46:56",
+  "syncedAt": "2026-10-17 15:31:51",
   "auto": false
 }

@@ -654,6 +654,28 @@
 
                     <TextView
                         style="@style/Sect"
+                        android:text="// 换新机器 · 一键部署" />
+
+                    <TextView
+                        style="@style/Note"
+                        android:text="拿到一台同型号的中继器（新机、或刚恢复出厂），点一下把该做的全做了：① 读型号固件 ② 实测注入通道真的能执行（拿 sleep 耗时对比）③ 确认 uid=0 ④ 写入分级软修复 + 断网看门狗 4 个文件 ⑤ 回读 ls -l 核对真落盘了 ⑥ 看当前连通性。默认落到「只记录」模式：cron 挂上但不重启机器，观察两天再说。" />
+
+                    <Button
+                        android:id="@+id/b_provision"
+                        style="@style/BtnPri"
+                        android:text="一键部署（装软修+看门狗）" />
+
+                    <TextView
+                        android:id="@+id/provState"
+                        style="@style/Out"
+                        android:minHeight="0dp"
+                        android:text="不下载整片 flash（8MB）—— 那要救砖的时候单独点「备份整片 flash」。" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/CardHi">
+
+                    <TextView
+                        style="@style/Sect"
                         android:text="// 断网看门狗 · 自动重启" />
 
                     <TextView
