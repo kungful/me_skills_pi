@@ -691,18 +691,22 @@ function bindPackTools() {
   $('btnPackClose').onclick = () => open(false);
 
   $('btnPackPaste').onclick = () => {
+    packMsg('正在读剪贴板…');
     API.invoke('paste', {}).then((r) => {
       if (r && r.ok && r.text) { $('packIn').value = r.text; packMsg('已从剪贴板读入 ' + r.text.length + ' 字符，点「导入」'); }
-      else packMsg('剪贴板是空的（或没给剪贴板权限）', true);
-    }).catch(() => packMsg('读剪贴板失败', true));
+      else packMsg('剪贴板里没有文字', true);
+    }).catch((e) => packMsg('读剪贴板失败：' + ((e && e.message) || '未知原因'), true));
   };
 
   $('btnPackFile').onclick = () => {
     packMsg('正在选文件…');
     API.invoke('pick', { mime: 'application/json' }).then((r) => {
       if (r && r.ok && r.text) { $('packIn').value = r.text; packMsg('已读入文件 ' + (r.name || '') + '（' + r.text.length + ' 字符），点「导入」'); }
-      else packMsg('没选文件（或读不出来）：' + ((r && r.err) || '已取消'));
-    }).catch((e) => packMsg('选文件失败：' + e.message, true));
+      else packMsg('文件里没有文字内容');
+    }).catch((e) => {
+      const m = (e && e.message) || '未知原因';
+      packMsg(m.indexOf('取消') >= 0 ? '没选文件（已取消）' : '读取失败：' + m, m.indexOf('取消') < 0);
+    });
   };
 
   $('btnPackDo').onclick = () => {

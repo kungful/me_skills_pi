@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17 09:32:35",
+  "generatedAt": "2026-10-17 10:01:44",
   "count": 12,
   "totalApkBytes": 49100011,
   "categories": [
@@ -136,8 +136,8 @@
           "apk": "tools/sunnet/sunnet.apk",
           "source": "tools/sunnet/src/",
           "size": 66709,
-          "sha256": "14c07dc87e47ceccb47747ebf4b484040eaf0ecf195949279d5271cbf8ec180c",
-          "builtAt": "2026-10-17 09:19:10",
+          "sha256": "07484ed1757f7ac22068b28da6efb7c10c4a047b9fb533083d308d1ec002610b",
+          "builtAt": "2026-10-17 09:50:33",
           "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
         },
         {
