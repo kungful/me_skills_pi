@@ -46,7 +46,7 @@ import time
 import urllib.error
 import urllib.request
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 HOWTO = r"""
 ==============================================================================
@@ -104,6 +104,15 @@ HOWTO = r"""
 
   建议：先 `guard install --mode log` 观察一两天，确认它只在真断网时计数，
   再 `guard install`（模式改回 reboot）正式启用。
+
+  换新机器 / 恢复出厂后重新装 —— 一条命令搞定：
+  python cpe140.py provision
+      ① 验设备连通 ② 验 root 注入通道 ③ 验 uid=0
+      ④ 备份整片 8MB flash（救砖，落到 cpe140_fullflash_<ip>.bin）
+      ⑤ 装分级软修复 + 看门狗（4 个文件）⑥ 回读核对 ⑦ 挂 cron ⑧ 看当前连通性
+      默认落到「只记录」模式，不会重启机器；观察几天再 guard install --mode reboot
+  python cpe140.py --host 192.168.188.254 provision      对着别的设备（新机器）装
+  python cpe140.py provision --no-backup --no-enable     只装文件，不备份也不挂 cron
 
 【4】底层命令（前面带 guard 的都不用记，这里只是备查）
 
@@ -851,6 +860,89 @@ class Cpe:
         self.guard_on() if enable else self.guard_off()
         return self.guard_status()
 
+    def provision(self, flash_out: str = "", backup: bool = True, enable: bool = True,
+                  mode: str = "log", minutes: int = 10, max_reboot: int = 3,
+                  long_wait: int = 21600) -> list[tuple[str, str, str]]:
+        """给一台（新）机器一键部署：验通道 → 备份 flash → 装软修+看门狗 → 挂 cron。
+
+        默认 mode="log"（只记录不重启）：先观察几天，确认它不误判，再切真重启。
+        """
+        res: list[tuple[str, str, str]] = []
+
+        def add(item, ok, note):
+            res.append((item, "OK" if ok else "FAIL", note))
+
+        try:
+            si = self.sysinfo()
+            add("① 设备连通", True,
+                f"{si.get('PRODUCTNAME', '?')} / {si.get('FIRMVERSION', '?')} @ {self.host}")
+        except CpeError as e:
+            add("① 设备连通", False, str(e))
+            return res
+
+        # 注入通道：拿 sleep 的实测耗时证明值真的被 sh 执行了（而不是被忽略）
+        try:
+            t0 = time.time(); self.run("true"); base = time.time() - t0
+            t0 = time.time(); self.run("sleep 3"); slow = time.time() - t0
+            ok = slow - base > 2.0
+            add("② root 注入通道", ok, f"true={base:.2f}s / sleep3={slow:.2f}s")
+            if not ok:
+                add("   —— 中止", False, "注入不生效（固件可能已修），别再往下装")
+                return res
+        except CpeError as e:
+            add("② root 注入通道", False, str(e))
+            return res
+
+        try:
+            i = self.run("id").strip()
+            add("③ 以 root 执行", "uid=0" in i, i)
+        except CpeError as e:
+            add("③ 以 root 执行", False, str(e))
+
+        if backup:
+            out = flash_out or f"cpe140_fullflash_{self.host.replace('.', '_')}.bin"
+            try:
+                n = self.dump_flash(out, progress=False)
+                md5 = hashlib.md5(open(out, "rb").read()).hexdigest()
+                add("④ flash 备份", n > 4 * 1024 * 1024, f"{_hb(n)} -> {out}  md5={md5}")
+            except Exception as e:                            # noqa: BLE001
+                add("④ flash 备份", False, f"{e}（不致命，可稍后 dump-flash 补）")
+        else:
+            add("④ flash 备份", True, "已跳过（--no-backup）")
+
+        try:
+            self.guard_install(minutes, mode, FIX_RECOVER, enable,
+                               max_reboot, long_wait, True)
+            add("⑤ 装软修+看门狗", True, "netfix.sh + netguard.sh + 2 个参数文件")
+        except CpeError as e:
+            add("⑤ 装软修+看门狗", False, str(e))
+            return res
+
+        try:
+            files = " ".join((FIX_SH, FIX_CONF, GUARD_SH, GUARD_CONF))
+            got = []
+            for ln in self.run(f"ls -l {files} 2>&1").splitlines():
+                f = ln.split()
+                if len(f) >= 9:
+                    got.append(f"{os.path.basename(f[-1])}={f[4]}B")
+            add("⑥ 文件已就位", len(got) == 4, f"{len(got)}/4  " + "  ".join(got))
+        except CpeError as e:
+            add("⑥ 文件已就位", False, str(e))
+
+        try:
+            c = self.run("grep -c netguard /etc/crontabs/root 2>/dev/null || echo 0").strip()
+            on = c not in ("", "0")
+            add("⑦ 定时任务", True,
+                "已挂上（每 2 分钟巡检一次）" if on else "未挂（只放文件，不自动动作）")
+        except CpeError as e:
+            add("⑦ 定时任务", False, str(e))
+
+        try:
+            add("⑧ 当前连通性", True, self.netfix_check().strip().replace("\n", " "))
+        except CpeError as e:
+            add("⑧ 当前连通性", False, str(e))
+        return res
+
     def guard_uninstall(self) -> str:
         """停用并擦掉脚本/参数（设备回到没装过的状态）。"""
         self.run(f"sh {GUARD_SH} cron off 2>&1")
@@ -1119,6 +1211,15 @@ def main(argv=None) -> int:
     sp = sub.add_parser("fix", help="分级软修复：从轻到重救网，比直接重启温和")
     sp.add_argument("action", nargs="?", default="run",
                     choices=["run", "check", "dry", "status", "log", "install"])
+    sp = sub.add_parser("provision", help="新机器一键部署：验漏洞 + 备份 flash + 装软修/看门狗")
+    sp.add_argument("--flash-out", default="", help="flash 备份存到哪（默认 cpe140_fullflash_<ip>.bin）")
+    sp.add_argument("--no-backup", action="store_true", help="跳过整片 flash 备份")
+    sp.add_argument("--no-enable", action="store_true", help="只放文件，不挂 cron")
+    sp.add_argument("--mode", choices=["log", "reboot"], default="log",
+                    help="log=只记录（默认，先观察几天）/ reboot=真重启")
+    sp.add_argument("--minutes", type=int, default=10, help="连续断网多少分钟算断网（默认 10）")
+    sp.add_argument("--max-reboot", type=int, default=3, help="单次断网最多自动重启几次（默认 3）")
+    sp.add_argument("--long-wait", type=int, default=21600, help="超限后的重试间隔秒数（默认 21600）")
     sp = sub.add_parser("guard", help="断网看门狗：持续断网自动重启")
     sp.add_argument("action", nargs="?", default="status",
                     choices=["status", "on", "off", "log", "test", "reset",
@@ -1166,6 +1267,31 @@ def main(argv=None) -> int:
                                         a.max_reboot, a.long_wait, not a.no_softfix))
             elif a.action == "uninstall":
                 print(cpe.guard_uninstall())
+            return 0
+        if a.cmd == "provision":
+            rows = cpe.provision(a.flash_out, not a.no_backup, not a.no_enable,
+                                 a.mode, a.minutes, a.max_reboot, a.long_wait)
+            for n, o, c in rows:
+                print(f"{n:18s} {o:4s} {c}")
+            bad = [n for n, o, _ in rows if o == "FAIL"]
+            print()
+            if bad:
+                print("⚠ 有失败项：" + "、".join(bad))
+                return 1
+            print("✅ 部署完成。后续：")
+            if a.no_enable:
+                print("  · 文件已就位但没挂 cron，随时可开：")
+                print(f"      python cpe140.py --host {a.host} guard install --mode log")
+            elif a.mode == "log":
+                print("  · 现在是「只记录」模式（**不会重启**）。观察 2~3 天：")
+                print(f"      python cpe140.py --host {a.host} guard log")
+                print("  · 确认它只在真断网时计数后，切成真重启：")
+                print(f"      python cpe140.py --host {a.host} guard install --mode reboot")
+            else:
+                print("  · 看门狗已开启（真重启）。断网先跑诊断，别急着重启：")
+                print(f"      python cpe140.py --host {a.host} diagnose")
+            print(f"  · 平时看状态：python cpe140.py --host {a.host} guard status")
+            print(f"  · 刷固件/恢复出厂前先停用：python cpe140.py --host {a.host} guard off")
             return 0
         if a.cmd == "diagnose":
             print(cpe.diagnose()); return 0
