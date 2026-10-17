@@ -56,7 +56,7 @@ xsshpass)
 	np=$2; [ -z "$np" ] && { echo "缺少新口令"; exit 2; }
 	bak /etc/shadow
 	printf '%s\n%s\n' "$np" "$np" | passwd root >/tmp/.hp 2>&1
-	if [ $? = 0 ]; then say "✓ root 口令已改"; else say "✗ 改失败:"; cat /tmp/.hp; fi
+	if [ $? = 0 ]; then say "[ok] root 口令已改"; else say "[!!] 改失败:"; cat /tmp/.hp; fi
 	rm -f /tmp/.hp
 	say "  回滚: printf 'cxyb#999\\ncxyb#999\\n' | passwd root"
 	;;
@@ -68,7 +68,7 @@ xwebadmin)
 	old=$(uci -q get administrator.user.password)
 	bak /etc/config/administrator
 	uci set administrator.user.password="$np" && uci commit administrator
-	say "✓ Web 管理员口令: $old -> $(uci get administrator.user.password)"
+	say "[ok] Web 管理员口令: $old -> $(uci get administrator.user.password)"
 	say "  回滚: uci set administrator.user.password='$old' && uci commit administrator"
 	say "  (注意: 若 Web 登录用别的字段, 请用浏览器实测一次)"
 	;;
@@ -80,7 +80,7 @@ xpsk)
 	echo "!! 本次会踢掉所有已连本机 AP 的客户端，它们必须用新密码重连。"
 	bak /etc/config/wireless
 	uci set wireless.vap0.key="$np" && uci commit wireless
-	say "✓ AP 密码: $old -> $(uci get wireless.vap0.key)"
+	say "[ok] AP 密码: $old -> $(uci get wireless.vap0.key)"
 	say "  生效需重启无线: wifi reload    (约断 1~5 秒)"
 	say "  回滚: uci set wireless.vap0.key='$old' && uci commit wireless && wifi reload"
 	;;
@@ -93,27 +93,35 @@ xsshport)
 	uci set dropbear.@dropbear[0].Port="$np" && uci commit dropbear
 	/etc/init.d/dropbear restart >/dev/null 2>&1
 	sleep 1
-	if netstat -lnt 2>/dev/null | grep -q ":$np "; then say "✓ SSH 端口: $old -> $np (已在监听)";
-	else say "✗ 新端口没起来！立刻回滚"; uci set dropbear.@dropbear[0].Port="$old"; uci commit dropbear; /etc/init.d/dropbear restart; fi
+	if netstat -lnt 2>/dev/null | grep -q ":$np "; then say "[ok] SSH 端口: $old -> $np (已在监听)";
+	else say "[!!] 新端口没起来！立刻回滚"; uci set dropbear.@dropbear[0].Port="$old"; uci commit dropbear; /etc/init.d/dropbear restart; fi
 	say "  回滚: uci set dropbear.@dropbear[0].Port='$old' && uci commit dropbear && /etc/init.d/dropbear restart"
 	say "  ★ 别忘了: 80 端口的未认证 CGI 仍可用，SSH 换端口只是减少扫描噪音"
 	;;
 
 xcloseports)
 	need_yes "closeports" "$2"
-	# upload = 未认证刷固件入口; showhtml = 死接口(全 opcode 空响应)
-	for n in upload showhtml; do
+	# showhtml = 死接口(所有 opcode 都返回 {}) -> 关掉零影响
+	# upload   = 未认证刷固件入口, 但 cpe140.py 的命令回退/文件推送依赖它!
+	#            默认不动; 确认要关请加 --with-upload(会削弱 cpe140.py)
+	for n in showhtml; do
 		if [ -L /www/cgi-bin/$n ] || [ -f /www/cgi-bin/$n ]; then
-			mv /www/cgi-bin/$n /www/cgi-bin/$n.off && say "✓ 已停用 /cgi-bin/$n"
+			mv /www/cgi-bin/$n /www/cgi-bin/$n.off && say "[ok] 已停用 /cgi-bin/$n"
 		else say "- /cgi-bin/$n 不存在，跳过"; fi
 	done
+	if [ "$3" = "--with-upload" ]; then
+		say "[!!] 关掉 upload 后 cpe140.py 遇含 美元符 或引号的命令会失败(它靠 upload 回退)"
+		mv /www/cgi-bin/upload /www/cgi-bin/upload.off 2>/dev/null && say "[ok] 已停用 /cgi-bin/upload"
+	else
+		say "保留 /cgi-bin/upload (cpe140.py 回退通道需要; 要关请加 --with-upload)"
+	fi
 	say "  保留(Web UI 需要): login sysinfo wireless* easyconfig lan* wan devmanage active timectrl"
 	say "  回滚: /etc/harden.sh revert"
 	;;
 
 xrevert)
 	for n in upload showhtml; do
-		[ -e /www/cgi-bin/$n.off ] && mv /www/cgi-bin/$n.off /www/cgi-bin/$n && say "✓ 已恢复 /cgi-bin/$n"
+		[ -e /www/cgi-bin/$n.off ] && mv /www/cgi-bin/$n.off /www/cgi-bin/$n && say "[ok] 已恢复 /cgi-bin/$n"
 	done
 	say "done"
 	;;
