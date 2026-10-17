@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-17 11:32:32**　|　共 **13** 个应用　|　APK 合计 **46.9 MB**
+最后同步：**2026-10-17 11:41:52**　|　共 **13** 个应用　|　APK 合计 **46.9 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -39,6 +39,6 @@ apks/<分类>/<应用>/
 | **CPE140 控制台 (PC)** | 1.2.0 | - | [`src/`](tools/cpe140-ctrl/src/) | 0 B | 逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI（六标签）；断网看门狗（断网 N 分钟自动重启；30 分钟冷却 + 单次断网最多重启 3 次，超限转 6 小时长退避，不会无限重启）；命令手册 howto；含脱敏报告 |
 | **CPE140 控制台 (安卓)** | 1.2.0 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.3 MB | 手机版完全控制台：概览/客户端/配置/root 终端/维护（整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；看门狗带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI |
 | **Pi 通知 (piLink)** | 0.7.0 | [`pilink.apk`](tools/pilink/pilink.apk) | [`src/`](tools/pilink/src/) | 1.9 MB | 把 pi / pi-web 的通知与派发链路接到安卓手机 |
-| **三角力学计算器** | 1.0 | [`trig-mech.apk`](tools/trig-mech/trig-mech.apk) | [`src/`](tools/trig-mech/src/) | 49.1 KB | 三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线 |
+| **三角力学计算器** | 1.0 | [`trig-mech.apk`](tools/trig-mech/trig-mech.apk) | [`src/`](tools/trig-mech/src/) | 77.1 KB | 三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线 |
 | **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 65.1 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
 | **需求雷达** | - | [`demand-radar.apk`](tools/demand-radar/demand-radar.apk) | [`src/`](tools/demand-radar/src/) | 857.4 KB | 从公开渠道挖掘市场需求信号，打分聚簇出机会榜 |

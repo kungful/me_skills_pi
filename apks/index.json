@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17 11:32:32",
+  "generatedAt": "2026-10-17 11:41:52",
   "count": 13,
-  "totalApkBytes": 49150944,
+  "totalApkBytes": 49179616,
   "categories": [
     {
       "id": "design",
@@ -135,9 +135,9 @@
           "version": "1.0",
           "apk": "tools/trig-mech/trig-mech.apk",
           "source": "tools/trig-mech/src/",
-          "size": 50325,
-          "sha256": "4852a56e8e7416836bc5b7907201800fdf817ee13b9188a5d2c944a1597e46c3",
-          "builtAt": "2026-10-17 11:30:24",
+          "size": 78997,
+          "sha256": "eb568c877cde00d99199649029836507f8396f512b0557ddbeb34f1e3f4ef55d",
+          "builtAt": "2026-10-17 11:41:25",
           "notes": "三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线"
         },
         {

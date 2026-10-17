@@ -1,68 +1,75 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """生成 ic_launcher.png —— 直角三角形意象：
-橙色=对边 蓝色=邻边 绿色=斜边，右下直角标记，左下角画角弧。
-纯 PIL 绘制，无网络 / 无字体依赖。"""
+蓝色=邻边 橙色=对边 绿色=斜边，直角标记 + 参考角弧 + 三个顶点。
+纯 PIL 绘制（4 倍超采样再缩小，边缘干净），无网络 / 无字体依赖。"""
 from PIL import Image, ImageDraw
 import os
 
 SIZES = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
-BG      = (14, 17, 22, 255)
-OPP     = (255, 180, 58, 255)    # 对边 → 琥珀
-ADJ     = (69, 200, 255, 255)    # 邻边 → 冰蓝
-HYP     = (74, 222, 128, 255)    # 斜边 → 绿
-DIM     = (122, 137, 156, 255)
-GRID    = (34, 44, 56, 255)
+SS = 4                                   # 超采样倍数
+
+BG    = (14, 17, 22, 255)     # 和 App 背景一致
+TILE  = (22, 28, 37, 255)
+OPP   = (255, 180, 58, 255)   # 对边 → 琥珀
+ADJ   = (69, 200, 255, 255)   # 邻边 → 冰蓝
+HYP   = (74, 222, 128, 255)   # 斜边 → 绿
+DIM   = (122, 137, 156, 255)
+WHITE = (240, 245, 250, 255)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
-A = (13.0, 84.0)     # 左下：参考角
-C = (84.0, 84.0)     # 右下：直角
-B = (84.0, 22.0)     # 右上
+# 单位坐标系 100×100：A 是参考角，C 是直角，B 是另一个锐角顶点
+A = (20.0, 78.0)
+C = (80.0, 78.0)
+B = (80.0, 26.0)
 
-for dpi, S in SIZES.items():
-    img = Image.new("RGBA", (S, S), BG)
+
+def render(S):
+    n = S * SS
+    u = n / 100.0
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    u = S / 100.0
 
     def P(p):
         return (p[0] * u, p[1] * u)
 
-    # 背景网格（淡）
-    step = 12
-    for g in range(step, 100, step):
-        d.line([(g * u, 0), (g * u, S)], fill=GRID, width=max(1, int(u)))
-        d.line([(0, g * u), (S, g * u)], fill=GRID, width=max(1, int(u)))
+    # 圆角底板
+    d.rounded_rectangle([2 * u, 2 * u, 98 * u, 98 * u],
+                        radius=23 * u, fill=TILE, outline=(38, 48, 62, 255),
+                        width=max(1, round(1.1 * u)))
 
-    lw = max(2, int(6.5 * u))
-
-    # 兜底圆角底板
-    d.rounded_rectangle([3 * u, 3 * u, 97 * u, 97 * u], radius=18 * u, outline=(40, 52, 66, 255), width=max(1, int(u)))
-
-    # 邻边 (底) 蓝
+    lw = round(9 * u)
+    # 邻边（底，蓝）· 对边（右，橙）· 斜边（绿）
     d.line([P(A), P(C)], fill=ADJ, width=lw)
-    # 对边 (右) 橙
     d.line([P(C), P(B)], fill=OPP, width=lw)
-    # 斜边 绿
     d.line([P(A), P(B)], fill=HYP, width=lw)
 
-    # 直角标记
-    sq = 13 * u
-    d.line([(C[0] * u - sq, C[1] * u), (C[0] * u - sq, C[1] * u - sq)], fill=DIM, width=max(1, int(2.4 * u)))
-    d.line([(C[0] * u - sq, C[1] * u - sq), (C[0] * u, C[1] * u - sq)], fill=DIM, width=max(1, int(2.4 * u)))
+    # 直角标记（C 点，往左上方的小方块）
+    sq = 15 * u
+    d.line([(C[0] * u - sq, C[1] * u), (C[0] * u - sq, C[1] * u - sq), (C[0] * u, C[1] * u - sq)],
+           fill=DIM, width=max(1, round(2.6 * u)), joint="curve")
 
-    # 左下角弧
-    r = 30 * u
-    d.arc([A[0] * u, A[1] * u - r, A[0] * u + 2 * r, A[1] * u + r],
-          start=270, end=323, fill=(255, 255, 255, 210), width=max(2, int(3.4 * u)))
+    # 参考角弧：以 A 为圆心，从 AC 方向（0°=正右）扫到 AB 方向
+    # 小尺寸下弧不好认，就不画了
+    import math
+    if S >= 72:
+        r = 30 * u
+        th = math.degrees(math.atan2(A[1] - B[1], B[0] - A[0]))     # AB 与水平夹角
+        d.arc([A[0] * u - r, A[1] * u - r, A[0] * u + r, A[1] * u + r],
+              start=360 - th, end=360, fill=(255, 255, 255, 225), width=max(2, round(3.2 * u)))
 
-    # 三个顶点小圆
-    for p, c in ((A, (255, 255, 255, 235)), (B, (255, 255, 255, 235)), (C, DIM)):
-        rr = 3.2 * u
-        d.ellipse([p[0] * u - rr, p[1] * u - rr, p[0] * u + rr, p[1] * u + rr], fill=c)
+    # 顶点
+    for p, col, rr in ((A, WHITE, 4.0), (B, WHITE, 4.0), (C, DIM, 3.6)):
+        d.ellipse([p[0] * u - rr * u, p[1] * u - rr * u,
+                   p[0] * u + rr * u, p[1] * u + rr * u], fill=col)
 
+    return img.resize((S, S), Image.LANCZOS)
+
+
+for dpi, S in SIZES.items():
     out = os.path.join(ROOT, "app", "res", "mipmap-" + dpi, "ic_launcher.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    img.save(out)
+    render(S).save(out)
     print("wrote", out, S)
