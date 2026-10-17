@@ -1,0 +1,19 @@
+{
+  "slug": "trig-mech",
+  "title": "三角力学计算器",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "com.hua.trigmech",
+  "version": "1.0",
+  "notes": "三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线",
+  "apk": "trig-mech.apk",
+  "apkName": "三角力学计算器.apk",
+  "apkSize": 50325,
+  "apkSha256": "4852a56e8e7416836bc5b7907201800fdf817ee13b9188a5d2c944a1597e46c3",
+  "srcSha": "a87dc3aa9b75c71605df2e20a41855f6be16b3c6",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/TrigMech-Android",
+  "builtAt": "2026-10-17 11:30:24",
+  "syncedAt": "2026-10-17 11:32:32",
+  "auto": false
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>三角力学计算器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="topbar">
+    <div id="hTitle">三角力学计算器</div>
+    <div id="hSub">对边 · 邻边 · 斜边，一比就懂</div>
+  </header>
+
+  <main id="view"></main>
+
+  <nav id="tabs">
+    <div class="tab on" data-t="tri"><i>📐</i><span>三角</span></div>
+    <div class="tab" data-t="ratio"><i>🔍</i><span>比值</span></div>
+    <div class="tab" data-t="slope"><i>🪜</i><span>坡度</span></div>
+    <div class="tab" data-t="mech"><i>🏗️</i><span>力学</span></div>
+    <div class="tab" data-t="ref"><i>📘</i><span>速查</span></div>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="data.js"></script>
+  <script src="trig.js"></script>
+  <script src="mech.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17 11:31:44",
-  "count": 12,
-  "totalApkBytes": 49100619,
+  "generatedAt": "2026-10-17 11:32:32",
+  "count": 13,
+  "totalApkBytes": 49150944,
   "categories": [
     {
       "id": "design",
@@ -128,6 +128,17 @@
           "sha256": "4e7563bebccf2a616f8f04256a8d8a3192dd6013fb7a8c07d373428d342f844a",
           "builtAt": "2026-09-26 10:11:47",
           "notes": "把 pi / pi-web 的通知与派发链路接到安卓手机"
+        },
+        {
+          "slug": "trig-mech",
+          "title": "三角力学计算器",
+          "version": "1.0",
+          "apk": "tools/trig-mech/trig-mech.apk",
+          "source": "tools/trig-mech/src/",
+          "size": 50325,
+          "sha256": "4852a56e8e7416836bc5b7907201800fdf817ee13b9188a5d2c944a1597e46c3",
+          "builtAt": "2026-10-17 11:30:24",
+          "notes": "三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线"
         },
         {
           "slug": "sunnet",
