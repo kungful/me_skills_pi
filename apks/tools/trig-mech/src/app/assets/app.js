@@ -582,8 +582,15 @@ window.addEventListener('load', () => {
   show(ST.tab);
 });
 
-/* 安卓返回键：不在第一个页签就回第一个，否则退出 */
+/* 安卓返回键：不在第一个页签就回第一个；已经在第一个页签，再按一次才退出
+   （否则手指一扫就把 App 关了，工地上很恼火） */
+let lastBack = 0;
 window.__back = function () {
   if (ST.tab !== 'tri') { show('tri'); return; }
-  nat('exit');
+  if (window.scrollY > 8) { window.scrollTo(0, 0); return; }
+  const now = Date.now();
+  if (now - lastBack < 2000) { nat('exit'); return; }
+  lastBack = now;
+  nat('toastMsg', '再按一次退出');
+  nat('buzz', 18);
 };

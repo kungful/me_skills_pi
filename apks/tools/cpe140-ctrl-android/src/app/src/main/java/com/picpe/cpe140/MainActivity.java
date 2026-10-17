@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     private Cpe cpe;
-    private TextView status, pill, guardState;
+    private TextView status, pill, guardState, fixState;
     private TextView[] out = new TextView[6];
     private ScrollView[] panels = new ScrollView[6];
     private LinearLayout[] navs = new LinearLayout[6];
@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         schM = findViewById(R.id.sch_m);
         guardMin = findViewById(R.id.guardMin);
         guardState = findViewById(R.id.guardState);
+        fixState = findViewById(R.id.fixState);
 
         out[1] = findViewById(R.id.out1);
         out[2] = findViewById(R.id.out2);
@@ -316,6 +317,43 @@ public class MainActivity extends AppCompatActivity {
                     }));
         });
 
+        // -------- 断网诊断 / 分级软修复 --------
+        findViewById(R.id.b_diag).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(fixState, "一键诊断（只读，不改设备）…\n（约 15~30 秒）", () -> cpe.diagnose());
+        });
+        findViewById(R.id.b_fix).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            confirm("立即救网（分级软修复）",
+                    "从最轻的动作开始逐级试，网络一通就立刻停：\n\n"
+                            + "1) 强制固件重新检测上网（零影响，专治门户劫持误判）\n"
+                            + "2) 放开被固件自己禁用的上行\n"
+                            + "3) 重新申请上行 DHCP（不动无线）\n"
+                            + "4) 让上行重新握手（断 1~3 秒）\n"
+                            + "5) 重起上行接口 wan\n"
+                            + "6) wifi reload（整无线栈重启，本机 AP 闪一下）\n\n"
+                            + "全程最多约 1 分半。修不好也不折腾，交给看门狗。确认？",
+                    () -> bg(fixState(), "救网中（最多约 100 秒，别离开）…", () -> cpe.netfixRun(false, 100)));
+        });
+        findViewById(R.id.b_fix_dry).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(fixState(), "干跑（只算，不动设备）…", () -> cpe.netfixRun(true, 60)
+                    + "\n\n说明：干跑只打印「真跑的话会做什么」，绝不执行任何一步。");
+        });
+        findViewById(R.id.b_fix_status).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(fixState(), "读分级软修状态…", () -> cpe.netfixStatus());
+        });
+        findViewById(R.id.b_fix_log).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(fixState(), "读分级软修日志…", () -> cpe.netfixLog());
+        });
+        findViewById(R.id.b_fix_install).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(fixState(), "装/更新分级软修脚本…",
+                    () -> cpe.netfixInstall(asset("netfix.sh"), Cpe.WAN_TARGETS));
+        });
+
         // -------- 看门狗 --------
         findViewById(R.id.b_g5).setOnClickListener(v -> guardMin.setText("5"));
         findViewById(R.id.b_g10).setOnClickListener(v -> guardMin.setText("10"));
@@ -325,14 +363,14 @@ public class MainActivity extends AppCompatActivity {
             final int m = Math.max(2, num(guardMin.getText().toString(), 10));
             confirm("开启断网看门狗",
                     "从现在起：设备每 2 分钟探测一次外网，连续 " + m + " 分钟不通就自动重启它自己。\n\n"
+                            + "重启之前会先跑一遍「分级软修复」（轻动作先试，救得回来就不重启）。\n\n"
                             + "制动规则：两次重启至少隔 30 分钟；单次断网最多重启 3 次，"
                             + "之后改为每 6 小时才试一次（不会无限重启）。\n"
                             + "网络一恢复就重新计。\n\n"
                             + "它和「定时重启」互不干扰；想停就点「停用」。确认开启？",
-                    () -> bg(guardState(), "安装并开启看门狗（阈值 " + m + " 分钟）…", () -> {
-                        byte[] sh = asset("netguard.sh");
-                        return cpe.guardInstall(sh, m, "reboot", "", true);
-                    }));
+                    () -> bg(guardState(), "安装并开启看门狗（阈值 " + m + " 分钟）…", () ->
+                            cpe.guardInstallSoft(asset("netguard.sh"), asset("netfix.sh"),
+                                    m, "reboot", true)));
         });
         findViewById(R.id.b_guard_off).setOnClickListener(v -> {
             if (!ready(5)) return;
@@ -436,6 +474,10 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView guardState() {
         return guardState;
+    }
+
+    private TextView fixState() {
+        return fixState;
     }
 
     private void toast(String s) {

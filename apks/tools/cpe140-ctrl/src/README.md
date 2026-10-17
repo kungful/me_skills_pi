@@ -49,6 +49,10 @@ python cpe140.py sh 'ps w; df -h'      # 以 root 执行（多命令用引号）
 python cpe140.py cat /etc/config/wireless
 python cpe140.py shell                 # 交互式 root shell
 python cpe140.py howto                 # 命令手册 / 使用教程（不用连设备）
+python cpe140.py diagnose              # 断网取证：一键盘点每一层 + 判定到底哪层坏了
+python cpe140.py fix                   # 分级软修复：从轻到重救网，比直接重启温和
+python cpe140.py fix dry                 # 干跑：只算会做什么，绝不动设备
+python cpe140.py fix status            # 看阶梯顺序 / 当前网络 / 门户劫持 / 上行禁用旗
 python cpe140.py guard status          # 断网看门狗状态
 python cpe140.py guard test            # 干跑：只算会不会重启，绝不重启
 python cpe140.py guard install --minutes 10   # 装上看门狗：断网 10 分钟自动重启
@@ -65,10 +69,44 @@ cp cpe140.py /usr/local/bin/ && chmod +x /usr/local/bin/cpe140.py   # 想当命�
 ```
 info status clients arp channels wifi sessions doctor gui shell uci clean reboot scan
 sh cat cfg set backup restore push pull dump-flash password schedule mode
-factory-reset upgrade guard howto
+diagnose fix factory-reset upgrade guard howto
 ```
 
 `mode`（切工作模式）、`factory-reset`、`upgrade` 是**危险操作**，`factory-reset` 需额外 `--yes`。
+
+---
+
+## 断网诊断 & 分级软修复（断网先跑这个）
+
+中继器“突然没网”分很多种，很多时候**重启根本没必要**。本工具先取证、再按最轻的动作救：
+
+```bash
+python cpe140.py diagnose      # 只读取证，不改设备任何东西
+python cpe140.py fix dry       # 干跑：只打印会执行哪几步
+python cpe140.py fix           # 真跑：从轻到重，一通就停（最多约 1 分半）
+```
+
+`diagnose` 逐层看：上行无线(apcli0)信号 → 默认网关/ARP → 三层连通性(网关/外网/DNS) →
+**固件的「强制门户」劫持链** → 上行接口 wan → 相关守护进程 → 系统日志，
+最后给出**判定**：假断网 / 上行无线不通 / 上游宽带问题 / DNS 坏了 / 一切正常。
+
+> 最典型的假断网：**打开管理页就又能上网**。其实外网一直通，只是固件自带的
+> `detect_internet` 把 DNS(53)/HTTP(80) 劫持到自己页面上。`fix` 第一步 `kill -USR1` 就清掉。
+
+`fix` 的六级阶梯（`/etc/netfix.sh`，每步之后验证，通了就停）：
+
+| # | 步骤 | 做什么 | 代价 |
+|---|---|---|---|
+| 1 | `usr1` | `kill -USR1 detect_internet` 强制重新检测 | 零影响 |
+| 2 | `unstuck` | 清掉固件自己立的上行禁用旗 `vap5.disabled=1` | 无（只在这一旗真被立起来时）|
+| 3 | `renew` | `ubus ... network.interface.wan renew` 重拨 DHCP | 不动无线 |
+| 4 | `reassoc` | `killall -HUP wpa_supplicant` 重新握手 | 断 1~3 秒 |
+| 5 | `ifup` | `ifdown wan; ifup wan` 重起上行接口 | 断几秒 |
+| 6 | `wifireload` | `wifi reload` 整无线栈重启 | 本机 AP 闪一下 |
+
+设备上还有 `/etc/netfix.conf`（探测目标 / 阶梯顺序）与 `/etc/netfix.local`（覆盖用）。
+`fix install` 会把脚本装到 `/etc/netfix.sh`（`guard install` 会自动装它并把看门狗的
+`RECOVER` 指向它 —— 重启前先软修一次，救得回来就不重启）。
 
 ---
 
@@ -110,8 +148,8 @@ python cpe140.py guard uninstall  # 删掉脚本与定时任务
 
 ## 图形界面
 
-`python cpe140.py gui` —— 六个标签页：**概览 / 客户端·扫描 / 配置 / 终端(root) / 维护 / 看门狗**
-（看门狗页有状态·干跑·日志·重置·开启·停用·卸载；终端页右上角有「命令手册」）。
+`python cpe140.py gui` —— 六个标签页：**概览 / 客户端·扫描 / 配置 / 终端(root) / 诊断·救网 / 看门狗**
+（诊断·救网页：一键诊断 + 立即救网 + 干跑 + 状态/日志/装脚本；看门狗页有状态·干跑·日志·重置·开启·停用·卸载；终端页右上角有「命令手册」）。
 
 ---
 

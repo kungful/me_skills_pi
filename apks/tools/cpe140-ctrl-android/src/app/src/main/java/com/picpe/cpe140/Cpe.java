@@ -45,6 +45,13 @@ public class Cpe {
     public static final String GUARD_SH = "/etc/netguard.sh";
     public static final String GUARD_CONF = "/etc/netguard.conf";
 
+    /** 分级软修复（netfix）在设备上的落点。 */
+    public static final String FIX_SH = "/etc/netfix.sh";
+    public static final String FIX_CONF = "/etc/netfix.conf";
+
+    /** 判定「有没有网」的探测目标：任一通即算通。 */
+    public static final String[] WAN_TARGETS = {"223.5.5.5", "114.114.114.114"};
+
     public static final Set<String> DANGEROUS = new HashSet<>(Arrays.asList(
             "OP_MODE", "VLAN_ENABLED", "PSMODE", "LAN_IP_ADDR", "LAN_NETMASK",
             "LAN_DHCP_SERVER_ENABLED", "DHCP_SERVER_ENABLED", "WLAN0_VAP0_SSID",
@@ -241,8 +248,16 @@ public class Cpe {
         return "'" + s.replace("'", "'\\''") + "'";
     }
 
+    /**
+     * 载荷能不能直接塞进注入字段。
+     *
+     * <p>载荷被拼进 {@code sh -c "..."} 的双引号里，所以这些字符要么破坏引号、
+     * 要么被 shell 抢先展开：反引号、双引号、反斜杠、{@code $}、{@code {}}。
+     * 命中任一就不走内联注入，改走「上传成脚本再 sh 它」的兜底通道。
+     */
     private static boolean unsafe(String cmd) {
-        return cmd.indexOf('`') >= 0 || cmd.indexOf('"') >= 0 || cmd.indexOf('\\') >= 0;
+        return cmd.indexOf('`') >= 0 || cmd.indexOf('"') >= 0 || cmd.indexOf('\\') >= 0
+                || cmd.indexOf('$') >= 0 || cmd.indexOf('{') >= 0 || cmd.indexOf('}') >= 0;
     }
 
     private void ensureLink() throws Exception {
@@ -398,7 +413,147 @@ public class Cpe {
     public String guardUninstall() throws Exception {
         run("sh " + GUARD_SH + " cron off 2>&1");
         return run("rm -f " + GUARD_SH + " " + GUARD_CONF + " /etc/netguard.last "
-                + "/etc/netguard.reboots /tmp/netguard.*; echo 已卸载看门狗（含单次断网重启计数）");
+                + "/etc/netguard.reboots /tmp/netguard.*; echo 已卸载看门狗（含单次断网重启计数）；"
+                + "分级软修复 " + FIX_SH + " 还留着，不动它");
+    }
+
+    /**
+     * 装看门狗，并把它的「先软后硬」恢复步骤指向分级软修复脚本。
+     *
+     * @param guardScript netguard.sh 内容
+     * @param fixScript   netfix.sh 内容（会先被装到 /etc/netfix.sh）
+     */
+    public String guardInstallSoft(byte[] guardScript, byte[] fixScript, int minutes,
+                                   String mode, boolean enable) throws Exception {
+        netfixInstall(fixScript, WAN_TARGETS);
+        return guardInstall(guardScript, minutes, mode, FIX_SH, enable);
+    }
+
+    // ------------------------------------------- 断网诊断 & 分级软修复 netfix
+
+    /** 装分级软修复脚本 + 参数（幂等，不启用任何自动动作）。 */
+    public String netfixInstall(byte[] script, String[] targets) throws Exception {
+        push(script, FIX_SH);
+        run("chmod 755 " + FIX_SH);
+        StringBuilder sb = new StringBuilder("# 由 CPE140 控制台写入：分级软修复参数\nTARGETS=\"");
+        for (String t : targets) {
+            sb.append(t).append(' ');
+        }
+        sb.append("\"\nSTEPS=\"usr1 unstuck renew reassoc ifup wifireload\"\n");
+        push(sb.toString().getBytes("UTF-8"), FIX_CONF);
+        run("chmod 644 " + FIX_CONF);
+        return netfixStatus();
+    }
+
+    /** 软修脚本状态；没装的话给一句人话提示。 */
+    public String netfixStatus() throws Exception {
+        String s = run("sh " + FIX_SH + " status 2>&1");
+        if (s.contains("can't open") || s.contains("not found")) {
+            return "分级软修复还没装上。\n点「装软修脚本」即可（也可在开看门狗时自动装）。";
+        }
+        return s;
+    }
+
+    public String netfixLog() throws Exception {
+        String s = run("sh " + FIX_SH + " log 2>&1 | tail -n 40");
+        return s.trim().isEmpty() || s.contains("还没有日志") ? "（还没有日志：它还没被执行过）" : s;
+    }
+
+    /** 只看现在通不通、有没有门户劫持（什么都不改）。 */
+    public String netfixCheck() throws Exception {
+        return run("sh " + FIX_SH + " check 2>&1");
+    }
+
+    /**
+     * 现在就按阶梯软修一次（从最轻的动作开始，救回来就停）。
+     *
+     * <p>脚本放后台跑、这里轮询它的输出 —— 因为最坏情况要跑 1 分多钟，
+     * 而 uhttpd 的 CGI 只等 60 秒，同步调用会被半路砍断。
+     *
+     * @param dry  干跑：只打印会做什么，绝不执行
+     * @param wait 最多等多少秒
+     */
+    public String netfixRun(boolean dry, int wait) throws Exception {
+        String cmd = (dry ? "DRY=1 " : "") + "sh " + FIX_SH;
+        exec(cmd + " > /tmp/netfix.out 2>&1 &", 30000);
+        long t0 = System.currentTimeMillis();
+        String out = "";
+        while (System.currentTimeMillis() - t0 < wait * 1000L) {
+            Thread.sleep(3000);
+            try {
+                out = run("cat /tmp/netfix.out 2>/dev/null");
+            } catch (Exception e) {
+                continue;
+            }
+            if (out.contains("--netfix--end")) {
+                break;
+            }
+        }
+        out = out.trim();
+        return out.isEmpty() ? "(没有输出 —— 脚本可能没跑起来)" : out;
+    }
+
+    /**
+     * 断网取证：一键盘点每一层，并给出「到底是哪一层坏了」的判定。
+     *
+     * <p>专治那个怪现象：打开管理页就又能上网 —— 多半是固件自带的
+     * 「强制门户」误判，把 DNS/HTTP 劫持到自己页面上（假断网）。
+     * 只读，不改设备任何东西。
+     */
+    public String diagnose() throws Exception {
+        // 整段作为脚本上传后 sh 执行（含 $ { } " 等，内联注入塞不下）。
+        String s = String.join("\n",
+                "echo '========== 断网取证快照 =========='",
+                "date '+%Y-%m-%d %H:%M:%S'; uptime",
+                "echo; echo '--- 1. 上行无线 (apcli0) ---'",
+                "iwinfo apcli0 info 2>&1 | head -8",
+                "GW=$(ip route 2>/dev/null | awk '/^default/ {print $3; exit}')",
+                "echo; echo '--- 2. 默认网关 / 路由 ---'",
+                "echo \"网关: ${GW:-(没有默认路由!)}\"",
+                "ip route 2>/dev/null",
+                "if [ -n \"$GW\" ]; then echo -n '网关 ARP: '; awk -v g=\"$GW\" 'NR>1 && $1==g && $4!=\"00:00:00:00:00:00\" {print $4}' /proc/net/arp; fi",
+                "echo; echo '--- 3. 三层连通性 ---'",
+                "if [ -n \"$GW\" ]; then ping -c 1 -W 2 $GW >/dev/null 2>&1 && echo \"网关 $GW: 通\" || echo \"网关 $GW: 不通\"; fi",
+                "NETUP=0",
+                "for t in 223.5.5.5 114.114.114.114; do if ping -c 1 -W 2 $t >/dev/null 2>&1; then echo \"外网 $t: 通\"; NETUP=1; else echo \"外网 $t: 不通\"; fi; done",
+                "DNS=$(nslookup www.baidu.com 114.114.114.114 2>&1 | tail -4)",
+                "echo \"$DNS\" | grep -qi address && DNSOK=1 || DNSOK=0",
+                "echo \"外网 DNS 查询: $([ $DNSOK = 1 ] && echo 通 || echo 失败)\"",
+                "echo \"$DNS\"",
+                "echo; echo '--- 4. 固件自带的门户口（假断网元凶） ---'",
+                "HIJ=$(iptables -t nat -S 2>/dev/null | grep -E 'detect_internet|lan_redirect|--dport 53 -j DNAT|--dport 80 -j DNAT')",
+                "if [ -n \"$HIJ\" ]; then echo \"劫持规则: $HIJ\"; else echo '劫持规则: 无（正常）'; fi",
+                "echo \"固件自报的互联网状态: $(cat /tmp/.internet_status 2>/dev/null)（实测网络正常时它一直写 0）\"",
+                "echo \"检测进程: $(pidof detect_internet 2>/dev/null || echo 未运行)\"",
+                "V5=$(uci -q get wireless.vap5.disabled 2>/dev/null)",
+                "echo \"上行禁用旗 vap5.disabled: ${V5:-未设置}  (1 = 固件自己的 aptrack 把上行关了，它要等 200 秒才恢复)\"",
+                "echo; echo '--- 5. 上行接口 wan ---'",
+                "ubus call network.interface.wan status 2>/dev/null | grep -E '\"up\"|\"address\"|\"proto\"' | head -4",
+                "echo; echo '--- 6. 相关守护进程 ---'",
+                "ps w | grep -E 'aptrack|detect_internet|wpa_supp|udhcpc|netguard' | grep -v grep",
+                "echo; echo '--- 7. 系统日志 (有意义的尾 25 行) ---'",
+                "logread 2>/dev/null | grep -v 'Broken pipe' | grep -v drop_caches | tail -25",
+                "echo; echo '========== 判定 =========='",
+                "if [ $NETUP = 1 ] && [ -n \"$HIJ\" ]; then",
+                "  echo '→ 【假断网】外网其实是通的，但固件的门户劫持规则在生效：'",
+                "  echo '  它把你的 DNS(53) 和网页(80) 抢到自己的页面上，所以你「上不了网」。'",
+                "  echo '  ✅ 立即恢复: 点「立即救网」（第一步 kill -USR1 就会清掉）'",
+                "  echo '  ✅ 根治(可选): uci set detect_internet.main.enable_redirect=0 后重启该服务'",
+                "elif [ -n \"$GW\" ] && ! ping -c 1 -W 2 $GW >/dev/null 2>&1; then",
+                "  echo '→ 【上行无线/网关不通】设备与上游光猫的链路断了（看第 1 节信号与第 4 节的禁用旗）。'",
+                "  [ \"$V5\" = 1 ] && echo '  ⚠ 看到 vap5.disabled=1：固件自带的 aptrack 把上行关了，它会睡 200 秒才自己恢复。'",
+                "  echo '  ✅ 先软修: 点「立即救网」（重新关联/重拨，比重启轻）'",
+                "elif [ $NETUP = 0 ]; then",
+                "  echo '→ 【上游/宽带问题】能到光猫但到不了外网 —— 重启本机基本没用。'",
+                "  echo '  ✅ 检查光猫/宽带；本机最多软修一下上行 DHCP。'",
+                "elif [ $DNSOK = 0 ]; then",
+                "  echo '→ 【DNS 层坏了】外网 IP 通但域名解析不了。'",
+                "  echo '  ✅ 切 DNS 或重启 dnsmasq；这和重启中继器无关。'",
+                "else",
+                "  echo '→ 【现在一切正常】没抓到现场。下次出问题时立刻再跑一次以便对比。'",
+                "fi",
+                "echo; echo '提示: 这是只读取证，没有改动设备的任何东西。'");
+        return run(s, 180000);
     }
 
     // --------------------------------------------------------------- 管理

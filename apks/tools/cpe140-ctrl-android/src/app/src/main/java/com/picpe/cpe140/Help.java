@@ -48,6 +48,7 @@ public final class Help {
             "点下面的命令会先填进输入框，你可以改几个字，再点「运行」。",
             "跑完 1～3 秒出结果；设备慢的时候要等，别重复点。",
             "带 ⚠ 的会断网或搞坏配置，除非你清楚在干什么，不然别点。",
+            "断网先别急着重启：去「维护」点「一键诊断」（只读取证）或「立即救网」（分级软修复，从轻到重试）。",
     };
 
     private static final List<Sec> SECTIONS = new ArrayList<>();
@@ -107,6 +108,15 @@ public final class Help {
                 {"/etc/netguard.sh log", "看它的日志", ""},
                 {"/etc/netguard.sh cron off", "停用（脚本保留）", ""},
                 {"/etc/netguard.sh cron on", "启用（每 2 分钟巡检）", ""},
+        }));
+
+        SECTIONS.add(new Sec("分级软修复 netfix", "断网时从最轻的动作开始逐级试（强制重新检测 → 放开被固件禁用的上行 → 重拨 DHCP → 重新关联 → 重起接口 → wifi reload），网络一通就立刻停，比重启温和得多。", new String[][]{
+                {"/etc/netfix.sh status", "看状态：阶梯顺序 / 当前网络 / 门户劫持 / 上行禁用旗", ""},
+                {"/etc/netfix.sh check", "只查现在通不通、有没有门户劫持（不改任何东西）", ""},
+                {"/etc/netfix.sh", "按阶梯修一次：哪一步救回来就立刻停", ""},
+                {"DRY=1 /etc/netfix.sh", "干跑：只打印会做什么，绝不执行", ""},
+                {"/etc/netfix.sh step unstuck", "只跑某一步（例：放开被固件自己立旗禁用的上行）", ""},
+                {"/etc/netfix.sh log", "看它的日志", ""},
         }));
 
         SECTIONS.add(new Sec("⚠ 危险操作", "会断网 / 会丢配置，想清楚再动。", new String[][]{

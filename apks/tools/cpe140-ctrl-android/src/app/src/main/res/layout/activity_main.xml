@@ -595,11 +595,70 @@
 
                     <TextView
                         style="@style/Sect"
+                        android:text="// 断网诊断 · 分级软修复（先跑这个）" />
+
+                    <TextView
+                        style="@style/Note"
+                        android:text="断了网别急着重启。点「一键诊断」只读取证，告诉你到底是哪一层坏了：是『假断网』（固件自带门户误判，把 DNS/网页劫到自己页上）、还是上行无线掉了、还是光猫/宽带的问题。判定和依据一起给你。" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/b_diag"
+                            style="@style/BtnPri"
+                            android:text="一键诊断" />
+
+                        <Button
+                            android:id="@+id/b_fix"
+                            style="@style/BtnPri"
+                            android:text="立即救网" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/b_fix_dry"
+                            style="@style/Chip"
+                            android:text="干跑" />
+
+                        <Button
+                            android:id="@+id/b_fix_status"
+                            style="@style/Chip"
+                            android:text="看状态" />
+
+                        <Button
+                            android:id="@+id/b_fix_log"
+                            style="@style/Chip"
+                            android:text="看日志" />
+
+                        <Button
+                            android:id="@+id/b_fix_install"
+                            style="@style/Chip"
+                            android:text="装软修脚本" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/fixState"
+                        style="@style/Out"
+                        android:minHeight="0dp"
+                        android:text="「立即救网」按六级阶梯从轻到重试：强制重新检测 → 放开被固件禁用的上行 → 重拨 DHCP → 重新关联 → 重起上行接口 → wifi reload；哪一步救回来就停，比重启温和得多。不放心先点「干跑」。" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/CardHi">
+
+                    <TextView
+                        style="@style/Sect"
                         android:text="// 断网看门狗 · 自动重启" />
 
                     <TextView
                         style="@style/Note"
-                        android:text="设备上跑的小脚本：每 2 分钟 ping 一次外网；一直不通（默认 10 分钟）就自动重启，把卡死的中继器救回来。和「定时重启」互不干扰；两次重启至少隔 30 分钟，单次断网最多重启 3 次，之后每 6 小时才试一次，所以不会无限重启。" />
+                        android:text="设备上跑的小脚本：每 2 分钟 ping 一次外网；一直不通（默认 10 分钟）就自动重启，把卡死的中继器救回来。开启时会把「分级软修复」也装上，重启前先软修一次 —— 救得回来就不重启。和「定时重启」互不干扰；两次重启至少隔 30 分钟，单次断网最多重启 3 次，之后每 6 小时才试一次，所以不会无限重启。" />
 
                     <TextView
                         android:id="@+id/guardState"

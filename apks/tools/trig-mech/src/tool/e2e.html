@@ -165,7 +165,27 @@ f.onload = async () => {
     /* ---------- 返回键 ---------- */
     w.__back();
     await wait(150);
-    ok(d.querySelector('#tabs .tab.on').dataset.t === 'tri', '返回键回到第一个页签');
+    ok(d.querySelector('#tabs .tab.on').dataset.t === 'tri', '返回键从其他页签回到第一个页签');
+
+    /* 已经在第一个页签：第一次只提示，两秒内再按才退出 */
+    let exited = 0; const toasts = [];
+    w.Native = { exit: () => { exited++; }, toastMsg: t => toasts.push(t), buzz: () => { }, copy: () => { } };
+    w.scrollTo(0, 0);
+    await wait(60);
+    w.__back();
+    await wait(60);
+    ok(exited === 0, '第一个页签按一次返回：不退出');
+    ok(toasts.length === 1 && toasts[0].indexOf('再按一次') >= 0, '第一个页签按一次返回：提示「再按一次退出」');
+    w.__back();
+    await wait(60);
+    ok(exited === 1, '两秒内再按一次：退出');
+    /* 页面滚下去时，返回先回到顶部 */
+    w.scrollTo(0, 600);
+    await wait(400);
+    w.__back();
+    await wait(1200);
+    ok(w.scrollY < 30, '页面滚下去时返回先回顶部（scrollY=' + Math.round(w.scrollY) + '）');
+    ok(exited === 1, '回顶部那次不算退出');
   } catch (e) {
     R.push('THROW ' + e.message + '\n' + e.stack);
   }
