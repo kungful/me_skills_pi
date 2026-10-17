@@ -66,4 +66,9 @@
     <string name="book_source_pd">公版书（Project Gutenberg）</string>
     <string name="book_source_ctext">中国哲学书电子化（ctext）</string>
     <string name="ev_sources">%d 家媒体报道</string>
+    <!-- 油价 / 液化气 -->
+    <string name="fuel_title">油价 · %1$s（点击切换省份）</string>
+    <string name="fuel_pick">选择省份</string>
+    <string name="fuel_loading">正在获取油价…</string>
+    <string name="fuel_fail">油价获取失败（可能源站维护）</string>
 </resources>

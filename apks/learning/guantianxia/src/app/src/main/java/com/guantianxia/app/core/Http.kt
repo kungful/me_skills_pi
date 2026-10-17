@@ -203,6 +203,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("bg_enabled", true)
         set(v) = sp.edit().putBoolean("bg_enabled", v).apply()
 
+    /** 油价默认看哪个省（默认广西） */
+    var fuelProvince: String
+        get() = sp.getString("fuel_province", "guangxi") ?: "guangxi"
+        set(v) = sp.edit().putString("fuel_province", v).apply()
+
     /** 前台服务被系统「配额用尽」暂停过（Android 15+ 每天 6 小时上限） */
     var bgPaused: Boolean
         get() = sp.getBoolean("bg_paused", false)

@@ -46,6 +46,34 @@
                     android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="false" />
 
+                <!-- 油价 / 液化气：默认广西，点标题切省份 -->
+                <TextView
+                    android:id="@+id/tv_fuel_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_fuel_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="6dp"
+                    android:textSize="11sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_fuel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

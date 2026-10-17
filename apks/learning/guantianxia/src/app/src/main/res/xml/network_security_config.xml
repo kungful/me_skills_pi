@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  默认仍然全局禁明文；只给「汽油价格网」开一个口子 ——
+  国内各省油价只有这一个稳定源，而且它不提供 HTTPS（实测 https 握手直接失败）。
+  只放行这一个域名，其它源照旧必须走 HTTPS。
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">qiyoujiage.com</domain>
+    </domain-config>
+</network-security-config>

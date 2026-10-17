@@ -663,6 +663,8 @@
                     <Button
                         android:id="@+id/b_provision"
                         style="@style/BtnPri"
+                        android:layout_width="match_parent"
+                        android:layout_weight="0"
                         android:text="一键部署（装软修+看门狗）" />
 
                     <TextView
