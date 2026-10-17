@@ -279,8 +279,7 @@
 
                     <Button
                         android:id="@+id/b_clients"
-                        style="@style/BtnWide"
-                        android:layout_marginEnd="0dp"
+                        style="@style/BtnLine"
                         android:text="DHCP 客户端列表" />
 
                     <LinearLayout
@@ -301,8 +300,7 @@
 
                     <Button
                         android:id="@+id/b_scan"
-                        style="@style/BtnWide"
-                        android:layout_marginEnd="0dp"
+                        style="@style/BtnLine"
                         android:text="扫描周边 WiFi（约 10 秒）" />
                 </LinearLayout>
 
@@ -388,9 +386,8 @@
 
                     <Button
                         android:id="@+id/b_cfgset"
-                        style="@style/BtnWide"
+                        style="@style/BtnLine"
                         android:layout_marginTop="8dp"
-                        android:layout_marginEnd="0dp"
                         android:text="写入（会立即生效）" />
 
                     <TextView
@@ -662,9 +659,7 @@
 
                     <Button
                         android:id="@+id/b_provision"
-                        style="@style/BtnPri"
-                        android:layout_width="match_parent"
-                        android:layout_weight="0"
+                        style="@style/BtnLinePri"
                         android:text="一键部署（装软修+看门狗）" />
 
                     <TextView
@@ -856,8 +851,7 @@
 
                     <Button
                         android:id="@+id/b_factory"
-                        style="@style/BtnWide"
-                        android:layout_marginEnd="0dp"
+                        style="@style/BtnLine"
                         android:text="恢复出厂设置（危险）" />
                 </LinearLayout>
 

@@ -97,6 +97,24 @@
         <item name="android:textColor">@color/red</item>
     </style>
 
+    <!--
+      整行按钮：用在竖向卡片（Card）里的单独一个按钮。
+      注意别在竖向卡片里用 BtnWide/BtnPri/BtnDanger —— 它们是 0dp + weight=1，
+      那是给横向排列分宽度的；放到竖向容器里，weight 会去抢竖直空间，
+      宽度被量成 0 -> 按钮完全看不见，还撑出一大块空白。
+    -->
+    <style name="BtnLine" parent="Btn">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_weight">0</item>
+        <item name="android:layout_marginEnd">0dp</item>
+    </style>
+
+    <style name="BtnLinePri" parent="BtnLine">
+        <item name="android:background">@drawable/bg_btn_pri</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="BtnGhost">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

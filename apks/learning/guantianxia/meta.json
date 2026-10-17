@@ -8,12 +8,12 @@
   "notes": "新闻 / 财经 / 书架 聚合阅读",
   "apk": "guantianxia.apk",
   "apkName": "app-debug.apk",
-  "apkSize": 9839467,
-  "apkSha256": "bf0de76f5af517469c1bac885f22c321ec2442e31ec00bdede61c900c28f6743",
+  "apkSize": 9841452,
+  "apkSha256": "e9fb2d42748a8c39ecddb6b96d6812c594a033040e2cc83dbf2d29e27c8ac026",
   "srcSha": "aaf4bedadca3b0ebe8ab62e424805cbb8521ef8d",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/AndroidStudioProjects/GuanTianXia",
-  "builtAt": "2026-10-09 22:58:31",
-  "syncedAt": "2026-10-17 16:01:46",
+  "builtAt": "2026-10-17 16:02:03",
+  "syncedAt": "2026-10-17 16:31:45",
   "auto": false
 }

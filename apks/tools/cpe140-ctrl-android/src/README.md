@@ -5,7 +5,7 @@
 
 ```
 package   com.picpe.cpe140
-version   1.4.1
+version   1.4.2
 minSdk    24 (Android 7.0)      targetSdk 37
 签名      cpe140.jks (alias cpe140 / cpe140123)   ← 自签名
 ```
@@ -102,6 +102,26 @@ App 里点「**干跑测试**」只算一遍并告诉你「现在断网的话会
   单次内联载荷 ≤ 620 字节，注入总长 ≤ 880（设备上限约 960）。
 * 文件读写走 SAF（`CreateDocument` / `OpenDocument`），**不需要存储权限**。
 * 边到边（targetSdk 35+ 强制）已在 `MainActivity` 里手动补系统栏内边距。
+
+## 布局坑：`0dp + weight` 只能用在横向排列（v1.4.2 修）
+
+`BtnWide` / `BtnPri` / `BtnDanger` 都是 `layout_width=0dp` + `layout_weight=1`，
+那是给**横向** LinearLayout 分宽度用的。如果直接放进**竖向**卡片（`Card`），
+weight 会去抢**竖直**空间、宽度被量成 0 → **按钮完全看不见**，还凭空撑出一大块空白。
+
+v1.4.2 之前有 4 个按钮中招（都在卡片里当独子）：
+
+| 页面 | 按钮 |
+|---|---|
+| 客户端 | 「DHCP 客户端列表」、「扫描周边 WiFi（约 10 秒）」 |
+| 配置 | 「写入（会立即生效）」 |
+| 维护 | 「恢复出厂设置（危险）」 |
+
+（新加的「一键部署」也踩了同一个坑——就是因为它的空白才把这个问题掃出来的。）
+
+现在新增了 `BtnLine` / `BtnLinePri`（`match_parent` + `weight=0`）专给竖向卡片里的
+整行按钮用，并把 layout 里所有竖向卡片中的按钮都换了过去（可用脚本自查：
+遍历 layout，凡是非横向容器里的 `Button` 带 `0dp`/`weight`/`BtnWide` 类样式就报警）。
 
 ## 回显通道：搜「Not Found」那个报错是什么（v1.4.0 修）
 
