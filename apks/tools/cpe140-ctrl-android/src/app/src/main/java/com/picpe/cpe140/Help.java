@@ -49,6 +49,7 @@ public final class Help {
             "跑完 1～3 秒出结果；设备慢的时候要等，别重复点。",
             "带 ⚠ 的会断网或搞坏配置，除非你清楚在干什么，不然别点。",
             "断网先别急着重启：去「维护」点「一键诊断」（只读取证）或「立即救网」（分级软修复，从轻到重试）。",
+            "如果结果里出现一段网页（<h1>Not Found</h1>…），说明「回显通道」断了 —— 设备重启后 /tmp 被清空、符号链接却留在 flash 上。工具现在会自动重铺；手动的话去「维护」点「重铺连接通道」。",
     };
 
     private static final List<Sec> SECTIONS = new ArrayList<>();
@@ -117,6 +118,13 @@ public final class Help {
                 {"DRY=1 /etc/netfix.sh", "干跑：只打印会做什么，绝不执行", ""},
                 {"/etc/netfix.sh step unstuck", "只跑某一步（例：放开被固件自己立旗禁用的上行）", ""},
                 {"/etc/netfix.sh log", "看它的日志", ""},
+        }));
+
+        SECTIONS.add(new Sec("回显通道（读输出全靠它）", "工具是这么把命令的输出取回来的；它断了就会看到一段网页当结果。", new String[][]{
+                {"ls -l /www/.cpeout /tmp/.cpeout", "看通道还在不在（前者是指向后者的符号链接）", ""},
+                {": > /tmp/.cpeout; chmod 644 /tmp/.cpeout; ln -sf /tmp/.cpeout /www/.cpeout",
+                        "手工重铺回显通道（=「重铺连接通道」按钮干的事）", ""},
+                {"ls -l /tmp/.cpeout", "看一眼输出文件（里面是上一条命令的结果）", ""},
         }));
 
         SECTIONS.add(new Sec("⚠ 危险操作", "会断网 / 会丢配置，想清楚再动。", new String[][]{

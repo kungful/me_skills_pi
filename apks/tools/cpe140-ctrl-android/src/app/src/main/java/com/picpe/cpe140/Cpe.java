@@ -264,8 +264,68 @@ public class Cpe {
         if (linkOk) {
             return;
         }
-        inject(": > " + OUT_TMP + "; ln -sf " + OUT_TMP + " " + OUT_LINK, timeout);
+        // 先判存在再清空：通道坏掉后重铺时，不能把刚写好的输出截掉
+        inject("[ -e " + OUT_TMP + " ] || : > " + OUT_TMP + "; chmod 644 " + OUT_TMP
+                + "; ln -sf " + OUT_TMP + " " + OUT_LINK, timeout);
         linkOk = true;
+    }
+
+    /** 设备回的是一张错误页（uhttpd 的 404 / Bad Gateway）而不是命令输出。 */
+    private static boolean isErrPage(byte[] r) {
+        if (r.length < 5) {
+            return false;
+        }
+        return new String(r, 0, 5, java.nio.charset.StandardCharsets.UTF_8).startsWith("<h1>");
+    }
+
+    /** 最近几条 HTTP 记录，出错时附在报错里，省得再靠猜。 */
+    public String logTail() {
+        synchronized (log) {
+            int n = log.size();
+            if (n == 0) {
+                return "";
+            }
+            return "\n最近请求：" + String.join(" | ", log.subList(Math.max(0, n - 6), n));
+        }
+    }
+
+    private IOException channelErr(int code) {
+        return new IOException("回显通道丢了（HTTP " + code + "）：设备上取不到 " + OUT_LINK + "。\n"
+                + "多半是设备刚重启过（/tmp 是内存盘，重启就清空；符号链接却留在 flash 上），\n"
+                + "或别的工具清过临时文件。再点一次就会自动重铺。" + logTail());
+    }
+
+    /**
+     * 取回 OUT_TMP 里刚刚写好的输出（单次，不重试）。
+     *
+     * <p>以前这里直接把 http() 的 body 当输出返回，于是通道一坏，界面上就显示一段
+     * uhttpd 的 404 网页当“命令输出”，既看不懂也没法自愈。现在认得出错误页，
+     * 并作废 linkOk，让 execRead() 去重铺通道/重跑命令。
+     */
+    public byte[] readOutBytes(int to) throws Exception {
+        byte[] r = http(OUT_URL, null, null, to);
+        if (lastCode == 200 && !isErrPage(r)) {
+            return r;
+        }
+        linkOk = false;
+        throw channelErr(lastCode);
+    }
+
+    /** exec + 读回。通道刚坏时：先重铺再重读（不重跑命令），真不行才重跑。 */
+    public byte[] execRead(String cmd, int to) throws Exception {
+        exec(cmd, to);
+        try {
+            return readOutBytes(to);
+        } catch (Exception ignored) {
+            // 上面已经 linkOk=false，下面 ensureLink() 会重铺（不会截掉输出）
+        }
+        ensureLink();
+        try {
+            return readOutBytes(to);
+        } catch (Exception e) {
+            exec(cmd, to);              // 最后手段：重跑一遍命令
+            return readOutBytes(to);
+        }
     }
 
     /** 以 root 执行命令，输出全部落到 OUT_TMP（不取回）。 */
@@ -281,11 +341,7 @@ public class Cpe {
     }
 
     public String readOut(int to) throws Exception {
-        byte[] r = http(OUT_URL, null, null, to);
-        if (lastCode == 403) {
-            throw new IOException("403：/tmp/.cpeout 权限不足，读不到输出");
-        }
-        return new String(r, "UTF-8");
+        return new String(readOutBytes(to), "UTF-8");
     }
 
     /** 以 root 执行命令并取回 stdout+stderr。 */
@@ -294,17 +350,21 @@ public class Cpe {
     }
 
     public String run(String cmd, int to) throws Exception {
-        exec(cmd, to);
-        return readOut(Math.max(60000, to));
+        return new String(execRead(cmd.trim(), to), "UTF-8");
     }
 
     // ------------------------------------------------------------- 文件传输
 
     public byte[] readBytes(String remote, int to) throws Exception {
-        ensureLink();
         String q = q(remote);
-        exec("cp " + q + " " + OUT_TMP + " 2>/dev/null || cat " + q + " > " + OUT_TMP, to);
-        return http(OUT_URL, null, null, to);
+        return execRead("cp " + q + " " + OUT_TMP + " 2>/dev/null || cat " + q + " > " + OUT_TMP, to);
+    }
+
+    /** 手动重铺回显通道（维护页按钮用），并回读验证。 */
+    public String repairChannel() throws Exception {
+        linkOk = false;
+        ensureLink();
+        return run("ls -l " + OUT_LINK + " " + OUT_TMP + " 2>&1; echo ---; id");
     }
 
     /**

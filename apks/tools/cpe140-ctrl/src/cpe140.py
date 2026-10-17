@@ -210,6 +210,13 @@ def _rand(n: int = 6) -> str:
     return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(n))
 
 
+def _chan_msg(why: str) -> str:
+    """回显通道丢了时的报错：说清楚是什么 + 接下来怎么办。"""
+    return (f"回显通道丢了（{why}）：设备上取不到 {OUT_LINK}。\n"
+            f"多半是设备刚重启过（/tmp 是内存盘，重启就清空；符号链接却留在 flash 上），\n"
+            f"或另外一个工具清过临时文件。重跑这条命令就会自动重铺通道。")
+
+
 def _hb(n: float) -> str:
     for u in ("B", "KB", "MB", "GB"):
         if n < 1024 or u == "GB":
@@ -399,10 +406,14 @@ class Cpe:
     BUDGET = 620                     # 内联载荷长度上限 (给 uci 前缀+重定向留余量)
 
     def _ensure_link(self) -> None:
-        """建立 /www/.cpeout -> /tmp/.cpeout 的读取通道 (整个会话只建一次)。"""
+        """建立 /www/.cpeout -> /tmp/.cpeout 的读取通道 (整个会话只建一次)。
+
+        先判存在再 : > —— 通道坏掉后重铺时不能把刚写好的输出截掉。
+        """
         if self._link_ok:
             return
-        self._inject(f": > {OUT_TMP}; chmod 644 {OUT_TMP}; ln -sf {OUT_TMP} {OUT_LINK}")
+        self._inject(f"[ -e {OUT_TMP} ] || : > {OUT_TMP}; chmod 644 {OUT_TMP}; "
+                     f"ln -sf {OUT_TMP} {OUT_LINK}")
         self._link_ok = True
 
     def _exec(self, cmdline: str, timeout: float = 60.0) -> None:
@@ -418,11 +429,68 @@ class Cpe:
                          ctype="application/octet-stream", timeout=60)
             self._inject(f"mv -f {UP_TMP} {SH_TMP}; sh {SH_TMP} > {OUT_TMP} 2>&1", timeout=timeout)
 
+    def _read_out(self, timeout: float = 120.0) -> bytes:
+        """取回 OUT_TMP 里的命令输出。
+
+        404 / HTML 错误页说明回显通道丢了：设备重启后 /tmp 是内存盘会被清空，
+        而 /www/.cpeout 这个符号链接留在 flash 上 -> GET /.cpeout 就是 404；
+        别的工具 clean 过、或 /tmp/.cpeout 被删也一样。以前这里只管往下传，
+        于是界面上把 uhttpd 的 404 网页当「命令输出」显示。现在自己重铺再试。
+        """
+        bad = ""
+        for _ in range(3):
+            try:
+                body = self.request(OUT_URL, timeout=max(60.0, timeout))
+            except CpeError as e:
+                body, bad = None, str(e)
+            else:
+                bad = "设备回了 HTML 错误页" if body[:4] == b"<h1>" else ""
+            if body is not None and not bad:
+                return body
+            self._link_ok = False
+            self._ensure_link()
+            time.sleep(0.3)
+        raise CpeError(f"回显通道丢了（{bad}）：设备上取不到 {OUT_LINK}。\n"
+                       f"多半是设备刚重启过（/tmp 是内存盘会清空，符号链接却留在 flash 上），\n"
+                       f"或另外一个工具清过临时文件。已重铺并重试 3 次，重跑这条命令即可。")
+
+    def _read_out(self, timeout: float = 120.0) -> bytes:
+        """取回 OUT_TMP 里刚刚写好的命令输出（单次，不重试）。
+
+        GET /.cpeout 拿到 404（或者 uhttpd 的 HTML 错误页）就说明回显通道丢了：
+        设备重启后 /tmp 是内存盘会被清空，而 /www/.cpeout 这个符号链接留在 flash
+        上；或者另一个工具 clean 过。这时候必须把 _link_ok 作废，让上层重铺通道。
+        以前这里不管三七二十一把 body 当输出传下去，于是界面上会直接显示一段
+        uhttpd 的 404 网页，像是“命令的输出”——看不懂也没法自愈。
+        """
+        try:
+            body = self.request(OUT_URL, timeout=max(60.0, timeout))
+        except CpeError as e:
+            self._link_ok = False
+            raise CpeError(_chan_msg(str(e))) from None
+        if body[:4] == b"<h1>":
+            self._link_ok = False
+            raise CpeError(_chan_msg("设备回的是 uhttpd 的 404 错误页"))
+        return body
+
+    def _exec_read(self, cmd: str, timeout: float) -> bytes:
+        """exec + 读回。通道刚坏时：先重铺再重读（不重跑命令），真不行才重跑。"""
+        self._ensure_link()
+        self._exec(cmd, timeout=timeout)
+        try:
+            return self._read_out(timeout=max(60.0, timeout))
+        except CpeError:
+            pass
+        self._ensure_link()                              # 重铺（不会截掉刚才的输出）
+        try:
+            return self._read_out(timeout=max(60.0, timeout))
+        except CpeError:
+            self._exec(cmd, timeout=timeout)             # 最后手段：重跑一遍命令
+            return self._read_out(timeout=max(60.0, timeout))
+
     def run(self, cmd: str, timeout: float = 120.0) -> str:
         """以 root 执行命令, 返回 stdout+stderr。"""
-        self._ensure_link()
-        self._exec(cmd.strip(), timeout)
-        return self.request(OUT_URL, timeout=max(60.0, timeout)).decode("utf-8", "replace")
+        return self._exec_read(cmd.strip(), timeout).decode("utf-8", "replace")
 
     def run_quiet(self, cmd: str, timeout: float = 60.0) -> None:
         """执行但不取回输出 (少一个来回)。"""
@@ -467,8 +535,7 @@ class Cpe:
         """读设备上任意文件 (先落到 tmpfs, 不吃 flash)。"""
         self._ensure_link()
         q = shlex.quote(remote)
-        self._exec(f"cp {q} {OUT_TMP} 2>/dev/null || cat {q} > {OUT_TMP}", timeout=timeout)
-        return self.request(OUT_URL, timeout=timeout)
+        return self._exec_read(f"cp {q} {OUT_TMP} 2>/dev/null || cat {q} > {OUT_TMP}", timeout)
 
     def pull(self, remote: str, local: str) -> int:
         data = self.read_bytes(remote)
@@ -930,8 +997,8 @@ class Cpe:
             add("⑥ 文件已就位", False, str(e))
 
         try:
-            c = self.run("grep -c netguard /etc/crontabs/root 2>/dev/null || echo 0").strip()
-            on = c not in ("", "0")
+            on = self.run("grep -q netguard /etc/crontabs/root 2>/dev/null "
+                          "&& echo ON || echo OFF").strip() == "ON"
             add("⑦ 定时任务", True,
                 "已挂上（每 2 分钟巡检一次）" if on else "未挂（只放文件，不自动动作）")
         except CpeError as e:

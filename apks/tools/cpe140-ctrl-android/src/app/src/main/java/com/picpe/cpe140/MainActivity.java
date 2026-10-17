@@ -280,6 +280,16 @@ public class MainActivity extends AppCompatActivity {
                 return "已清理设备上的临时文件。";
             });
         });
+        findViewById(R.id.b_relink).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            bg(out[5], "重铺 /www/.cpeout -> /tmp/.cpeout …", () ->
+                    "回显通道已重铺：\n" + cpe.repairChannel());
+        });
+        findViewById(R.id.b_log).setOnClickListener(v -> {
+            if (!ready(5)) return;
+            String s = cpe.logTail();
+            out[5].setText(s.isEmpty() ? "还没有发出任何请求。" : "最近的 HTTP 请求（最后一条最新）：" + s);
+        });
         findViewById(R.id.b_pw).setOnClickListener(v -> {
             if (!ready(5)) return;
             LinearLayout l = new LinearLayout(this);

@@ -50,6 +50,7 @@ python cpe140.py cat /etc/config/wireless
 python cpe140.py shell                 # 交互式 root shell
 python cpe140.py howto                 # 命令手册 / 使用教程（不用连设备）
 python cpe140.py diagnose              # 断网取证：一键盘点每一层 + 判定到底哪层坏了
+python cpe140.py provision             # 【新机器一键部署】验漏洞 + 备份 flash + 装软修/看门狗
 python cpe140.py fix                   # 分级软修复：从轻到重救网，比直接重启温和
 python cpe140.py fix dry                 # 干跑：只算会做什么，绝不动设备
 python cpe140.py fix status            # 看阶梯顺序 / 当前网络 / 门户劫持 / 上行禁用旗
@@ -69,10 +70,49 @@ cp cpe140.py /usr/local/bin/ && chmod +x /usr/local/bin/cpe140.py   # 想当命�
 ```
 info status clients arp channels wifi sessions doctor gui shell uci clean reboot scan
 sh cat cfg set backup restore push pull dump-flash password schedule mode
-diagnose fix factory-reset upgrade guard howto
+provision diagnose fix factory-reset upgrade guard howto
 ```
 
 `mode`（切工作模式）、`factory-reset`、`upgrade` 是**危险操作**，`factory-reset` 需额外 `--yes`。
+
+---
+
+## 一键部署新机器：`provision`
+
+拿到一台**同型号**中继器（新机、或刚恢复出厂），一条命令把该做的都做了：
+
+```bash
+python cpe140.py --host 192.168.188.254 provision
+```
+
+它依次做八件事，每件都回读结果，失败会停：
+
+| 步 | 干什么 | 为何要 |
+|---|---|---|
+| ① | 读型号/固件（确认连通） | 确定对面是同型号 |
+| ② | 拿 `true` 与 `sleep 3` 实测耗时对比 | 证明注入真的被 `sh` 执行了，不是被忽略 |
+| ③ | `id` | 确认是 uid=0 |
+| ④ | 备份整片 8MB flash 到 `cpe140_fullflash_<ip>.bin` + md5 | 刷坏了靠它救砖 |
+| ⑤ | 写入 netfix.sh / netfix.conf / netguard.sh / netguard.conf | 分级软修复 + 看门狗 |
+| ⑥ | `ls -l` 回读四个文件 | 确认真落盘了（不是“以为成功”） |
+| ⑦ | 检查 `/etc/crontabs/root` 里有没有 netguard | 看 cron 到底挂上没 |
+| ⑧ | 跑一遍连通性判定 | 给个“现在网络什么样”的基线 |
+
+```bash
+python cpe140.py provision --no-backup     # 已备份过，跳过 8MB 下载
+python cpe140.py provision --no-enable     # 只放文件，不挂 cron（最保守）
+python cpe140.py provision --mode reboot   # 直接上真重启（不推荐，先观察）
+```
+
+**默认落在「只记录」模式**（`--mode log`）：装好、cron 也挂上，但看门狗只写日志不重启。
+观察两三天、确认它只在真断网时计数，再切真重启：
+
+```bash
+python cpe140.py guard log                          # 看它这两天到底判了几次断网
+python cpe140.py --host <ip> guard install --mode reboot
+```
+
+命令结尾会直接打印上面这几条后续命令，照抄即可。
 
 ---
 
@@ -189,6 +229,12 @@ python cpe140.py guard uninstall  # 删掉脚本与定时任务
   `push_bytes()` 已内置重试 3 次（每次重试前重铺回读通道），看到重试日志不用管。
 * `guard install` 需要 `device/netguard.sh` 与 `cpe140.py` 同级（或当前目录的 `device/`）；
   找不到会明确报错，不会静默装个空脚本上去。
+* **回显通道会丢（v1.4.0 修）**：命令输出靠 `/tmp/.cpeout` + 符号链接 `/www/.cpeout`
+  取回。`/tmp` 是内存盘，**设备一重启就空**；而 `/www/.cpeout` 写在 flash（overlay）上，
+  **重启后还在** → 变成断链，`GET /.cpeout` 回的是 uhttpd 的 404 网页。
+  旧版也会把这张网页当“命令输出”显示给你看；v1.4.0 起会认出来、自己重铺通道并重读
+  （实在不行才重跑命令），真修不好则明确报「回显通道丢了」而不是给你一段 HTML。
+  手动修：`sh ': > /tmp/.cpeout; ln -sf /tmp/.cpeout /www/.cpeout'`。
 
 ---
 

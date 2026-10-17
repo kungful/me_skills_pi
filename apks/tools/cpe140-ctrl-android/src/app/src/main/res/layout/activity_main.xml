@@ -786,10 +786,26 @@
                             android:text="清理临时文件" />
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/b_relink"
+                            style="@style/BtnWide"
+                            android:text="重铺连接通道" />
+
+                        <Button
+                            android:id="@+id/b_log"
+                            style="@style/BtnWide"
+                            android:text="看请求日志" />
+                    </LinearLayout>
+
                     <TextView
                         style="@style/Note"
                         android:layout_marginBottom="0dp"
-                        android:text="整片 flash 备份 8MB，是救砖的底牌：哪天刷坏了，用 U-Boot 把备份写回去就能救活。" />
+                        android:text="整片 flash 备份 8MB，是救砖的底牌：哪天刷坏了，用 U-Boot 把备份写回去就能救活。\n\n“重铺连接通道”是干嘛的：工具靠设备上的 /www/.cpeout 这个符号链接把命令输出取回来。设备重启后 /tmp 会被清空，链接就成了断链，读输出会 404 —— 此时点一下它就恢复了（工具自己也会自动重铺，这个按钮是手动的保险）。" />
                 </LinearLayout>
 
                 <LinearLayout style="@style/Card">
