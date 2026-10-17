@@ -10,10 +10,10 @@
   "apkName": "三角力学计算器.apk",
   "apkSize": 78997,
   "apkSha256": "6ba4096947d0fcf7d6e7c42a0349f06912aeab5dad8de2664715be689b9da9e3",
-  "srcSha": "97158a9799786b9a29bc2fed4c7477bebcc7a530",
+  "srcSha": "83a0a0bf24ca0071301e8c1fd94667029f8c7da6",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/TrigMech-Android",
   "builtAt": "2026-10-17 12:30:43",
-  "syncedAt": "2026-10-17 12:30:55",
+  "syncedAt": "2026-10-17 12:54:12",
   "auto": false
 }
