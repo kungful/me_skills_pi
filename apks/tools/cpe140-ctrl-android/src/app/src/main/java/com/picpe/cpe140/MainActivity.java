@@ -251,6 +251,14 @@ public class MainActivity extends AppCompatActivity {
         quick(R.id.q7, "ls -la /www; ls -la /etc/config", "网站目录");
 
         // ---------------------------------------------------------- 5 维护
+        // 网页工具箱（抓包 / 命令台 / WoL / 加固）—— 直接开设备端 /tools.html
+        findViewById(R.id.b_tools).setOnClickListener(v -> {
+            String h = (cpe == null) ? DEF_HOST : cpe.host;
+            ((TextView) findViewById(R.id.toolsHint)).setText("地址：http://" + h + "/tools.html");
+            android.content.Intent it = new android.content.Intent(this, ToolsActivity.class);
+            it.putExtra("host", h);
+            startActivity(it);
+        });
         findViewById(R.id.b_dump).setOnClickListener(v -> {
             if (!ready(5)) return;
             pendingTask = "dumpflash";

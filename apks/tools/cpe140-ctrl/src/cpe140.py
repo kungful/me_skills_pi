@@ -38,6 +38,7 @@ import json
 import os
 import random
 import re
+import subprocess
 import shlex
 import socket
 import string
@@ -1228,6 +1229,40 @@ def _table(rows):
         print("  ".join(str(r.get(c, "")).ljust(x) for c, x in zip(cols, w)))
 
 
+def _find_sniff_tool() -> str | None:
+    """定位 re-router 里的 wifi_sniff.py（monitor 抓包工具）。"""
+    here = os.path.dirname(os.path.abspath(__file__))
+    cands = [os.environ.get("CPE140_SNIFF", "")]
+    cands += [
+        os.path.join(here, "tools", "wifi_sniff.py"),
+        os.path.join(here, "..", "re-router", "re", "tools", "wifi_sniff.py"),
+        os.path.join(here, "..", "备份代码", "re-router", "re", "tools", "wifi_sniff.py"),
+    ]
+    for c in cands:
+        if c and os.path.isfile(os.path.normpath(c)):
+            return os.path.normpath(c)
+    return None
+
+
+def _cmd_sniff(a) -> int:
+    """把 `sniff` 转给独立的 wifi_sniff.py（monitor 模式抓包）。"""
+    tool = _find_sniff_tool()
+    if not tool:
+        print("找不到抓包工具 wifi_sniff.py。\n"
+              "请设 CPE140_SNIFF=<路径>，或直接跑：\n"
+              "  python <re-router>/re/tools/wifi_sniff.py --host " + a.host)
+        return 2
+    argv = [sys.executable, tool, "--host", a.host, "--port", str(a.port),
+            "--seconds", str(a.seconds), "--sweep", str(a.sweep), "--top", str(a.top)]
+    if a.pcap:
+        argv += ["--pcap", a.pcap]
+    if a.keep:
+        argv += ["--keep"]
+    if a.json:
+        argv += ["--json"]
+    return subprocess.call(argv)
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(
         prog="cpe140", description="易阔 CPE140 / BHU BXO2000n-2S-Lite 中继器完全控制台",
@@ -1320,6 +1355,8 @@ def main(argv=None) -> int:
         p.print_help(); return 0
     if a.cmd == "howto":
         print(HOWTO); return 0
+    if a.cmd == "sniff":
+        return _cmd_sniff(a)
     cpe = Cpe(a.host, a.port, getattr(a, "timeout", 30.0) or 30.0, a.verbose)
 
     try:

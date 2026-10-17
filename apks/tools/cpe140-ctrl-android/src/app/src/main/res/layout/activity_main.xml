@@ -592,6 +592,28 @@
 
                     <TextView
                         style="@style/Sect"
+                        android:text="// 网页工具箱（抓包 · 命令 · WoL · 加固）" />
+
+                    <TextView
+                        style="@style/Note"
+                        android:text="设备端已内置完整工具页面：抓包（tcpdump，可选接口/BPF 过滤/时长，抓完直接下载 pcap）、实时状态、远程开机 (WoL)、分级软修复、加固体检、root 命令台。点下面在 App 里直接打开。" />
+
+                    <Button
+                        android:id="@+id/b_tools"
+                        style="@style/BtnPri"
+                        android:text="打开网页工具箱" />
+
+                    <TextView
+                        android:id="@+id/toolsHint"
+                        style="@style/Out"
+                        android:minHeight="0dp"
+                        android:text="地址：http://192.168.188.254/tools.html" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/CardHi">
+
+                    <TextView
+                        style="@style/Sect"
                         android:text="// 断网诊断 · 分级软修复（先跑这个）" />
 
                     <TextView

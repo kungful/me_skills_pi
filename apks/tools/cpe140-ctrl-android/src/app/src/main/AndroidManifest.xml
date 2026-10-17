@@ -17,6 +17,13 @@
         android:usesCleartextTraffic="true">
 
         <activity
+            android:name=".ToolsActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
+            android:exported="false"
+            android:label="工具箱"
+            android:theme="@style/T.App" />
+
+        <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
             android:exported="true"
