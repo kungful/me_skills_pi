@@ -99,7 +99,7 @@ public final class Help {
                 {"cp /etc/shadow /tmp/shadow.bak", "备份文件到内存盘（重启就没了）", ""},
         }));
 
-        SECTIONS.add(new Sec("断网看门狗", "第 4 个你要的自动化：断网自动重启。", new String[][]{
+        SECTIONS.add(new Sec("断网看门狗", "断网自动重启：连续 N 分钟不通 → 重启自己；两次至少隔 30 分钟；单次断网最多重启 3 次，之后每 6 小时才试一次（不会无限重启）。", new String[][]{
                 {"/etc/netguard.sh status", "看门狗状态（计数/上次重启时间）", ""},
                 {"/etc/netguard.sh test", "干跑：只算不重启", ""},
                 {"/etc/netguard.sh check", "只 ping 一次看通不通", ""},

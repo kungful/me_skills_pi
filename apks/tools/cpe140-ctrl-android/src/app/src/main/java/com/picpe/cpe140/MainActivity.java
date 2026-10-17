@@ -324,8 +324,10 @@ public class MainActivity extends AppCompatActivity {
             if (!ready(5)) return;
             final int m = Math.max(2, num(guardMin.getText().toString(), 10));
             confirm("开启断网看门狗",
-                    "从现在起：设备每 2 分钟探测一次外网，连续 " + m + " 分钟不通就自动重启它自己"
-                            + "（30 分钟内最多重启一次）。\n\n"
+                    "从现在起：设备每 2 分钟探测一次外网，连续 " + m + " 分钟不通就自动重启它自己。\n\n"
+                            + "制动规则：两次重启至少隔 30 分钟；单次断网最多重启 3 次，"
+                            + "之后改为每 6 小时才试一次（不会无限重启）。\n"
+                            + "网络一恢复就重新计。\n\n"
                             + "它和「定时重启」互不干扰；想停就点「停用」。确认开启？",
                     () -> bg(guardState(), "安装并开启看门狗（阈值 " + m + " 分钟）…", () -> {
                         byte[] sh = asset("netguard.sh");

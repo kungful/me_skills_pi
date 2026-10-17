@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17 10:01:44",
+  "generatedAt": "2026-10-17 10:29:04",
   "count": 12,
-  "totalApkBytes": 49100011,
+  "totalApkBytes": 49100619,
   "categories": [
     {
       "id": "design",
@@ -99,24 +99,24 @@
         {
           "slug": "cpe140-ctrl",
           "title": "CPE140 控制台 (PC)",
-          "version": "1.1.0",
+          "version": "1.2.0",
           "apk": "",
           "source": "tools/cpe140-ctrl/src/",
           "size": 0,
           "sha256": "",
           "builtAt": "",
-          "notes": "逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI；断网看门狗（断网 N 分钟自动重启）；命令手册 howto；含脱敏报告"
+          "notes": "逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI（六标签）；断网看门狗（断网 N 分钟自动重启；30 分钟冷却 + 单次断网最多重启 3 次，超限转 6 小时长退避，不会无限重启）；命令手册 howto；含脱敏报告"
         },
         {
           "slug": "cpe140-ctrl-android",
           "title": "CPE140 控制台 (安卓)",
-          "version": "1.1.0",
+          "version": "1.2.0",
           "apk": "tools/cpe140-ctrl-android/cpe140-ctrl-android.apk",
           "source": "tools/cpe140-ctrl-android/src/",
-          "size": 5525366,
-          "sha256": "fcd91d2f3a4804fab06ac4e57f3be2959db6acb1a05cc74ceaaffab0752a3137",
-          "builtAt": "2026-10-17 09:20:10",
-          "notes": "手机版完全控制台：概览/客户端/配置/root 终端/维护（整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；纯 Java + SAF 零存储权限；深色自绘 UI"
+          "size": 5525974,
+          "sha256": "ef0c727590795a3fa82b141b4ba3a0326aa7ae9b3730ceea4c87601fb92acbeb",
+          "builtAt": "2026-10-17 10:27:09",
+          "notes": "手机版完全控制台：概览/客户端/配置/root 终端/维护（整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；看门狗带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI"
         },
         {
           "slug": "pilink",

@@ -368,13 +368,21 @@ public class Cpe {
     /** 安装脚本 + 参数（enable=true 同时挂上 crontab）。 */
     public String guardInstall(byte[] script, int minutes, String mode, String recover,
                                boolean enable) throws Exception {
+        return guardInstall(script, minutes, mode, recover, enable, 3, 21600);
+    }
+
+    /** maxReboot=单次断网最多自动重启几次；longWait=超限后的重试间隔（秒）。 */
+    public String guardInstall(byte[] script, int minutes, String mode, String recover,
+                               boolean enable, int maxReboot, int longWait) throws Exception {
         push(script, GUARD_SH);
         run("chmod 755 " + GUARD_SH);
-        int need = Math.max(1, Math.round(minutes / 2f));
+        int need = Math.min(99, Math.max(1, (minutes + 1) / 2));   // 向上取整，不早于所选分钟
         String conf = "# 由 CPE140 控制台写入：断网看门狗参数\n"
                 + "MINUTES=" + minutes + "\n"
                 + "FAIL_NEED=" + need + "\n"
                 + "MODE=" + mode + "\n"
+                + "MAX_REBOOT=" + maxReboot + "\n"
+                + "LONG_WAIT=" + longWait + "\n"
                 + "RECOVER=" + recover + "\n";
         push(conf.getBytes("UTF-8"), GUARD_CONF);
         run("chmod 644 " + GUARD_CONF);
@@ -389,8 +397,8 @@ public class Cpe {
     /** 停用并摸掉脚本，设备回到没装过的状态。 */
     public String guardUninstall() throws Exception {
         run("sh " + GUARD_SH + " cron off 2>&1");
-        return run("rm -f " + GUARD_SH + " " + GUARD_CONF + " /tmp/netguard.log /tmp/netguard.fails; "
-                + "echo 已卸载看门狗");
+        return run("rm -f " + GUARD_SH + " " + GUARD_CONF + " /etc/netguard.last "
+                + "/etc/netguard.reboots /tmp/netguard.*; echo 已卸载看门狗（含单次断网重启计数）");
     }
 
     // --------------------------------------------------------------- 管理

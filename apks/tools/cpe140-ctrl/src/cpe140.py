@@ -46,7 +46,7 @@ import time
 import urllib.error
 import urllib.request
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 HOWTO = r"""
 ==============================================================================
@@ -84,11 +84,16 @@ HOWTO = r"""
     网络通       -> 计数清零，什么都不做
     网络不通     -> 计数 +1；连续 N 次（默认 5 次 = 10 分钟）才认定「真断网」
     真的断网     -> 写日志 + 重启设备；但如果 30 分钟内已经重启过，就跳过
-                    （防「上游光猫坏了」导致无限重启）
+    还一直不通   -> 单次断网最多自动重启 3 次（约 1 小时）；
+                    到量后不再频繁重启，改为每 6 小时才试一次，
+                    所以不会「每 30 分钟重启一次」地无限重启下去。
+                    网络一恢复，计数归零，下次断网重新给满 3 次。
   它不是「定时重启」：不管几点，只看网络通不通；也不碰定时重启那条规则。
 
   python cpe140.py guard install            装上并开启（默认 10 分钟阈值）
   python cpe140.py guard install --minutes 5
+  python cpe140.py guard install --max-reboot 5 --long-wait 7200
+                                            改「单次断网最多重启几次 / 超限后间隔」
   python cpe140.py guard install --mode log 只监控不重启（先观察几天再用）
   python cpe140.py guard status             看状态（当前计数 / 上次自重启时间）
   python cpe140.py guard log                看日志
@@ -646,12 +651,22 @@ class Cpe:
         return self.run(f"sh {GUARD_SH} cron off 2>&1")
 
     def guard_install(self, minutes: int = 10, mode: str = "reboot",
-                      recover: str = "", enable: bool = True) -> str:
-        """把看门狗脚本 + 参数装到设备上（enable=True 同时挂上 crontab）。"""
+                      recover: str = "", enable: bool = True,
+                      max_reboot: int = 3, long_wait: int = 21600) -> str:
+        """把看门狗脚本 + 参数装到设备上（enable=True 同时挂上 crontab）。
+
+        minutes    连续断网多少分钟算断网
+        max_reboot 单次断网最多自动重启几次（超限后改 long_wait 秒一次）
+        long_wait  超限后的重试间隔（秒，默认 21600 = 6 小时）
+        """
         if mode not in ("reboot", "log"):
             raise CpeError("mode 只能是 reboot 或 log")
         if minutes < 2:
             raise CpeError("分钟数至少 2（脚本每 2 分钟巡检一次）")
+        if max_reboot < 1:
+            raise CpeError("max_reboot 至少 1")
+        if long_wait < 60:
+            raise CpeError("long_wait 至少 60 秒")
         if re.search(r"[\n\r'\"`$\\]", recover):
             raise CpeError("recover 里有危险字符（换行/引号/反引号/$/反斜杠）")
         src = guard_script_path()
@@ -660,8 +675,11 @@ class Cpe:
         self.run(f"chmod 755 {GUARD_SH}")
         conf = ("# 由 cpe140 控制台写入：断网看门狗参数\n"
                 f"MINUTES={minutes}\n"
-                f"FAIL_NEED={max(1, int(round(minutes / 2.0)))}\n"
+                # 向上取整，保证「选 5 分钟」不会早于 5 分钟动手
+                f"FAIL_NEED={min(99, max(1, (minutes + 1) // 2))}\n"
                 f"MODE={mode}\n"
+                f"MAX_REBOOT={max_reboot}\n"
+                f"LONG_WAIT={long_wait}\n"
                 f"RECOVER={recover}\n")
         self.push_bytes(conf.encode(), GUARD_CONF)
         self.run(f"chmod 644 {GUARD_CONF}")
@@ -671,8 +689,9 @@ class Cpe:
     def guard_uninstall(self) -> str:
         """停用并擦掉脚本/参数（设备回到没装过的状态）。"""
         self.run(f"sh {GUARD_SH} cron off 2>&1")
-        return self.run(f"rm -f {GUARD_SH} {GUARD_CONF} /tmp/netguard.* /tmp/netguard.log; "
-                        f"echo 已卸载看门狗")
+        return self.run(f"rm -f {GUARD_SH} {GUARD_CONF} /etc/netguard.last "
+                        f"/etc/netguard.reboots /tmp/netguard.*; "
+                        f"echo 已卸载看门狗（含单次断网重启计数）")
 
 
 # --------------------------------------------------------------------------- #
@@ -823,13 +842,14 @@ def gui(host: str, port: int) -> None:                   # pragma: no cover
     ttk.Label(b6a, text="断网看门狗：设备每 2 分钟 ping 一次外网；连续", foreground="#333").pack(side="left")
     gmin = tk.StringVar(value="10")
     ttk.Entry(b6a, textvariable=gmin, width=4).pack(side="left")
-    ttk.Label(b6a, text="分钟不通 → 自动重启它自己（30 分钟冷却，与「定时重启」互不干扰）",
+    ttk.Label(b6a, text="分钟不通 → 自动重启它自己（30 分钟冷却、单次断网最多 3 次，与「定时重启」互不干扰）",
               foreground="#333").pack(side="left")
 
     def _g_on():
         m = int(gmin.get() or 10)
         if not messagebox.askyesno("确认开启", f"安装并启用断网看门狗：\n连续 {m} 分钟不通外网就自动重启设备。\n\n"
-                                   "只会真的断网时才重启；上游光猫坏了也不会无限重启。\n确认？"):
+                                   "只会在真的断网时才重启；30 分钟冷却；\n"
+                                   "单次断网最多重启 3 次，之后再等 6 小时才试（不会无限重启）。\n\n确认？"):
             return
         bg(lambda: cpe.guard_install(minutes=m), x6, "开启看门狗")
 
@@ -924,6 +944,10 @@ def main(argv=None) -> int:
     sp.add_argument("--mode", choices=["reboot", "log"], default="reboot",
                     help="reboot=到点重启（默认）/ log=只记录不重启")
     sp.add_argument("--recover", default="", help="可选轻量恢复命令，例如 'wifi down; sleep 3; wifi up'")
+    sp.add_argument("--max-reboot", type=int, default=3,
+                    help="单次断网最多自动重启几次（默认 3；超限后转长退避）")
+    sp.add_argument("--long-wait", type=int, default=21600,
+                    help="超限后的重试间隔秒数（默认 21600 = 6 小时）")
     sp.add_argument("--no-enable", action="store_true", help="只装不启用")
     sp = sub.add_parser("mode", help="工作模式切换 (危险)")
     sp.add_argument("mode", choices=list(MODE_MAP)); sp.add_argument("--force", action="store_true")
@@ -953,7 +977,8 @@ def main(argv=None) -> int:
             elif a.action == "reset":
                 print(cpe.guard_reset())
             elif a.action == "install":
-                print(cpe.guard_install(a.minutes, a.mode, a.recover, not a.no_enable))
+                print(cpe.guard_install(a.minutes, a.mode, a.recover, not a.no_enable,
+                                        a.max_reboot, a.long_wait))
             elif a.action == "uninstall":
                 print(cpe.guard_uninstall())
             return 0

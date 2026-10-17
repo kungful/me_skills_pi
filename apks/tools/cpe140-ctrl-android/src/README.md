@@ -5,7 +5,7 @@
 
 ```
 package   com.picpe.cpe140
-version   1.1.0
+version   1.2.0
 minSdk    24 (Android 7.0)      targetSdk 37
 签名      cpe140.jks (alias cpe140 / cpe140123)   ← 自签名
 ```
@@ -40,7 +40,9 @@ minSdk    24 (Android 7.0)      targetSdk 37
 
 * 探测 `223.5.5.5` / `114.114.114.114`，任一通 → 计数清零；
 * 连续 `N/2` 次全不通（默认 10 分钟）→ `sync; sleep 3; reboot`；
-* **30 分钟冷却**：上游光猫真坏了也不会无限重启；
+* **30 分钟冷却**：两次自重启至少隔 30 分钟；
+* **单次断网最多重启 3 次**：到量后改为每 6 小时才试一次，**不会无限重启**；
+  网络一恢复就重新计时、重新给满 3 次；
 * **和「定时重启」互不干扰**：脚本名与命令行都不含 `reboot` 子串，
   不会被 `/etc/init.d/autoreboot` 的 `sed -i '/reboot/d'` 误删；
 * 计数与日志放 `/tmp`（内存盘，零 flash 磨损，重启自然归零）。

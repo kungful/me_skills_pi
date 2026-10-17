@@ -78,19 +78,23 @@ factory-reset upgrade guard howto
 
 * 探测 `223.5.5.5` / `114.114.114.114`，任一通 → 计数清零；
 * 连续 `MINUTES/2` 次全不通（默认 10 分钟）→ `sync; sleep 3; reboot`；
-* **30 分钟冷却**：上游光猫真坏了也不会无限重启；
+* **30 分钟冷却**：上一次自重启到现在不满 30 分钟就只记日志、不动手；
+* **单次断网最多重启 `MAX_REBOOT` 次（默认 3 次）**：到量后不再「每 30 分钟一次」
+  地接着重启，改为每 `LONG_WAIT` 秒（默认 6 小时）才试一次，**不会无限重启**；
+  网络一恢复，本次断网的次数与计数一起归零，下次断网重新给满 3 次；
 * **与「定时重启」互不干扰**：脚本名/命令行都不含 `reboot` 子串，
   不会被 `/etc/init.d/autoreboot` 的 `sed -i '/reboot/d'` 误删；
 * 计数与日志在 `/tmp`（内存盘，零 flash 磨损，重启自然归零）；
-  只有**真重启**才写一次 `/etc/netguard.last`。
+  **真重启**才写一次 `/etc/netguard.last`，并 +1 写一次 `/etc/netguard.reboots`。
 
 ```bash
-python cpe140.py guard status     # 状态：装上没 / 计数 / 冷却 / 上次自重启
+python cpe140.py guard status     # 状态：装上没 / 计数 / 冷却 / 单次断网已重启几次 / 上次自重启
 python cpe140.py guard test       # 干跑：只算一遍，绝不重启、绝不执行恢复
 python cpe140.py guard log        # 它的日志（记录“上游网关通不通”）
-python cpe140.py guard reset      # 计数清零
+python cpe140.py guard reset      # 计数清零（单次断网的已重启次数也归零）
 python cpe140.py guard off / on   # 停用 / 启用 cron
 python cpe140.py guard install --minutes 10 --mode reboot
+python cpe140.py guard install --max-reboot 5 --long-wait 7200   # 调重启上限/超限间隔
 python cpe140.py guard install --mode log      # 只记录不重启（先观察几天）
 python cpe140.py guard uninstall  # 删掉脚本与定时任务
 ```
