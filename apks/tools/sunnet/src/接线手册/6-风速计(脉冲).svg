@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1150" viewBox="0 0 1600 1150">
+<rect width="1600" height="1150" fill="#ffffff"/>
+<text x="40" y="45.95" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="21" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">第 6 张 · 风速计（脉冲型，读真 m/s）</text>
+<text x="40" y="72.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#1b5e20" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">把“风”从“有风/无风”开关升级成真实风速。只有脉冲输出（集电极开路/NPN）的风速计能直接接。</text>
+<rect x="60" y="320" width="320" height="400" rx="10" fill="#f5f7fa" stroke="#1a237e" stroke-width="2"/>
+<rect x="60" y="320" width="320" height="30" rx="8" fill="#1a237e" stroke="#1a237e" stroke-width="1"/>
+<rect x="60" y="341" width="320" height="10" rx="0" fill="#1a237e" stroke="#1a237e" stroke-width="1"/>
+<text x="220.0" y="340.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">ESP32-S3 开发板</text>
+<text x="220.0" y="366.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">右列只列出用到的脚</text>
+<circle cx="60" cy="473.3333333333333" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="71" y="477.6533333333333" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">3V3</text>
+<circle cx="60" cy="596.6666666666666" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="71" y="600.9866666666667" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<circle cx="380" cy="535.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="369" y="539.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IO14</text>
+<rect x="760" y="140" width="400" height="240" rx="10" fill="#f5f7fa" stroke="#00695c" stroke-width="2"/>
+<rect x="760" y="140" width="400" height="30" rx="8" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<rect x="760" y="161" width="400" height="10" rx="0" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<text x="960.0" y="160.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">三杯式风速计（脉冲输出）</text>
+<text x="960.0" y="186.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">写 0-70m/s、脉冲输出的那种</text>
+<circle cx="760" cy="222.5" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="226.82" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">电源+ 红</text>
+<circle cx="760" cy="275.0" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="279.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND 黑</text>
+<circle cx="760" cy="327.5" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="331.82" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">脉冲 黄/绿</text>
+<rect x="1180" y="150" width="300" height="100" rx="10" fill="#f5f7fa" stroke="#455a64" stroke-width="2"/>
+<rect x="1180" y="150" width="300" height="30" rx="8" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<rect x="1180" y="171" width="300" height="10" rx="0" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<text x="1330.0" y="170.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">端子排 / 电源</text>
+<text x="1330.0" y="196.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">按风速计铭牌选 5V / 12V / 24V</text>
+<circle cx="1180" cy="203.33333333333334" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="1191" y="207.65333333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">+12V</text>
+<circle cx="1180" cy="226.66666666666666" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="1191" y="230.98666666666665" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<polyline points="760,327.5 620,327.5 620,535.0 380,535.0" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round"/>
+<rect x="692.8" y="296.5" width="94.4" height="18.0" rx="4" fill="#ffffff" stroke="#2e7d32" stroke-width="1"/>
+<text x="740" y="309.82" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#2e7d32" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">脉冲 → IO14</text>
+<polyline points="60,473.3333333333333 20,473.3333333333333 20,230 690,230" fill="none" stroke="#7b1fa2" stroke-width="4" stroke-linejoin="round"/>
+<rect x="180.4" y="220.25" width="39.2" height="19.5" rx="4" fill="#ffffff" stroke="#7b1fa2" stroke-width="1"/>
+<text x="200" y="234.68" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#7b1fa2" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">3V3</text>
+<polyline points="690,230 690,262" fill="none" stroke="#7b1fa2" stroke-width="3" stroke-linejoin="round"/>
+<rect x="672" y="262" width="36" height="46" rx="4" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="690" y="289.14" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11.5" fill="#37474f" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">4.7k</text>
+<polyline points="690,308 690,327.5" fill="none" stroke="#7b1fa2" stroke-width="3" stroke-linejoin="round"/>
+<text x="710" y="329.4" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">上拉电阻：把信号拉到 3.3V，低速时也稳</text>
+<polyline points="760,222.5 1120,222.5 1120,203.33333333333334 1180,203.33333333333334" fill="none" stroke="#d32f2f" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="760,275.0 720,275.0 720,790" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="1180,226.66666666666666 1090,226.66666666666666 1090,790" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="60,596.6666666666666 30,596.6666666666666 30,790" fill="none" stroke="#212121" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="20,790 1520,790" fill="none" stroke="#212121" stroke-width="6" stroke-linejoin="round"/>
+<rect x="729.6" y="756.25" width="80.8" height="19.5" rx="4" fill="#ffffff" stroke="#212121" stroke-width="1"/>
+<text x="770.0" y="770.68" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#212121" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">公共地 GND</text>
+<rect x="40" y="835" width="740" height="177" rx="8" fill="#ffebee" stroke="#b71c1c" stroke-width="2"/>
+<text x="52" y="857.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#b71c1c" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">接线前必看（很重要）</text>
+<text x="52" y="881.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">① 先用万用表确认你的风速计是哪种输出：</text>
+<text x="52" y="902.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   不转时量 信号对 GND ≈ 3.3V，手转风杯时被拉低 → **集电极开路/NPN**，可直按上图接；</text>
+<text x="52" y="923.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   若量到 5V 或 12V 的电压脉冲 → **电压输出型**，必须分压或加光耦隔离才能进 GPIO，</text>
+<text x="52" y="944.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   否则会直接烧掉 ESP32 的 IO。</text>
+<text x="52" y="965.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">② 风速计供电电压看铭牌（常见 12V/24V），**不要用 ESP32 的 3V3 去带**。</text>
+<text x="52" y="986.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">③ 长线（&gt;5m）建议：信号线用屏蔽线，屏蔽层只在 ESP32 这头接 GND，,</text>
+<text x="52" y="1007.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   并在风速计那头加 100nF 对地。</text>
+<rect x="800" y="835" width="760" height="156" rx="8" fill="#e3f2fd" stroke="#0d47a1" stroke-width="2"/>
+<text x="812" y="857.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#0d47a1" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">换上去后怎么调</text>
+<text x="812" y="881.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">① 接线前：set windMode 0（先保开关量），接完再 set windMode 1，</text>
+<text x="812" y="902.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   状态页会多出 wind.hz / wind.mps / wind.pulses。</text>
+<text x="812" y="923.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">② 标定：找个风稳的时候，看一眼 wind.hz（比如 12.3），</text>
+<text x="812" y="944.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   再看手机天气/附近气象站的风速（比如 9.0 m/s）；</text>
+<text x="812" y="965.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   windMpsPerHz = 9.0 ÷ 12.3 × 100 ≈ 73 → set windMpsPerHz 73。</text>
+<text x="812" y="986.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">   多测两次取平均；标定完设 windStartMps / windStopMps / windEmergMps。</text>
+</svg>
