@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-18 16:58:28",
-  "count": 38,
+  "generatedAt": "2026-10-18 23:28:28",
+  "count": 39,
   "skills": [
     {
       "name": "apk-github-sync",
@@ -15,6 +15,11 @@
     {
       "name": "blender-motion-state-inspection",
       "description": "Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where screenshots alone are not enough.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "bw16-flash",
+      "description": "Ai-Thinker BW16 / RTL8720DN (Realtek AmebaD) 设备的识别、编译、烧录与救砖。含环境一键搭建、串口自动识别、源码编译、擦除+写入+校验全流程，以及「半写砖头」救援、SoftAP 不广播、抓包误报等已知坑的修法。当用户说「烧录/刷 BW16」「RTL8720DN 刷机」「抓包器/渗透机器重刷固件」「AmebaD 编译」「设备插上了找不到」「esp 渗透工具刷机」时使用。⚠️ BW16 是 Realtek 芯片，**esptool 永远连不上**，别走 ESP 那条路。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

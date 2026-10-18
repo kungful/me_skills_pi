@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-18 16:58:28**
+最后同步：**2026-10-18 23:28:28**
 
-共 **38** 个 skill。
+共 **39** 个 skill。
 
 ## 安装
 
@@ -20,6 +20,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`apk-github-sync`](skills/apk-github-sync/) | 把本机 Pi 开发出来的 Android APK 软件包和源代码镜像备份到 GitHub 仓库（自动提交 + 推送 + 定时/实时自动备份）。当用户说"备份 apk / 把 apk 传到 GitHub / apk 自动上传 / 新做的安卓 app 传上去 / 备份安卓源码 / apks 文件夹更新一下 / 查 a... | pi |
 | [`awesome-reverse-engineering`](skills/awesome-reverse-engineering/) | 逆向工程工具与学习资源选型索引（二进制、App、固件、文件格式、协议）。当需要"逆向 / 反编译 / 反汇编 / 脱壳 / 抓包分析协议 / 分析固件 / 分析恶意样本 / 该用哪个工具 / 有没有 xx 逆向工具"，或要在 IDA、Ghidra、radare2、Frida、JADX、Hopper、x64dbg、... | pi |
 | [`blender-motion-state-inspection`](skills/blender-motion-state-inspection/) | Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where s... | pi |
+| [`bw16-flash`](skills/bw16-flash/) | Ai-Thinker BW16 / RTL8720DN (Realtek AmebaD) 设备的识别、编译、烧录与救砖。含环境一键搭建、串口自动识别、源码编译、擦除+写入+校验全流程，以及「半写砖头」救援、SoftAP 不广播、抓包误报等已知坑的修法。当用户说「烧录/刷 BW16」「RTL8720DN 刷机」「抓... | pi |
 | [`courseware-factory`](skills/courseware-factory/) | 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台 + 多课件工作台。**作用域仅限「少儿美术课件生产」，不是通用找图/做图工具。** 用于：做新课件（“做课件/新课题/出一套 XX 岁课件/范画/教学课件”）；改已有课件的图片/版式/文案/品牌名；导出 PDF/PPTX/单张图... | pi |
 | [`design-and-review-circuit`](skills/design-and-review-circuit/) | Design, audit, or correct an electronic circuit from a product brief, native schematic, netlist, block diagram, or circuit description. Use for architecture ... | pi |
 | [`easyeda-agent`](skills/easyeda-agent/) | 通过本地 easyeda CLI、daemon 和连接器操作嘉立创EDA专业版（EasyEDA Pro）：用可迁移样例和参数化数据构建或修复原理图、布局布线 PCB，并回读连接、几何、DRC 与保存结果。适用于已有工程操作及数据驱动电路设计。 | agents |
@@ -58,4 +59,4 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 
 ## APK 备份
 
-Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 13 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
+Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 14 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
