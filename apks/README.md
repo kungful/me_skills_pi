@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-19 00:01:45**　|　共 **14** 个应用　|　APK 合计 **47.1 MB**
+最后同步：**2026-10-19 00:20:00**　|　共 **14** 个应用　|　APK 合计 **47.8 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -40,6 +40,6 @@ apks/<分类>/<应用>/
 | **CPE140 控制台 (安卓)** | 1.4.2 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.3 MB | 手机版完全控制台：概览/客户端/配置/root 终端/维护（换新机器一键部署 + 一键断网诊断 + 分级软修救网 + 整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；v1.4.2 修一个布局坑（BtnWide 的 0dp+weight 放进竖向卡片会被量成 0 宽 -> 有 4 个按钮一直看不见：「DHCP 客户端列表」「扫描周边 WiFi」「写入」「恢复出厂设置」；新增 BtnLine 样式修正）；v1.4.1 加「一键部署」（验型号/验注入通道/验 uid=0 → 装不加 flash 自分级软修+看门狗 → ls -l 回读核对 → 看连通性，默认落到只记录模式）；v1.4.0 修回显通道丢失（设备重启后 /tmp 被清、或 PC 工具退出时 rm -f /www/.cpeout，断链后 GET /.cpeout 回 404 网页而旧版当成命令输出显示）—— 现在认得出来并自动重铺通道、重读、必要时重跑命令，另加「重铺连接通道」与「看请求日志」两个手动按钮；看门狗重启前先软修、带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI |
 | **Pi 通知 (piLink)** | 0.7.0 | [`pilink.apk`](tools/pilink/pilink.apk) | [`src/`](tools/pilink/src/) | 1.9 MB | 把 pi / pi-web 的通知与派发链路接到安卓手机 |
 | **三角力学计算器** | 1.0 | [`trig-mech.apk`](tools/trig-mech/trig-mech.apk) | [`src/`](tools/trig-mech/src/) | 77.1 KB | 三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线 |
-| **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 65.1 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
-| **茶叶军师** | 1.1 | [`tea-strategist.apk`](tools/tea-strategist/tea-strategist.apk) | [`src/`](tools/tea-strategist/src/) | 129.1 KB | 茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用 |
+| **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 777.6 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
+| **茶叶军师** | 1.2 | [`tea-strategist.apk`](tools/tea-strategist/tea-strategist.apk) | [`src/`](tools/tea-strategist/src/) | 129.1 KB | 茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用 |
 | **需求雷达** | - | [`demand-radar.apk`](tools/demand-radar/demand-radar.apk) | [`src/`](tools/demand-radar/src/) | 857.4 KB | 从公开渠道挖掘市场需求信号，打分聚簇出机会榜 |

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19 00:01:45",
+  "generatedAt": "2026-10-19 00:20:00",
   "count": 14,
-  "totalApkBytes": 49344399,
+  "totalApkBytes": 50073912,
   "categories": [
     {
       "id": "design",
@@ -146,15 +146,15 @@
           "version": "1.0",
           "apk": "tools/sunnet/sunnet.apk",
           "source": "tools/sunnet/src/",
-          "size": 66709,
-          "sha256": "c27c79dc65c15d0ef39270c2f268b4148bb5e94c14bb83c942475ce47091c472",
-          "builtAt": "2026-10-18 23:37:36",
+          "size": 796222,
+          "sha256": "0078ef052d7fd0c8efad421e1e3b6c4416016645928b757f761b38c8d5074947",
+          "builtAt": "2026-10-19 00:02:56",
           "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
         },
         {
           "slug": "tea-strategist",
           "title": "茶叶军师",
-          "version": "1.1",
+          "version": "1.2",
           "apk": "tools/tea-strategist/tea-strategist.apk",
           "source": "tools/tea-strategist/src/",
           "size": 132188,

@@ -8,12 +8,12 @@
   "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点",
   "apk": "sunnet.apk",
   "apkName": "SunNet.apk",
-  "apkSize": 66709,
-  "apkSha256": "c27c79dc65c15d0ef39270c2f268b4148bb5e94c14bb83c942475ce47091c472",
-  "srcSha": "263e969b2257acd7ca796767b2fa6e0535e230bd",
+  "apkSize": 796222,
+  "apkSha256": "0078ef052d7fd0c8efad421e1e3b6c4416016645928b757f761b38c8d5074947",
+  "srcSha": "b53f6d550a4cbb6c3a95869f833132f650e36bd0",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/SunNet-Android",
-  "builtAt": "2026-10-18 23:37:36",
-  "syncedAt": "2026-10-19 00:01:45",
+  "builtAt": "2026-10-19 00:02:56",
+  "syncedAt": "2026-10-19 00:20:00",
   "auto": false
 }
