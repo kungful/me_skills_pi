@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate Social Preview"
+  short_description: "Create repository-aware social preview images"
+  default_prompt: "Use $generate-social-preview to create a polished social preview for this repository."

@@ -1,10 +1,15 @@
 {
-  "generatedAt": "2026-10-18 09:28:31",
-  "count": 28,
+  "generatedAt": "2026-10-18 11:52:23",
+  "count": 37,
   "skills": [
     {
       "name": "apk-github-sync",
       "description": "把本机 Pi 开发出来的 Android APK 软件包和源代码镜像备份到 GitHub 仓库（自动提交 + 推送 + 定时/实时自动备份）。当用户说\"备份 apk / 把 apk 传到 GitHub / apk 自动上传 / 新做的安卓 app 传上去 / 备份安卓源码 / apks 文件夹更新一下 / 查 apk 备份状态\"时使用。和 skills-github-sync 是姊妹技能，共用同一个仓库。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "awesome-reverse-engineering",
+      "description": "逆向工程工具与学习资源选型索引（二进制、App、固件、文件格式、协议）。当需要\"逆向 / 反编译 / 反汇编 / 脱壳 / 抓包分析协议 / 分析固件 / 分析恶意样本 / 该用哪个工具 / 有没有 xx 逆向工具\"，或要在 IDA、Ghidra、radare2、Frida、JADX、Hopper、x64dbg、dnSpy、Wireshark、binwalk、QEMU 之间做选择时使用。也可用于查逆向学习路线与练习靶场。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
@@ -33,6 +38,21 @@
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
+      "name": "flameox",
+      "description": "用 Flameox 采集有界、可复现的运行时证据——CPU/内存/GPU/推理栈的性能剖析，或把一条命令的输出抓成结构化 artifact 供后续分析比对。当用户说\"profile 一下 / 性能剖析 / 火焰图 / 找性能瓶颈 / 跑个 benchmark 采数据 / 追踪 trace / 抓一次运行证据 / 对比优化前后\"时使用。是 REA 的运行时证据采集侧翼（REA 偏静态与动态逆向，Flameox 偏性能证据）。只做证据采集与对比，不改代码、不下结论。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "generate-social-preview",
+      "description": "生成或修改仓库的社交预览图（GitHub 社交卡片 / 包页 / 发布贴 / 链接卡片）。当用户说\"做个社交预览图 / 项目的封面图 / GitHub 分享图 / 1280x640 卡片 / 参考这张图改一个\"时使用。Create or revise repository-aware social preview images for GitHub, package pages, launch posts, and link cards.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "gitcontribute",
+      "description": "用 GitContribute 做\"给开源仓库贡献\"的前期调研——判断某个 issue 还值不值得做、有没有人在做、适不适合外部贡献者、有没有足够证据动手，以及收集仓库贡献规范、相关 issue/PR、代码上下文和验证结果。当用户说\"给这个仓库提个 PR / 这个 issue 我能做吗 / 找点能贡献的活 / 看看有没有重复实现 / 调研一下 owner/repo#123 / 提 PR 前先查清楚\"时使用。它**从不写 GitHub**，只出本地调研和草稿。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
       "name": "grsai-image-2-5",
       "description": "Generate or restyle images through the grsai API (gpt-image-2 / 2.5 family; text-to-image, image-to-image with base64 or URL references, transparent background, up to 3840x2160). Use when the user asks to 出图/生成/渲染/换风格 an image, turn a photo or 3D view into photoreal architecture or product art, or handle /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.",
       "source": "C:/Users/hua/.pi/agent/skills"
@@ -43,13 +63,33 @@
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
+      "name": "internalcot",
+      "description": "开启 InternalCoT 可见思维链模式：在每次实质工具调用和回答前，必须先写 internalcot CLI 笔记，整个会话持续生效。仅当用户明确说\"$internalcot / internalcot on / 开 internalcot\"时才用；用户只是说\"仔细想 / 深入推理 / 展示思路\"不算触发。用户明确关闭前保持激活。Activate a persistent visible-reasoning mode that requires detailed internalcot CLI notes before substantive tools and answers, throughout the conversation.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "jacobian-math",
+      "description": "当精确计算或结构分析能帮助解题时，用 Jacobian（`math.find` / `math.run`）的类型化数学操作。当用户说\"精确算一下 / 符号计算 / 矩阵分解 / 组合枚举 / 数论 / 验证这个数学结论 / 有什么数学操作可用\"时使用。Use Jacobian’s typed operations when exact computation or structural analysis can help solve a mathematical problem.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
       "name": "kicad",
       "description": "Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, traces nets, cross-references schematic to PCB, extracts BOM data, checks DRC/ERC, DFM, power trees, and regulator circuits. Every finding carries a confidence label and evidence source with trust_summary rollup. Analyzes PDF schematics from dev boards, reference designs, eval kits, and datasheets. Supports KiCad 5–10. Use whenever the user mentions .kicad_sch, .kicad_pcb, .kicad_pro, PCB design review, schematic analysis, PDF schematics, reference designs, Gerber files, DRC/ERC, netlist issues, BOM extraction, signal tracing, power budget, DFM, or wants to understand, debug, compare, or review any hardware design. Also for \"check my board\", \"review before fab\", \"what's wrong with my schematic\", \"is this ready to order\", \"check my power supply\", \"verify this circuit\", OSHWA certification readiness, or any electronics/PCB design question.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
+      "name": "leantoken",
+      "description": "用 LeanToken 做代码检索与结构理解，省 token 省上下文——找相关文件/代码、按符号大纲看结构、精确读某个函数或行段、跨 git 版本追踪符号、查询大 JSON。当任务是在大型或不熟的代码库里\"找到该看的那段代码\"\"别把整个文件读进来\"\"追一下这个函数的历史\"\"仓库太大上下文塞不下\"时使用，优先替代 grep/find/cat。只读，不改代码。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
       "name": "manage-pcba-program",
       "description": "Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package through a reviewed order. Use for end-to-end requests, multi-stage hardware projects, workflow recovery, gate tracking, change invalidation, or deciding which specialist skill is required next.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "morluto-reversing-index",
+      "description": "morluto（REA 作者）整个逆向工具与知识库生态的导航索引——要装/要连什么、有哪些配套技能、以及 80+ 个逆向与安全资源清单在哪个仓库。当用户说\"morluto 还有别的逆向工具吗 / REA 生态 / 装 REA / 有哪些逆向 MCP / 找个逆向知识库 / 这套逆向工具配套都有啥\"时使用，或当 `reverse-engineer-anything` 需要配合其它证据工具（性能、崩溃、token、贡献调研）时先读它。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
@@ -95,6 +135,11 @@
     {
       "name": "skills-github-sync",
       "description": "把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 推送），并在仓库里维护 README 清单。当用户说\"同步 skills 到 GitHub / 上传 skills / 备份 skills / 新建一个 skill 顺手传上去 / skills 自动上传 / 仓库里的 skills 更新一下\"，或需要初始化一个 skills 仓库、配置自动上传、排查同步失败时使用。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "smokinggun",
+      "description": "用 SmokingGun 扫出复杂度热点候选，并整理导入的优化证据（只读静态扫描，不执行、不改码）。当用户说\"找复杂度热点 / 哪里是性能瓶颈 / 这段代码是不是太重 / 优化前后对比 / 有没有证据支持这次优化\"时使用；不执行 benchmark，实测走 flameox。Use SmokingGun to find complexity candidates and organize imported optimization evidence.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
