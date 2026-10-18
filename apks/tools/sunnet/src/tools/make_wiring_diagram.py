@@ -582,14 +582,17 @@ def fig_wind_pulse(out):
     wg = ws["l"][1][0]
     wp = ws["l"][2][0]
 
-    pw = f.module(1180, 150, 300, 100, "端子排 / 电源", {"l": ["+12V", "GND"]}, color="#455a64",
-                  sub="按风速计铭牌选 5V / 12V / 24V")
+    f.text(1180, 120, "按风速计铭牌选 5V / 12V / 24V", size=12.5, color="#546e7a")
+    pw = f.module(1180, 150, 300, 100, "端子排 / 电源", {"l": ["+12V", "GND"]}, color="#455a64")
     pv = pw["l"][0][0]
     pg = pw["l"][1][0]
+    # 风速计供电：从端子排来（电压看铭牌，常见 12V/24V）
+    f.wire([(wv[0], wv[1]), (700, wv[1]), (700, 92), (640, 92)], RED, width=4)
+    f.label(490, 92, "+12V ← 端子排（电压看风速计铭牌）", color=RED, size=12)
 
     # 脉冲信号 → IO14
     f.wire([(wp[0], wp[1]), (620, wp[1]), (620, io14[1]), (io14[0], io14[1])], GRN, width=3,
-           label="脉冲 → IO14", lx=740, ly=wp[1] - 22)
+           label="脉冲 → IO14", lx=790, ly=wp[1] - 20)
     # 3V3 上拉轨 + 4.7k 上拉电阻
     f.wire([(v3[0], v3[1]), (20, v3[1]), (20, 230), (690, 230)], PUR, width=4)
     f.label(200, 230, "3V3", color=PUR, size=13)
@@ -597,11 +600,8 @@ def fig_wind_pulse(out):
     f.rect(672, 262, 36, 46, fill="#fffde7", stroke="#455a64", width=2, r=4)
     f.text(690, 285, "4.7k", size=11.5, color="#37474f", anchor="cm", bold=True)
     f.wire([(690, 308), (690, wp[1])], PUR, width=3)
-    f.text(710, 318, "上拉电阻：把信号拉到 3.3V，低速时也稳", size=12, color="#546e7a")
-    # 电源
-    f.wire([(wv[0], wv[1]), (1120, wv[1]), (1120, pv[1]), (pv[0], pv[1])], RED, width=4)
+    # 地（ESP32 GND + 风速计 GND 都下到公共地）
     f.wire([(wg[0], wg[1]), (720, wg[1]), (720, 790)], BLK, width=3)
-    f.wire([(pg[0], pg[1]), (1090, pg[1]), (1090, 790)], BLK, width=3)
     f.wire([(eg[0], eg[1]), (30, eg[1]), (30, 790)], BLK, width=4)
     f.gnd_bus(20, 1520, 790, "公共地 GND")
 
@@ -611,7 +611,8 @@ def fig_wind_pulse(out):
         "   若量到 5V 或 12V 的电压脉冲 → **电压输出型**，必须分压或加光耦隔离才能进 GPIO，",
         "   否则会直接烧掉 ESP32 的 IO。",
         "② 风速计供电电压看铭牌（常见 12V/24V），**不要用 ESP32 的 3V3 去带**。",
-        "③ 长线（>5m）建议：信号线用屏蔽线，屏蔽层只在 ESP32 这头接 GND，,",
+        "③ 信号线上必须加一个 4.7kΩ 上拉到 3V3（图中已画），长线不加上拉信号会丢。",
+        "④ 长线（>5m）建议：信号线用屏蔽线，屏蔽层只在 ESP32 这头接 GND，",
         "   并在风速计那头加 100nF 对地。",
     ], title="接线前必看（很重要）", color="#b71c1c", fill="#ffebee")
 
