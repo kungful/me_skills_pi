@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18 01:01:53",
+  "generatedAt": "2026-10-18 08:31:45",
   "count": 13,
-  "totalApkBytes": 49205859,
+  "totalApkBytes": 49207391,
   "categories": [
     {
       "id": "design",
@@ -113,9 +113,9 @@
           "version": "1.4.2",
           "apk": "tools/cpe140-ctrl-android/cpe140-ctrl-android.apk",
           "source": "tools/cpe140-ctrl-android/src/",
-          "size": 5550232,
-          "sha256": "36bfc512bb879d1b818eb35e04d21f61189d2a741b4d749b55f9af7dc56d7d68",
-          "builtAt": "2026-10-18 00:53:48",
+          "size": 5551764,
+          "sha256": "aab4d262e2965cf8c47cfaf7523c1bb47d44d8a98c3128fea582ddcfd9afffb1",
+          "builtAt": "2026-10-18 08:09:03",
           "notes": "手机版完全控制台：概览/客户端/配置/root 终端/维护（换新机器一键部署 + 一键断网诊断 + 分级软修救网 + 整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；v1.4.2 修一个布局坑（BtnWide 的 0dp+weight 放进竖向卡片会被量成 0 宽 -> 有 4 个按钮一直看不见：「DHCP 客户端列表」「扫描周边 WiFi」「写入」「恢复出厂设置」；新增 BtnLine 样式修正）；v1.4.1 加「一键部署」（验型号/验注入通道/验 uid=0 → 装不加 flash 自分级软修+看门狗 → ls -l 回读核对 → 看连通性，默认落到只记录模式）；v1.4.0 修回显通道丢失（设备重启后 /tmp 被清、或 PC 工具退出时 rm -f /www/.cpeout，断链后 GET /.cpeout 回 404 网页而旧版当成命令输出显示）—— 现在认得出来并自动重铺通道、重读、必要时重跑命令，另加「重铺连接通道」与「看请求日志」两个手动按钮；看门狗重启前先软修、带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI"
         },
         {

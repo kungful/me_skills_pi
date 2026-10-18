@@ -54,6 +54,8 @@ public class CaptureActivity extends AppCompatActivity {
     private Spinner spIf;
     private EditText etFilter, etSecs;
     private Button bStart, bStop, bRefresh, bScan;
+    private Button bHs, bHsStop;
+    private EditText etHsSecs;
     private TextView tvState;
     private LinearLayout listBox;
 
@@ -204,6 +206,36 @@ public class CaptureActivity extends AppCompatActivity {
         lp2.topMargin = dp(10);
         c2.addView(bRefresh, lp2);
         col.addView(c2);
+
+        // ---- 握手包 ----
+        LinearLayout c3 = card();
+        c3.addView(sect("握手包（同信道监听，不影响中继）"));
+        c3.addView(label("抓多久（秒，5-120）"));
+        etHsSecs = mkInput("60", true);
+        etHsSecs.setText("60");
+        c3.addView(etHsSecs);
+        LinearLayout row3 = new LinearLayout(this);
+        row3.setOrientation(LinearLayout.HORIZONTAL);
+        row3.setPadding(0, dp(10), 0, 0);
+        bHs = mkBtn("开始抓握手", ACC, Color.WHITE);
+        bHs.setOnClickListener(v -> hsStart());
+        bHsStop = mkBtn("停止", Color.parseColor("#3a1e22"), BAD);
+        bHsStop.setOnClickListener(v -> hsStop());
+        row3.addView(bHs, new LinearLayout.LayoutParams(0, dp(46), 1f));
+        LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(0, dp(46), 1f);
+        lp4.leftMargin = dp(8);
+        row3.addView(bHsStop, lp4);
+        c3.addView(row3);
+        TextView hsNote = new TextView(this);
+        hsNote.setText("用法：点「开始抓握手」-> 抓包期间让目标 AP 的客户端重连一次（关开手机 WiFi）"
+                + "-> 抓完在上面文件列表里点「分析」-> 列出每个 WiFi 抓到几个 EAPOL"
+                + "，满 4 个就是完整 4 次握手，点进去抽包导出。\n"
+                + "本机 AP（2030.1.1）会被标记「本机AP·跳过」—— 抓自己没意义。");
+        hsNote.setTextColor(DIM);
+        hsNote.setTextSize(11.5f);
+        hsNote.setPadding(0, dp(8), 0, 0);
+        c3.addView(hsNote);
+        col.addView(c3);
 
         TextView note = new TextView(this);
         note.setText("说明：文件存在设备的 /tmp/cap（内存盘，重启即清空）。导出后是标准 pcap，"
@@ -409,6 +441,16 @@ public class CaptureActivity extends AppCompatActivity {
             del.setOnClickListener(v -> remove(it));
             row.addView(del, lp);
 
+            // hs-* 是握手抓包：额外给一个「分析」
+            if (it.name != null && it.name.startsWith("hs-")) {
+                Button an = mkBtn("分析", Color.parseColor("#1f3a2a"), Color.parseColor("#35c759"));
+                an.setTextSize(12.5f);
+                LinearLayout.LayoutParams lp2b = new LinearLayout.LayoutParams(dp(64), dp(38));
+                lp2b.leftMargin = dp(6);
+                an.setOnClickListener(v -> analyze(it));
+                row.addView(an, lp2b);
+            }
+
             listBox.addView(row);
 
             View line = new View(this);
@@ -496,6 +538,127 @@ public class CaptureActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("取消", null)
                 .show();
+    }
+
+    // ------------------------------------------------------- 握手包
+
+    private void hsStart() {
+        String s = etHsSecs.getText().toString().trim();
+        final String secs = s.isEmpty() ? "60" : s;
+        bHs.setEnabled(false);
+        tvState.setTextColor(DIM);
+        tvState.setText("状态：正在启动握手抓包…");
+        ex.execute(() -> {
+            try {
+                String r = cpe.tools("hs_start", "secs", secs);
+                final String f = line(r, "file");
+                final String e = line(r, "err");
+                ui.post(() -> {
+                    toast(e != null ? ("失败: " + e) : ("已开始抓握手：" + f));
+                    refresh();
+                });
+            } catch (Exception ex2) {
+                ui.post(() -> toast("启动失败: " + ex2.getMessage()));
+            } finally {
+                ui.post(() -> bHs.setEnabled(true));
+            }
+        });
+    }
+
+    private void hsStop() {
+        bHsStop.setEnabled(false);
+        ex.execute(() -> {
+            try {
+                cpe.tools("hs_stop");
+                ui.post(() -> { toast("已停止"); refresh(); });
+            } catch (Exception e) {
+                ui.post(() -> toast("停止失败: " + e.getMessage()));
+            } finally {
+                ui.post(() -> bHsStop.setEnabled(true));
+            }
+        });
+    }
+
+    /** 分析一个 hs-*.pcap：列出每个 AP 抓到几个 EAPOL，点进去抽包。 */
+    private void analyze(Item it) {
+        toast("分析 " + it.name + " …");
+        ex.execute(() -> {
+            final List<String[]> aps = new ArrayList<>();
+            try {
+                String r = cpe.tools("hs_index", "f", it.name);
+                for (String ln : r.split("\n")) {
+                    if (!ln.startsWith("wifi=")) continue;
+                    String[] p = ln.substring(5).split("\\|");
+                    if (p.length >= 4) {
+                        aps.add(new String[]{p[0], unesc(p[1]), p[2], p[3]});
+                    }
+                }
+            } catch (Exception e) {
+                ui.post(() -> toast("分析失败: " + e.getMessage()));
+                return;
+            }
+            ui.post(() -> showAps(it.name, aps));
+        });
+    }
+
+    private void showAps(final String src, List<String[]> aps) {
+        if (aps.isEmpty()) {
+            toast("没解析到 Beacon（可能抓太短）");
+            return;
+        }
+        final String[] items = new String[aps.size()];
+        for (int i = 0; i < aps.size(); i++) {
+            String[] a = aps.get(i);
+            String name = a[1] == null || a[1].isEmpty() ? "(隐藏)" : a[1];
+            String tail;
+            if ("1".equals(a[3])) tail = "     本机AP·跳过";
+            else if (parseInt(a[2]) >= 4) tail = "     EAPOL " + a[2] + " · 完整握手";
+            else tail = "     EAPOL " + a[2];
+            items[i] = name + tail + "\n" + a[0];
+        }
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("点一个 AP 抽包（本机 AP 不建议抓）")
+                .setItems(items, (d, w) -> {
+                    String[] a = aps.get(w);
+                    if ("1".equals(a[3])) {
+                        toast("这是本机 AP（2030.1.1），抓自己没意义");
+                        return;
+                    }
+                    extract(src, a[0], a[1]);
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private static int parseInt(String s) {
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /** 按选中的 BSSID 从 hs pcap 里抽出该 AP 的包。 */
+    private void extract(final String src, final String bssid, final String ssid) {
+        toast("正在抽取 " + ssid + " …");
+        ex.execute(() -> {
+            try {
+                String r = cpe.tools("hs_extract", "f", src, "bssid", bssid);
+                final String f = line(r, "file");
+                final String n = line(r, "eapol");
+                final String e = line(r, "err");
+                ui.post(() -> {
+                    if (e != null) {
+                        toast("抽取失败: " + e);
+                    } else {
+                        toast("已生成 " + f + "（EAPOL " + n + "）");
+                        refresh();
+                    }
+                });
+            } catch (Exception ex2) {
+                ui.post(() -> toast("抽取失败: " + ex2.getMessage()));
+            }
+        });
     }
 
     /** 频率 -> 信道号 */
