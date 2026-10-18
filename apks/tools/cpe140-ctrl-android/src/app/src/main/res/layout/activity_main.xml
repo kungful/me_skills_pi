@@ -838,6 +838,11 @@
                             android:text="上传文件到设备" />
 
                         <Button
+                            android:id="@+id/b_fetchother"
+                            style="@style/BtnWide"
+                            android:text="抓取另一台中继器的后台页面（手机连 00001111 后用它）" />
+
+                        <Button
                             android:id="@+id/b_clean"
                             style="@style/BtnWide"
                             android:text="清理临时文件" />

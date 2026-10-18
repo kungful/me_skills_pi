@@ -3,6 +3,7 @@ package com.picpe.cpe140;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -289,6 +290,8 @@ public class MainActivity extends AppCompatActivity {
                 openDoc.launch(new String[]{"*/*"});
             });
         });
+        findViewById(R.id.b_fetchother).setOnClickListener(v ->
+                startActivity(new android.content.Intent(this, FetchActivity.class)));
         findViewById(R.id.b_clean).setOnClickListener(v -> {
             if (!ready(5)) return;
             bg(out[5], "清理 /tmp/.cpeout /tmp/.cpesh /tmp/upload.img /www/.cpeout …", () -> {

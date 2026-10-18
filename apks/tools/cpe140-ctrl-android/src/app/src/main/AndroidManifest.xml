@@ -30,6 +30,14 @@
             android:label="工具箱"
             android:theme="@style/T.App" />
 
+
+        <activity
+            android:name=".FetchActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
+            android:exported="false"
+            android:label="抓取另一台后台"
+            android:theme="@style/T.App" />
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
