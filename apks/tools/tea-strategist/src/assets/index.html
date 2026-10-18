@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>茶叶军师</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="seal"></div>
+  <h1>茶叶<b>军师</b></h1>
+  <div class="sub" id="hdSub">帐中看舆图</div>
+</header>
+
+<main>
+
+  <!-- ============================ 舆图（首页） ============================ -->
+  <section class="page on" id="p-radar">
+    <div class="card" id="briefCard">
+      <h2>军师晨报 <span class="r" id="briefTime">未生成</span></h2>
+      <div id="briefBody" class="md muted">还没有晨报。可以现在生成一份，或去「设置」开启每天定时推送。</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn pri sm" onclick="Brief.gen(this)">现在生成</button>
+        <button class="btn sm gho" onclick="Brief.copy()">复制</button>
+        <button class="btn sm gho" onclick="Brief.share()">分享</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>今日舆图 <span class="r" id="radarTime">—</span></h2>
+      <div class="metrics" id="radarMetrics">
+        <div class="metric"><div class="k">加载中…</div><div class="v">—</div></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm gho" onclick="Radar.refresh(true)">重新探报</button>
+        <button class="btn sm gho" onclick="Router.go('intel')">全部情报</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>军师研判 <span class="r">需在设置里填 API Key</span></h2>
+      <div id="radarVerdict" class="muted">填好大模型 API Key 后，军师会自动读今日情报 + 行情，给出一段研判。</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn pri sm" onclick="Radar.analyse()">出研判</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>火烧眉毛的情报</h2>
+      <div id="radarHot" class="muted">—</div>
+    </div>
+
+    <div class="card">
+      <h2>产业链行情 <span class="r" id="quoteTime">—</span></h2>
+      <div id="radarQuotes" class="muted">加载中…</div>
+    </div>
+  </section>
+
+  <!-- ============================ 情报 ============================ -->
+  <section class="page" id="p-intel">
+    <div class="card">
+      <h2>情报分类</h2>
+      <div class="pick" id="intelFilter"></div>
+    </div>
+    <div class="card">
+      <h2>实时情报流 <span class="r" id="intelCount">—</span></h2>
+      <div class="row" style="margin-bottom:9px">
+        <button class="btn sm gho" onclick="Intel.load(true)">刷新</button>
+        <button class="btn sm gho" onclick="Intel.onlyRelated=!Intel.onlyRelated;Intel.render()" id="btnRelated">只看相关</button>
+        <button class="btn sm gho" onclick="Intel.translateAll(this)">全部译中文</button>
+      </div>
+      <div class="feed" id="intelFeed"><div class="empty">加载中…</div></div>
+      <div class="tiny" style="margin-top:8px">点一条看详情／翻译／让军师分析。</div>
+    </div>
+  </section>
+
+  <!-- ============================ 台账 ============================ -->
+  <section class="page" id="p-ledger">
+    <div class="card">
+      <h2>客户台账 <span class="r" id="ledgerStat">—</span></h2>
+      <div class="metrics" id="ledgerMetrics" style="margin-bottom:10px"></div>
+      <div class="row">
+        <button class="btn pri sm" onclick="Ledger.edit(null)">＋ 新增客户</button>
+        <button class="btn sm gho" onclick="Ledger.exportCsv()">导出 CSV</button>
+        <button class="btn sm gho" onclick="Ledger.showDue()">只看待跟进</button>
+      </div>
+      <label>搜索</label>
+      <input type="text" id="ledgerSearch" placeholder="客户名 / 联系人 / 品类 / 备注" oninput="Ledger.render()">
+      <div class="pick" id="ledgerFilter" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>客户列表 <span class="r" id="ledgerCount">—</span></h2>
+      <div id="ledgerList"><div class="empty">还没有客户。点「＋ 新增客户」开始记。</div></div>
+    </div>
+  </section>
+
+  <!-- ============================ 决策 ============================ -->
+  <section class="page" id="p-decide">
+    <div class="card">
+      <h2>报上你的军情</h2>
+      <div id="decideForm"></div>
+      <div class="row grow" style="margin-top:14px">
+        <button class="btn pri" onclick="Decide.run()">请军师定策</button>
+        <button class="btn gho" style="flex:0 0 auto" onclick="Decide.reset()">重来</button>
+      </div>
+    </div>
+    <div class="card" id="decideOut" style="display:none"></div>
+    <div class="card" id="decideAI" style="display:none">
+      <h2>军师详策</h2>
+      <div id="decideAIBody" class="md"></div>
+    </div>
+  </section>
+
+  <!-- ============================ 妙计 ============================ -->
+  <section class="page" id="p-ideas">
+    <div class="card">
+      <h2>把梳子卖给和尚</h2>
+      <div class="muted">需求 = 场景 × 人群 × 价值重构。不是让人喝茶，是找到必须用茶解决的那个问题。</div>
+      <label>你要卖给的「和尚」（场景 / 人群 / 渠道）</label>
+      <textarea id="ideaInput" placeholder="例：我这边火锅店特别多 / 想卖给写字楼里的公司 / 老外根本不喝茶 / 本地有个茶园景区"></textarea>
+      <div class="row grow" style="margin-top:10px">
+        <button class="btn pri" onclick="Ideas.gen()">请出妙计</button>
+        <button class="btn gho" style="flex:0 0 auto" onclick="Ideas.pick()">换个场景</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>内置十二招 <span class="r">点一下展开</span></h2>
+      <div id="trickList"></div>
+    </div>
+    <div class="card" id="ideaOut" style="display:none">
+      <h2>军师妙计</h2>
+      <div id="ideaBody" class="md"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm gho" onclick="Ideas.save()">存为报告</button>
+        <button class="btn sm gho" onclick="Ideas.share()">分享</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 兵法（知识库） ============================ -->
+  <section class="page" id="p-book">
+    <div class="card">
+      <h2>全球盘面</h2>
+      <div class="metrics" id="kbGlobal"></div>
+      <div class="verdict" style="margin-top:10px" id="kbVerdict"></div>
+    </div>
+    <div class="card">
+      <h2>中国出口盘面 <span class="r">2025 海关</span></h2>
+      <div class="metrics" id="kbExport"></div>
+    </div>
+    <div class="card">
+      <h2>品类出口均价 <span class="r">美元/公斤</span></h2>
+      <div class="muted" style="margin-bottom:8px">同一片叶子，做对品类差 3~8 倍。</div>
+      <div id="kbPrice"></div>
+    </div>
+    <div class="card">
+      <h2>目标市场分层</h2>
+      <div id="kbMarkets"></div>
+    </div>
+    <div class="card">
+      <h2>全渠道地图</h2>
+      <div id="kbChannels"></div>
+    </div>
+    <div class="card">
+      <h2>出口前十省 <span class="r">2025</span></h2>
+      <div id="kbProv"></div>
+    </div>
+  </section>
+
+  <!-- ============================ 设置 ============================ -->
+  <section class="page" id="p-set">
+    <div class="card">
+      <h2>大模型 API <span class="r">只存本机</span></h2>
+      <label>服务商</label>
+      <select id="setModel" onchange="Setting.modelChanged()"></select>
+      <label>接口地址</label>
+      <input type="text" id="setUrl" placeholder="https://api.deepseek.com/chat/completions">
+      <label>模型名</label>
+      <input type="text" id="setModelName" placeholder="deepseek-chat">
+      <label>API Key</label>
+      <input type="password" id="setKey" placeholder="sk-...">
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm gho" onclick="Setting.paste()">粘贴</button>
+        <button class="btn sm gho" onclick="Setting.test(this)">测试连接</button>
+        <button class="btn sm pri" onclick="Setting.save()">保存</button>
+      </div>
+      <div class="tiny" style="margin-top:8px">Key 保存在手机本地（Android SharedPreferences），只用于直接调用上面这个接口，不经任何第三方服务器。</div>
+    </div>
+
+    <div class="card">
+      <h2>军师晨报</h2>
+      <div class="pick" id="setBriefOn">
+        <div class="o" data-v="1">每天推送</div>
+        <div class="o" data-v="0">关闭</div>
+      </div>
+      <label>推送时间（HH:MM）</label>
+      <input type="text" id="setBriefTime" placeholder="07:30">
+      <div class="pick" id="setBriefAi" style="margin-top:8px">
+        <div class="o" data-v="1">带 AI 研判</div>
+        <div class="o" data-v="0">只要数据</div>
+      </div>
+      <div class="tiny" id="briefPermHint" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm pri" onclick="Setting.saveBrief()">保存</button>
+        <button class="btn sm gho" onclick="Setting.notifyPerm()">要通知权限</button>
+        <button class="btn sm gho" onclick="Setting.notifyTest()">测试通知</button>
+      </div>
+      <div class="tiny" style="margin-top:8px">晨报在手机本地生成，不依赖 App 是否打开。会连带提醒你台账里到期该跟进的客户。</div>
+    </div>
+
+    <div class="card">
+      <h2>我的茶叶厂</h2>
+      <label>主要品类</label>
+      <input type="text" id="setCat" placeholder="例：大宗绿茶 + 少量白茶">
+      <label>年产能</label>
+      <input type="text" id="setCap" placeholder="例：800 吨">
+      <label>所在地</label>
+      <input type="text" id="setAddr" placeholder="例：浙江绍兴">
+      <label>目前主要销路</label>
+      <input type="text" id="setNow" placeholder="例：线下批发给外贸公司">
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm pri" onclick="Setting.saveBiz()">保存</button>
+      </div>
+      <div class="tiny" style="margin-top:8px">填了这些，军师出招会结合你的实际情况，而不是泛泛而谈。</div>
+    </div>
+
+    <div class="card">
+      <h2>行情自选</h2>
+      <div class="muted" style="margin-bottom:8px">留一行一个，格式 <code>代码 名称</code>。sh=沪 sz=深 hk=港 us=美</div>
+      <textarea id="setWatch" style="min-height:120px"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm pri" onclick="Setting.saveWatch()">保存</button>
+        <button class="btn sm gho" onclick="Setting.defaultWatch()">恢复默认</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>关于</h2>
+      <div class="muted" id="aboutBox">—</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm gho" onclick="Setting.diag()">体检（测数据源）</button>
+        <button class="btn sm gho" onclick="Setting.clear()">清空全部设置</button>
+      </div>
+      <div id="diagOut" class="md" style="margin-top:9px"></div>
+    </div>
+  </section>
+
+</main>
+
+<nav>
+  <a href="#" data-p="radar" class="on"><i>🗺</i>舆图</a>
+  <a href="#" data-p="intel"><i>📡</i>情报</a>
+  <a href="#" data-p="decide"><i>⚖️</i>决策</a>
+  <a href="#" data-p="ledger"><i>📒</i>台账</a>
+  <a href="#" data-p="ideas"><i>💡</i>妙计</a>
+  <a href="#" data-p="book"><i>📜</i>兵法</a>
+  <a href="#" data-p="set"><i>⚙️</i>设置</a>
+</nav>
+
+<!-- 底部弹层：情报详情 / 客户编辑 -->
+<div class="sheet" id="sheet">
+  <div class="sheetMask" onclick="Sheet.close()"></div>
+  <div class="sheetBody" id="sheetBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="transport.js"></script>
+<script src="kb.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

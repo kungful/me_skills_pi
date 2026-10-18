@@ -563,6 +563,69 @@ def fig_sensors(out):
     f.save(os.path.join(out, "5-传感器与面板"))
 
 
+def fig_wind_pulse(out):
+    f = Fig(1600, 1150)
+    f.heading(40, 26, "第 6 张 · 风速计（脉冲型，读真 m/s）")
+    f.text(40, 60, "把“风”从“有风/无风”开关升级成真实风速。只有脉冲输出（集电极开路/NPN）的风速计能直接接。",
+           size=13.5, color="#1b5e20")
+
+    esp = f.module(60, 320, 320, 400, "ESP32-S3 开发板", {"l": ["3V3", "GND"], "r": ["IO14"]},
+                   color="#1a237e", sub="右列只列出用到的脚")
+    v3 = esp["l"][0][0]
+    eg = esp["l"][1][0]
+    io14 = esp["r"][0][0]
+
+    ws = f.module(760, 140, 400, 240, "三杯式风速计（脉冲输出）",
+                  {"l": ["电源+ 红", "GND 黑", "脉冲 黄/绿"]}, color="#00695c",
+                  sub="写 0-70m/s、脉冲输出的那种")
+    wv = ws["l"][0][0]
+    wg = ws["l"][1][0]
+    wp = ws["l"][2][0]
+
+    pw = f.module(1180, 150, 300, 100, "端子排 / 电源", {"l": ["+12V", "GND"]}, color="#455a64",
+                  sub="按风速计铭牌选 5V / 12V / 24V")
+    pv = pw["l"][0][0]
+    pg = pw["l"][1][0]
+
+    # 脉冲信号 → IO14
+    f.wire([(wp[0], wp[1]), (620, wp[1]), (620, io14[1]), (io14[0], io14[1])], GRN, width=3,
+           label="脉冲 → IO14", lx=740, ly=wp[1] - 22)
+    # 3V3 上拉轨 + 4.7k 上拉电阻
+    f.wire([(v3[0], v3[1]), (20, v3[1]), (20, 230), (690, 230)], PUR, width=4)
+    f.label(200, 230, "3V3", color=PUR, size=13)
+    f.wire([(690, 230), (690, 262)], PUR, width=3)
+    f.rect(672, 262, 36, 46, fill="#fffde7", stroke="#455a64", width=2, r=4)
+    f.text(690, 285, "4.7k", size=11.5, color="#37474f", anchor="cm", bold=True)
+    f.wire([(690, 308), (690, wp[1])], PUR, width=3)
+    f.text(710, 318, "上拉电阻：把信号拉到 3.3V，低速时也稳", size=12, color="#546e7a")
+    # 电源
+    f.wire([(wv[0], wv[1]), (1120, wv[1]), (1120, pv[1]), (pv[0], pv[1])], RED, width=4)
+    f.wire([(wg[0], wg[1]), (720, wg[1]), (720, 790)], BLK, width=3)
+    f.wire([(pg[0], pg[1]), (1090, pg[1]), (1090, 790)], BLK, width=3)
+    f.wire([(eg[0], eg[1]), (30, eg[1]), (30, 790)], BLK, width=4)
+    f.gnd_bus(20, 1520, 790, "公共地 GND")
+
+    f.note(40, 835, 740, [
+        "① 先用万用表确认你的风速计是哪种输出：",
+        "   不转时量 信号对 GND ≈ 3.3V，手转风杯时被拉低 → **集电极开路/NPN**，可直按上图接；",
+        "   若量到 5V 或 12V 的电压脉冲 → **电压输出型**，必须分压或加光耦隔离才能进 GPIO，",
+        "   否则会直接烧掉 ESP32 的 IO。",
+        "② 风速计供电电压看铭牌（常见 12V/24V），**不要用 ESP32 的 3V3 去带**。",
+        "③ 长线（>5m）建议：信号线用屏蔽线，屏蔽层只在 ESP32 这头接 GND，,",
+        "   并在风速计那头加 100nF 对地。",
+    ], title="接线前必看（很重要）", color="#b71c1c", fill="#ffebee")
+
+    f.note(800, 835, 760, [
+        "① 接线前：set windMode 0（先保开关量），接完再 set windMode 1，",
+        "   状态页会多出 wind.hz / wind.mps / wind.pulses。",
+        "② 标定：找个风稳的时候，看一眼 wind.hz（比如 12.3），",
+        "   再看手机天气/附近气象站的风速（比如 9.0 m/s）；",
+        "   windMpsPerHz = 9.0 ÷ 12.3 × 100 ≈ 73 → set windMpsPerHz 73。",
+        "   多测两次取平均；标定完设 windStartMps / windStopMps / windEmergMps。",
+    ], title="换上去后怎么调", color="#0d47a1", fill="#e3f2fd")
+    f.save(os.path.join(out, "6-风速计(脉冲)"))
+
+
 def main():
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "接线手册")
     print("输出目录:", out)
@@ -571,6 +634,7 @@ def main():
     fig_motor(out)
     fig_safety(out)
     fig_sensors(out)
+    fig_wind_pulse(out)
     print("完成")
 
 

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18 22:31:53",
-  "count": 13,
-  "totalApkBytes": 49212211,
+  "generatedAt": "2026-10-18 23:01:41",
+  "count": 14,
+  "totalApkBytes": 49344399,
   "categories": [
     {
       "id": "design",
@@ -150,6 +150,17 @@
           "sha256": "07484ed1757f7ac22068b28da6efb7c10c4a047b9fb533083d308d1ec002610b",
           "builtAt": "2026-10-17 09:50:33",
           "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
+        },
+        {
+          "slug": "tea-strategist",
+          "title": "茶叶军师",
+          "version": "1.1",
+          "apk": "tools/tea-strategist/tea-strategist.apk",
+          "source": "tools/tea-strategist/src/",
+          "size": 132188,
+          "sha256": "17355ce819a3a70bb3f4b24efb8b50e23584b22808e2b74576fa628286d4a8c8",
+          "builtAt": "2026-10-18 22:59:50",
+          "notes": "茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用"
         },
         {
           "slug": "demand-radar",

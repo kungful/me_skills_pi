@@ -1,0 +1,19 @@
+{
+  "slug": "tea-strategist",
+  "title": "茶叶军师",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "com.hua.teastrategist",
+  "version": "1.1",
+  "notes": "茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用",
+  "apk": "tea-strategist.apk",
+  "apkName": "茶叶军师.apk",
+  "apkSize": 132188,
+  "apkSha256": "17355ce819a3a70bb3f4b24efb8b50e23584b22808e2b74576fa628286d4a8c8",
+  "srcSha": "b0aba18600cf4e674943909e937c7db0a95efd85",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/TeaStrategist-Android",
+  "builtAt": "2026-10-18 22:59:50",
+  "syncedAt": "2026-10-18 23:01:41",
+  "auto": false
+}
