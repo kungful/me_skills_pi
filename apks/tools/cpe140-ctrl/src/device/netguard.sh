@@ -67,6 +67,18 @@ LONG_WAIT=${LONG_WAIT:-21600}    # 超过上面次数后的重试间隔（秒，
 MODE=${MODE:-reboot}             # reboot=到点重启 / log=只记录不动手
 RECOVER=${RECOVER:-}             # 可选轻量恢复命令，默认空
 
+#=== 跳频抓包保护（hssweep / hsrestore）=====================================
+# 扫频期间老家会短暂断网，这不是故障：别去"修"它，更别重启设备。
+# 若标记还在但扫频进程已经死了（被打断/掉电），立刻恢复网络。
+if [ -f /etc/hssweep.state ]; then
+	_hsp=$(cat /tmp/hssweep.pid 2>/dev/null)
+	if [ -n "$_hsp" ] && kill -0 "$_hsp" 2>/dev/null; then
+		exit 0
+	fi
+	sh /etc/hsrestore.sh >/dev/null 2>&1
+	exit 0
+fi
+
 log() {
 	echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> $LOG_FILE
 	[ -f $LOG_FILE ] || return 0
