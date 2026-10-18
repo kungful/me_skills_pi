@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-18 11:52:23**
+最后同步：**2026-10-18 16:28:29**
 
-共 **37** 个 skill。
+共 **38** 个 skill。
 
 ## 安装
 
@@ -49,6 +49,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`solidcraft-editing`](skills/solidcraft-editing/) | Use when changing, fixing or extending an existing SolidCraft design through its MCP server - a .solidcraft file or the design open in the app. Typical reque... | pi |
 | [`solidcraft-mechanisms`](skills/solidcraft-mechanisms/) | Use when building, driving or animating an assembly or mechanism in SolidCraft through its MCP server - components, grounding, joints and joint origins, rigi... | pi |
 | [`solidcraft-modeling`](skills/solidcraft-modeling/) | Use when building a new part, enclosure, bracket, plate, flange or any other 3D solid in SolidCraft through its MCP server (tools such as batch, execute, mea... | pi |
+| [`video-studio-mcp`](skills/video-studio-mcp/) | 用脚本/AI 自动出片：剪辑引擎是开源 Concat（JSON-RPC），配音用免费 edge-tts，配乐从 AlgerMusicPlayer 本地接口下，字幕用本地 Whisper，混音走 ffmpeg（闪避/响度归一）。当用户说"剪个视频/自动剪辑/一键成片/给视频配音/加字幕/配背景音乐/把素材做成片/批... | pi |
 | [`web-browse`](skills/web-browse/) | Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metad... | pi |
 | [`wifi-wireless`](skills/wifi-wireless/) | Wi-Fi / 无线安全评估与取证（仅授权）：监听模式抓包、WPA/WPA2/WPA3 握手与 PMKID 采集、离线口令强度评估、流氓 AP / 钓鱼热点检测、企业无线隔离与 Captive Portal 绕过测试、去认证（deauth）实验室验证。当用户说 "wifi 渗透 / 无线渗透 / 抓握手 / 破解... | pi |
 | [`xgc-api`](skills/xgc-api/) | Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down... | pi |

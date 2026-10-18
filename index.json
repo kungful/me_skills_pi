@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-18 11:52:23",
-  "count": 37,
+  "generatedAt": "2026-10-18 16:28:29",
+  "count": 38,
   "skills": [
     {
       "name": "apk-github-sync",
@@ -160,6 +160,11 @@
     {
       "name": "solidcraft-modeling",
       "description": "Use when building a new part, enclosure, bracket, plate, flange or any other 3D solid in SolidCraft through its MCP server (tools such as batch, execute, measure, screenshot), or when a SolidCraft session is using many tool calls or tokens.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "video-studio-mcp",
+      "description": "用脚本/AI 自动出片：剪辑引擎是开源 Concat（JSON-RPC），配音用免费 edge-tts，配乐从 AlgerMusicPlayer 本地接口下，字幕用本地 Whisper，混音走 ffmpeg（闪避/响度归一）。当用户说\"剪个视频/自动剪辑/一键成片/给视频配音/加字幕/配背景音乐/把素材做成片/批量出片/用 Concat 剪/Concat MCP/concat-cli\"，或要\"发声/生成语音/文字转语音\"，或要\"下载背景音乐/找无版权 BGM\"，或要\"识别视频里的说话内容生成字幕\"时使用。**注意：Concat 官方没有 MCP 服务**（文档写明 planned, not shipped），本 skill 自带那个 stdio 桥。纯做图/做课件不走这里。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
