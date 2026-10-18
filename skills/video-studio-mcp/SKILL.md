@@ -70,6 +70,12 @@ python cli.py make scripts/example.json --audio-only   # 只做声音+字幕，�
 - **窗口正开着的项目，socket 改不动**；两边各开各的项目。
 - **`batch` 里不能引用它自己刚造的 id** → 「加片段再按 clipId 裁切」必须拆两次调用。
 - **`addClip` 没有时长参数**，长度=素材长度；裁切用 `trimClip(clipId, edge, delta)`。
+- **`trimClip` 拖左边缘会让整段在时间轴上右移 delta**（它真的是「拖边缘」）。要原地裁头，
+  裁完必须 `moveClips {moves:[{clipId,trackId,start}]}`（三个字段都必填）摆回去。
+  本项目 `_verify_placement` 会自动核对+修正 —— 这个坑真踩过：34 秒的片子导成 94 秒。
+- **从视频网站取素材**：`yt-dlp`（B 站 720p 免登，1080P 要会员）+ 
+  `--download-sections` 只取一段；挑素材先出 `tile` 缩略图看一眼，热门短视频很多是带货混剪
+  （烧字幕/角标），跟自己的字幕打架。下载内容仅限自用。
 - **重名项目不覆盖**，本项目自动加序号（`名字 2`）。
 - **Whisper 模型从 ModelScope 下**（HF 在本机网络不通，hf-mirror 也超时）：
   `tiny` 78MB 花了约 4 分钟，中文建议 `small` 以上，先 `tiny` 试通道。
