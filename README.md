@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-17 00:05:07**
+最后同步：**2026-10-18 09:28:31**
 
-共 **27** 个 skill。
+共 **28** 个 skill。
 
 ## 安装
 
@@ -41,10 +41,11 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`solidcraft-mechanisms`](skills/solidcraft-mechanisms/) | Use when building, driving or animating an assembly or mechanism in SolidCraft through its MCP server - components, grounding, joints and joint origins, rigi... | pi |
 | [`solidcraft-modeling`](skills/solidcraft-modeling/) | Use when building a new part, enclosure, bracket, plate, flange or any other 3D solid in SolidCraft through its MCP server (tools such as batch, execute, mea... | pi |
 | [`web-browse`](skills/web-browse/) | Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metad... | pi |
+| [`wifi-wireless`](skills/wifi-wireless/) | Wi-Fi / 无线安全评估与取证（仅授权）：监听模式抓包、WPA/WPA2/WPA3 握手与 PMKID 采集、离线口令强度评估、流氓 AP / 钓鱼热点检测、企业无线隔离与 Captive Portal 绕过测试、去认证（deauth）实验室验证。当用户说 "wifi 渗透 / 无线渗透 / 抓握手 / 破解... | pi |
 | [`xgc-api`](skills/xgc-api/) | Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down... | pi |
 | [`xgc-image-run`](skills/xgc-image-run/) | 仙宫云 GPU 跑图一条龙 —— 自动开机 → 自动连进容器 → 跑 ComfyUI 出图 → 把图拉回本地 → 立刻销毁实例。当用户说"跑图/出图/生图/生成一张图/用仙宫云跑/用 ComfyUI 出图/用 Krea2 跑/拿我的 4090 跑一张/跑完就销毁/省钱的跑图方式"，或者要用**本地部署的模型**（... | pi |
 | [`xhs-courseware-post`](skills/xhs-courseware-post/) | 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 用于：把课件发小红书/发笔记/上架；给课件写小红书文案、起标题、配话题标签；挑图、补封面、去重图；发出去以后核实、看通知、回评论。要做课件本... | pi |
 
 ## APK 备份
 
-Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 10 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
+Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 13 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-17 00:05:07",
-  "count": 27,
+  "generatedAt": "2026-10-18 09:28:31",
+  "count": 28,
   "skills": [
     {
       "name": "apk-github-sync",
@@ -120,6 +120,11 @@
     {
       "name": "web-browse",
       "description": "Browse and read the live web - fetch pages as clean markdown, click into tabs/buttons/accordions and read what loads, search engines, extract links and metadata, and take screenshots the model can actually look at. Use when the user asks to 看看/查/搜/预览某个网页或子页面/子标签, read a URL or article, click through a docs site or SPA to reach a sub-page, use a site search box, summarize a page, verify a fact online, or when any answer requires current internet information.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "wifi-wireless",
+      "description": "Wi-Fi / 无线安全评估与取证（仅授权）：监听模式抓包、WPA/WPA2/WPA3 握手与 PMKID 采集、离线口令强度评估、流氓 AP / 钓鱼热点检测、企业无线隔离与 Captive Portal 绕过测试、去认证（deauth）实验室验证。当用户说 \"wifi 渗透 / 无线渗透 / 抓握手 / 破解 wifi 密码 / PMKID / aircrack / hashcat 跑握手 / 流氓 AP / 钓鱼热点 / 无线安全评估 / 无线审计\" 时使用。不做非授权的邻居网络扫描。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
