@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19 00:31:45",
-  "count": 14,
-  "totalApkBytes": 50073912,
+  "generatedAt": "2026-10-19 01:20:49",
+  "count": 15,
+  "totalApkBytes": 50333383,
   "categories": [
     {
       "id": "design",
@@ -150,6 +150,17 @@
           "sha256": "0078ef052d7fd0c8efad421e1e3b6c4416016645928b757f761b38c8d5074947",
           "builtAt": "2026-10-19 00:02:56",
           "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
+        },
+        {
+          "slug": "canopy-struct",
+          "title": "棚架受力分析",
+          "version": "1.0",
+          "apk": "tools/canopy-struct/canopy-struct.apk",
+          "source": "tools/canopy-struct/src/",
+          "size": 259471,
+          "sha256": "40db51d22b555664a0eaee68f5d425508e05ddf7ec9bb7914f621f2f77e3dfd4",
+          "builtAt": "2026-10-19 00:11:25",
+          "notes": "L形墙内角太阳网车棚受力分析：GB50009风荷载 + 平面刚架矩阵位移法 + 柱脚/基础抗拔抗倾覆校核 + three.js三维可视化"
         },
         {
           "slug": "tea-strategist",

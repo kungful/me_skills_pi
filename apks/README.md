@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-19 00:31:45**　|　共 **14** 个应用　|　APK 合计 **47.8 MB**
+最后同步：**2026-10-19 01:20:49**　|　共 **15** 个应用　|　APK 合计 **48.0 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -41,5 +41,6 @@ apks/<分类>/<应用>/
 | **Pi 通知 (piLink)** | 0.7.0 | [`pilink.apk`](tools/pilink/pilink.apk) | [`src/`](tools/pilink/src/) | 1.9 MB | 把 pi / pi-web 的通知与派发链路接到安卓手机 |
 | **三角力学计算器** | 1.0 | [`trig-mech.apk`](tools/trig-mech/trig-mech.apk) | [`src/`](tools/trig-mech/src/) | 77.1 KB | 三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线 |
 | **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 777.6 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
+| **棚架受力分析** | 1.0 | [`canopy-struct.apk`](tools/canopy-struct/canopy-struct.apk) | [`src/`](tools/canopy-struct/src/) | 253.4 KB | L形墙内角太阳网车棚受力分析：GB50009风荷载 + 平面刚架矩阵位移法 + 柱脚/基础抗拔抗倾覆校核 + three.js三维可视化 |
 | **茶叶军师** | 1.2 | [`tea-strategist.apk`](tools/tea-strategist/tea-strategist.apk) | [`src/`](tools/tea-strategist/src/) | 129.1 KB | 茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用 |
 | **需求雷达** | - | [`demand-radar.apk`](tools/demand-radar/demand-radar.apk) | [`src/`](tools/demand-radar/src/) | 857.4 KB | 从公开渠道挖掘市场需求信号，打分聚簇出机会榜 |

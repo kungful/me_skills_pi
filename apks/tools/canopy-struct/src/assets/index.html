@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>棚架受力分析</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="ttl">
+    <b>棚架受力分析</b>
+    <span id="sub">L 形墙 · 挑梁 · 太阳网 · 风荷载</span>
+  </div>
+  <div id="verdict" class="chip">—</div>
+</header>
+
+<div id="vmaxbar">
+  <span class="k">能扛</span>
+  <b id="vmaxv">—</b>
+  <span id="vmaxb" class="k"></span>
+  <span class="sep">|</span>
+  <span class="k">最不利</span><span id="vgov" class="k2">—</span>
+</div>
+
+<main id="view"></main>
+
+<nav id="tabs">
+  <div class="tab on" data-t="s3"><i>🧊</i><span>三维</span></div>
+  <div class="tab" data-t="s2"><i>📐</i><span>平面/内力</span></div>
+  <div class="tab" data-t="par"><i>🎛️</i><span>参数</span></div>
+  <div class="tab" data-t="chk"><i>📊</i><span>校核</span></div>
+  <div class="tab" data-t="cmp"><i>⚖️</i><span>对比</span></div>
+  <div class="tab" data-t="doc"><i>📘</i><span>说明</span></div>
+</nav>
+
+<div id="toast" class="toast"></div>
+<div id="busy" class="busy"><div class="spin"></div><span>计算中…</span></div>
+
+<script src="three.min.js"></script>
+<script src="solver.js"></script>
+<script src="wind.js"></script>
+<script src="model.js"></script>
+<script src="view2d.js"></script>
+<script src="view3d.js"></script>
+<script src="ui.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

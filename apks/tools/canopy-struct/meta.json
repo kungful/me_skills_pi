@@ -1,0 +1,19 @@
+{
+  "slug": "canopy-struct",
+  "title": "棚架受力分析",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "com.hua.canopystruct",
+  "version": "1.0",
+  "notes": "L形墙内角太阳网车棚受力分析：GB50009风荷载 + 平面刚架矩阵位移法 + 柱脚/基础抗拔抗倾覆校核 + three.js三维可视化",
+  "apk": "canopy-struct.apk",
+  "apkName": "棚架受力分析.apk",
+  "apkSize": 259471,
+  "apkSha256": "40db51d22b555664a0eaee68f5d425508e05ddf7ec9bb7914f621f2f77e3dfd4",
+  "srcSha": "4abc2aa0480905ec0402c7dd183edce34ad82f97",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/CanopyStruct-Android",
+  "builtAt": "2026-10-19 00:11:25",
+  "syncedAt": "2026-10-19 01:20:49",
+  "auto": false
+}
