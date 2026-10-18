@@ -101,6 +101,11 @@ hr{border:0;border-top:1px dashed var(--line);margin:10px 0;}
 .btn.pri{background:linear-gradient(180deg,#C8A24A,#A8863A);color:#231B06;border-color:transparent;font-weight:600;}
 .btn.pri:active{filter:brightness(.9);}
 .btn.gho{background:transparent;}
+/* 「只看相关」是 .gho + 运行时加 .pri 的组合。.gho 排在 .pri 后面，
+   只写 .pri 的 background 会被 .gho 的 transparent 盖掉，只剩深色字 → 看不见。
+   所以这里必须显式把 gh o+pri 的样式补回来。 */
+.btn.gho.pri{background:linear-gradient(180deg,#C8A24A,#A8863A);color:#231B06;border-color:transparent;}
+.btn.gho.pri:active{filter:brightness(.9);}
 .btn.sm{padding:5px 10px;font-size:12.5px;border-radius:7px;}
 .btn[disabled]{opacity:.45;}
 .row{display:flex;gap:8px;flex-wrap:wrap;}

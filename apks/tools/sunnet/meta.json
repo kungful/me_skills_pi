@@ -9,11 +9,11 @@
   "apk": "sunnet.apk",
   "apkName": "SunNet.apk",
   "apkSize": 66709,
-  "apkSha256": "07484ed1757f7ac22068b28da6efb7c10c4a047b9fb533083d308d1ec002610b",
-  "srcSha": "4b664f92c87842f13792f811069403c614e94c54",
+  "apkSha256": "c27c79dc65c15d0ef39270c2f268b4148bb5e94c14bb83c942475ce47091c472",
+  "srcSha": "263e969b2257acd7ca796767b2fa6e0535e230bd",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/SunNet-Android",
-  "builtAt": "2026-10-17 09:50:33",
-  "syncedAt": "2026-10-18 23:31:45",
+  "builtAt": "2026-10-18 23:37:36",
+  "syncedAt": "2026-10-19 00:01:45",
   "auto": false
 }

@@ -9,11 +9,11 @@
   "apk": "tea-strategist.apk",
   "apkName": "茶叶军师.apk",
   "apkSize": 132188,
-  "apkSha256": "17355ce819a3a70bb3f4b24efb8b50e23584b22808e2b74576fa628286d4a8c8",
-  "srcSha": "d3b6632417964adb916d2564400dee603f7bb268",
+  "apkSha256": "f29cf84b2191f71bfe11f1575e49d134fa6a4d38af6300d2cbc9935db20d82be",
+  "srcSha": "2b2048723d9d4237a0fc0f494ce3df45e8d65bea",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/TeaStrategist-Android",
-  "builtAt": "2026-10-18 22:59:50",
-  "syncedAt": "2026-10-18 23:31:46",
+  "builtAt": "2026-10-18 23:51:47",
+  "syncedAt": "2026-10-19 00:01:45",
   "auto": false
 }

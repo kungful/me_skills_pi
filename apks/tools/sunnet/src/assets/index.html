@@ -25,6 +25,7 @@
     <button data-tab="link">连接</button>
     <button data-tab="cfg">参数</button>
     <button data-tab="diy">散装</button>
+    <button data-tab="wire">接线图</button>
     <button data-tab="diag">诊断</button>
   </nav>
 </header>
@@ -294,6 +295,36 @@ pio run -t uploadfs    # 烧 WebUI（不做这步浏览器打开会 404）</pre>
     <div id="extraCards"></div>
   </section>
 
+  <!-- ============================ 接线图 ============================ -->
+  <section class="tab" data-tab="wire">
+    <div class="card">
+      <h2>接线图 <small>6 张 · 点开可放大 / 拖动</small></h2>
+      <p class="hint">
+        按顺序接：<b>① 电源 → ② 电机 → ③ 安全链 → ④ 传感器/面板</b>；⑤ 风速计是可选升级。<br />
+        完整逐线表（P1-P14 / S1-S18）、上电检查清单、排错表在「散装」页的方案包（接线工位）。
+      </p>
+      <div class="wireGrid" id="wireGrid"></div>
+      <p class="hint">
+        线色约定：<b style="color:#f85149">红=+12V</b> ·
+        <b style="color:#d29922">橙=+5V</b> ·
+        <b style="color:#a371f7">紫=+3V3</b> ·
+        <b>黑=GND</b> ·
+        <b style="color:#3fb950">绿/蓝=信号</b>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>接线前必看</h2>
+      <div class="hint">
+        1. <b>任何接线/改线前先拔掉 12V</b>，接完先量电压再上电。<br />
+        2. 光敏、雨滴模块的 VCC <b>只能用 3V3</b>（5V 会让 AO 输出 5V，烧 ADC 脚）。<br />
+        3. <b>所有模块的 GND 必须接到一起</b>（一点共地），否则传感器乱跳。<br />
+        4. 限位用 <b>NO</b>，急停用 <b>NC + 接 3V3</b>（断线=停机，失效安全）。<br />
+        5. 上电后先做一件事：<b>拔掉急停那根线，确认 App 报 estop</b>。
+      </div>
+    </div>
+  </section>
+
   <!-- ============================ 诊断 ============================ -->
   <section class="tab" data-tab="diag">
     <div class="card">
@@ -341,6 +372,18 @@ pio run -t uploadfs    # 烧 WebUI（不做这步浏览器打开会 404）</pre>
     固件 <b id="fwVer">–</b> · 运行 <b id="uptime">–</b> · BLE <b id="bleInfo">–</b>
   </footer>
 </main>
+<div id="wireViewer" class="wv">
+  <div class="wvbar">
+    <button id="wvPrev" title="上一张">◀</button>
+    <b id="wvTitle">–</b>
+    <button id="wvNext" title="下一张">▶</button>
+    <button id="wvFit">适应</button>
+    <button id="wvClose">关闭</button>
+  </div>
+  <div class="wvstage" id="wvStage"><img id="wvImg" alt="接线图" /></div>
+  <p class="wvhint" id="wvHint">双指缩放 / 单指拖动 · 双击放大 · 返回键也可关闭</p>
+</div>
+
 <script src="transport.js"></script>
 <script src="bom.js"></script>
 <script src="pack.js"></script>

@@ -178,7 +178,13 @@ function render(s) {
   $('thUp').style.left = pct(s.th.up) + '%';
   $('valTh').textContent = s.th.up + ' / ' + s.th.down + ' (hyst ' + s.th.hyst + ')';
   $('valRain').textContent = s.rain.raw + ' · ' + (s.rain.wet ? '有雨' : '无雨');
-  $('valWind').textContent = s.wind.active ? '大风' : '无风';
+  if (s.wind.mode === 'pulse') {
+    const mps = (s.wind.mps / 10).toFixed(1), hz = (s.wind.hz / 10).toFixed(1);
+    $('valWind').textContent = mps + ' m/s (' + hz + ' Hz)' +
+      (s.wind.emerg ? ' 紧急' : (s.wind.active ? ' 大风' : ' 正常'));
+  } else {
+    $('valWind').textContent = s.wind.active ? '大风' : '无风';
+  }
   $('valNight').textContent = s.night ? '夜间(停追)' : '白天';
 
   const m = s.motor;
@@ -336,6 +342,10 @@ const CFG_FIELDS = [
   ['windActiveLow', '风=低电平 0/1'], ['rainInhibit', '下雨禁自动 0/1'], ['windInhibit', '大风禁自动 0/1'],
   ['windAutoClear', '风停自动清 0/1'], ['ledEnabled', 'LED 使能 0/1'], ['emaShift', '滤波移位 0..6'],
   ['telemPeriodMs', '遥测周期 ms'],
+  // ---- 风：开关量 / 脉冲风速计 ----
+  ['windMode', '风: 0=开关 1=脉冲风速计'], ['windMpsPerHz', '风标定 0.01m/s每Hz(149=1.49)'],
+  ['windStartMps', '收网风速 0.1m/s(80=8.0)'], ['windStopMps', '解除风速 0.1m/s(50=5.0)'],
+  ['windEmergMps', '紧急风速 0.1m/s(120=12.0)'], ['windPulseMinUs', '脉冲消抖 µs'],
   ['limitEnabled', '启用限位 0/1'], ['limitAStopsCw', 'A 限位挡 CW 0/1'],
   ['limitBStopsCcw', 'B 限位挡 CCW 0/1'], ['limitDebounceMs', '限位去抖 ms'],
   ['hwEstopEnabled', '读 J10 硬急停 0/1'], ['modeSelEnabled', '读 J11 模式开关 0/1'],
@@ -343,6 +353,11 @@ const CFG_FIELDS = [
   ['stallHoldMs', '堵转保持 ms'], ['retractOnWeather', '风雨自动拉收 0/1'],
   ['retractOnNight', '夜间自动拉收 0/1'], ['retractDutyPct', '拉收占空 %'],
   ['retractMaxMs', '走限位超时 ms'], ['travelDwellMs', '走限位点动间隔 ms'],
+  // ---- 时序算法：确认时间 / 解除滞回 / 冷却 / 有限重试 ----
+  ['rainConfirmMs', '降雨确认 ms'], ['windConfirmMs', '大风确认 ms'],
+  ['windClearMs', '风停解除 ms'], ['retractCooldownMs', '收网后冷却 ms'],
+  ['travelRetryMax', '走限位重试次数(0-5)'], ['travelRetryHoldMs', '重试前等待 ms'],
+  ['imonZeroMv', '电流零点 mV(INA282=0/ACS712≈2500)'],
 ];
 
 async function loadConfig() {
@@ -395,6 +410,7 @@ function showTab(name) {
   document.querySelectorAll('nav.tabs button').forEach((b) => b.classList.toggle('act', b.dataset.tab === name));
   document.querySelectorAll('main > section.tab').forEach((s) => s.classList.toggle('act', s.dataset.tab === name));
   if (name === 'cfg') renderCfgGrid();
+  if (name === 'wire') renderWireGrid();
 }
 
 // ---------------------------------------------------------------- 散装页（清单/接线/组装）
@@ -811,6 +827,8 @@ function copy(text, okMsg) {
   }
 }
 window.__back = function () {
+  const wv = $('wireViewer');
+  if (wv && wv.classList.contains('act')) { closeWire(); return; }
   const cur = document.querySelector('nav.tabs button.act');
   if (cur && cur.dataset.tab !== 'ctrl') { showTab('ctrl'); return; }
   if (window.__backArmed) { API.invoke('exit', {}); return; }
@@ -818,6 +836,105 @@ window.__back = function () {
   toast('再按一次返回键退出');
   setTimeout(() => { window.__backArmed = false; }, 1500);
 };
+
+// ---------------------------------------------------------------- 接线图（离线资源，不依赖设备）
+// 图片全在 APK 里（assets/wiring/*.png），断网、没连设备也能看。
+const WIRES = [
+  ['overview',   '总览（先看这张）',      '整机方块图：哪块接哪块，以及四步顺序'],
+  ['power',      '① 电源',               '12V → 保险丝 → 端子排 → LM2596 → 5V'],
+  ['motor',      '② 电机（直流）',         'MOS 母线总闸 + DRV8871 + IO4/IO5/IO6'],
+  ['safety',     '③ 安全链',             '限位 A/B、急停（常闭）、手动/自动旋钮'],
+  ['sensors',    '④ 传感器 + 面板',       '光照 / 雨 / 风 / 电位器 / 三键 / 指示灯'],
+  ['anemometer', '⑤ 风速计（脉冲，可选）', '三杯式风速计 → 真 m/s，含 4.7k 上拉'],
+];
+let wvIdx = 0, wvScale = 1, wvX = 0, wvY = 0, wvBound = false;
+
+function renderWireGrid() {
+  const g = $('wireGrid');
+  if (!g || g.dataset.ready) return;
+  g.dataset.ready = '1';
+  WIRES.forEach(([file, title, sub], i) => {
+    const b = document.createElement('button');
+    b.className = 'wireCard';
+    b.innerHTML = '<img src="wiring/' + file + '.png" alt="" />' +
+                  '<span><b>' + title + '</b><small>' + sub + '</small></span>';
+    b.onclick = () => openWire(i);
+    g.appendChild(b);
+  });
+}
+
+function wvApply() {
+  const img = $('wvImg');
+  img.style.transform = 'translate(' + wvX + 'px,' + wvY + 'px) scale(' + wvScale + ')';
+}
+
+function wvFit() { wvScale = 1; wvX = 0; wvY = 0; wvApply(); }
+
+function wvShow(i) {
+  wvIdx = (i + WIRES.length) % WIRES.length;
+  $('wvImg').src = 'wiring/' + WIRES[wvIdx][0] + '.png';
+  $('wvTitle').textContent = (wvIdx + 1) + '/' + WIRES.length + ' · ' + WIRES[wvIdx][1];
+  wvFit();
+}
+
+function openWire(i) {
+  wvShow(i);
+  $('wireViewer').classList.add('act');
+  if (!wvBound) { wvBound = true; bindWireTouch(); }
+}
+
+function closeWire() { $('wireViewer').classList.remove('act'); }
+
+function bindWireTouch() {
+  const st = $('wvStage');
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const mid = (t) => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
+  let mode = 0, d0 = 1, s0 = 1, mx0 = 0, my0 = 0, x0 = 0, y0 = 0, lastTap = 0;
+
+  $('wvPrev').onclick = () => wvShow(wvIdx - 1);
+  $('wvNext').onclick = () => wvShow(wvIdx + 1);
+  $('wvFit').onclick = () => wvFit();
+  $('wvClose').onclick = () => closeWire();
+
+  st.addEventListener('touchstart', (e) => {
+    if (e.touches.length >= 2) {
+      mode = 2; d0 = Math.max(1, dist(e.touches)); s0 = wvScale;
+      const m = mid(e.touches); mx0 = m[0]; my0 = m[1]; x0 = wvX; y0 = wvY;
+    } else if (e.touches.length === 1) {
+      mode = 1;
+      mx0 = e.touches[0].clientX; my0 = e.touches[0].clientY; x0 = wvX; y0 = wvY;
+      const now = Date.now();
+      if (now - lastTap < 300) {            // 双击：放大 / 复原
+        lastTap = 0;
+        if (wvScale > 1.05) { wvFit(); } else { wvScale = 2.4; wvX = 0; wvY = 0; wvApply(); }
+      } else { lastTap = now; }
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  st.addEventListener('touchmove', (e) => {
+    if (mode === 2 && e.touches.length >= 2) {
+      const k = dist(e.touches) / d0;
+      wvScale = Math.min(8, Math.max(0.5, s0 * k));
+      const m = mid(e.touches);
+      wvX = x0 + (m[0] - mx0); wvY = y0 + (m[1] - my0);
+      wvApply();
+    } else if (mode === 1 && e.touches.length === 1) {
+      wvX = x0 + (e.touches[0].clientX - mx0);
+      wvY = y0 + (e.touches[0].clientY - my0);
+      wvApply();
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  st.addEventListener('touchend', () => { mode = 0; });
+  // 电脑上调试时用滚轮缩放
+  st.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    wvScale = Math.min(8, Math.max(0.5, wvScale * (e.deltaY < 0 ? 1.12 : 0.89)));
+    wvApply();
+  }, { passive: false });
+}
 
 // ---------------------------------------------------------------- 启动
 (async function boot() {

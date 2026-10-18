@@ -117,11 +117,16 @@ final class Briefing {
         return out;
     }
 
+    // 默认自选：JS 那边只在用户点过「保存」后才写进 SharedPreferences，
+    // 所以这里得自己带一份，否则晨报的「盘面」永远是空的。
+    private static final String DEFAULT_WATCH =
+            "hk02097\nhk01364\nhk02589\nusCHA\nhk02150\nsh600519\nsh000001\nhkHSI";
+
     private static String fetchQuotes(Context c) {
         try {
             SharedPreferences sp = c.getSharedPreferences(SP, Context.MODE_PRIVATE);
             String watch = sp.getString("watch", "");
-            if (watch == null || watch.trim().isEmpty()) return "";
+            if (watch == null || watch.trim().isEmpty()) watch = DEFAULT_WATCH;
             StringBuilder codes = new StringBuilder();
             for (String line : watch.split("\n")) {
                 String t = line.trim();
@@ -226,10 +231,23 @@ final class Briefing {
         }
 
         sb.append("\n▎要盯的事\n");
+        // 品类均衡：同一标签先最多出 2 条，再回头补满。
+        // 否则高权重的「军事·地缘」会把整条晨报刷满，看不到茶业/关税。
+        List<Item> picked = new ArrayList<>();
+        Map<String, Integer> used = new HashMap<>();
+        for (int pass = 0; pass < 2 && picked.size() < 6; pass++) {
+            for (Item it : list) {
+                if (picked.size() >= 6) break;
+                if (it.weight < 7) continue;
+                if (picked.contains(it)) continue;
+                int u = used.containsKey(it.tag) ? used.get(it.tag) : 0;
+                if (pass == 0 && u >= 2) continue;
+                picked.add(it);
+                used.put(it.tag, u + 1);
+            }
+        }
         int n = 0;
-        for (Item it : list) {
-            if (n >= 6) break;
-            if (it.weight < 7) continue;
+        for (Item it : picked) {
             sb.append(++n).append(". ").append(it.title);
             if (!it.tag.isEmpty()) sb.append("　[").append(it.tag).append(']');
             sb.append('\n');

@@ -313,13 +313,18 @@ const Intel = {
       title: it.title || (it.summary || '').slice(0, 40),
       summary: (it.summary || '').replace(/^【[^】]*】/, ''),
       time: it.showTime || '', src: '全球快讯',
+      ts: Date.parse(String(it.showTime || '').replace(/-/g, '/')) || 0,
     }));
   },
   // ---- 东财 财经要闻 ----
   async fetchFinance() {
     const j = await Tea.json(KB.SOURCES.finance.url, { timeout: 15 });
     const arr = (j && j.data && j.data.list) || [];
-    return arr.map((it) => ({ title: it.title || '', summary: it.summary || '', time: it.showTime || '', src: it.mediaName || '财经要闻' }));
+    return arr.map((it) => ({
+      title: it.title || '', summary: it.summary || '',
+      time: it.showTime || '', src: it.mediaName || '财经要闻',
+      ts: Date.parse(String(it.showTime || '').replace(/-/g, '/')) || 0,
+    }));
   },
   // ---- 新浪滚播 ----
   async fetchSina(lid) {
@@ -327,9 +332,10 @@ const Intel = {
     const j = await Tea.json(url, { timeout: 15 });
     const arr = (j && j.result && j.result.data) || [];
     return arr.map((it) => {
+      const ts = (parseInt(it.ctime, 10) || 0) * 1000;
       let t = '';
-      try { t = new Date(parseInt(it.ctime, 10) * 1000).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
-      return { title: it.title || '', summary: (it.intro || '').slice(0, 120), time: t, src: (lid === 2511 ? '国际要闻' : '全网热讯'), url: it.url || it.wapurl || '' };
+      try { t = new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return { title: it.title || '', summary: (it.intro || '').slice(0, 120), time: t, src: (lid === 2511 ? '国际要闻' : '全网热讯'), url: it.url || it.wapurl || '', ts: ts };
     });
   },
   // ---- 百度热搜 ----
@@ -340,7 +346,7 @@ const Intel = {
       if (!o) return;
       if (Array.isArray(o)) { o.forEach(walk); return; }
       if (typeof o === 'object') {
-        if (typeof o.word === 'string' && o.word.length > 3) out.push({ title: o.word, summary: o.desc || '', time: '', src: '热搜' });
+        if (typeof o.word === 'string' && o.word.length > 3) out.push({ title: o.word, summary: o.desc || '', time: '', src: '热搜', ts: 0 });
         Object.keys(o).forEach((k) => walk(o[k]));
       }
     };
@@ -373,7 +379,7 @@ const Intel = {
       it.tags = this.tagAll(it.title + ' ' + (it.summary || ''));
       it.w = it.tags.reduce((a, b) => Math.max(a, b.weight), 0);
       return true;
-    }).sort((a, b) => (b.w - a.w) || String(b.time).localeCompare(String(a.time)));
+    }).sort((a, b) => (b.w - a.w) || ((b.ts || 0) - (a.ts || 0)) || String(b.time).localeCompare(String(a.time)));
 
     this.loaded = true;
     this.render();
@@ -975,10 +981,12 @@ const Ledger = {
 
   async next(id) {
     const it = this.items.find((x) => x.id === id); if (!it) return;
-    const d = it.next ? new Date(it.next + 'T00:00:00') : new Date();
-    d.setDate(d.getDate() + (it.next ? 7 : 3));
-    it.next = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    it.updated = new Date().toISOString().slice(0, 10);
+    const d0 = it.next ? new Date(String(it.next) + 'T00:00:00') : null;
+    const valid = !!(d0 && !isNaN(d0.getTime()));   // 日期填得不对就退回“今天+3”
+    const base = valid ? d0 : new Date();
+    base.setDate(base.getDate() + (valid ? 7 : 3));
+    it.next = base.getFullYear() + '-' + String(base.getMonth() + 1).padStart(2, '0') + '-' + String(base.getDate()).padStart(2, '0');
+    it.updated = this.today();
     await this.persist(); this.render();
     toast('下次跟进改到 ' + it.next);
   },
