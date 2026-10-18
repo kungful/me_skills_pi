@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1780" height="1280" viewBox="0 0 1780 1280">
+<rect width="1780" height="1280" fill="#ffffff"/>
+<text x="40" y="45.95" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="21" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">第 4 张 · 安全链：限位 / 急停 / 手动自动（干接点，低 = 触发）</text>
+<text x="40" y="72.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#00695c" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">散装版没有板上的 10k 上拉电阻，固件已改用芯片内部上拉/下拉 —— 所以你不用外接任何电阻。</text>
+<rect x="60" y="380" width="300" height="420" rx="10" fill="#f5f7fa" stroke="#1a237e" stroke-width="2"/>
+<rect x="60" y="380" width="300" height="30" rx="8" fill="#1a237e" stroke="#1a237e" stroke-width="1"/>
+<rect x="60" y="401" width="300" height="10" rx="0" fill="#1a237e" stroke="#1a237e" stroke-width="1"/>
+<text x="210.0" y="400.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">ESP32-S3 开发板</text>
+<circle cx="60" cy="540.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="71" y="544.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">3V3</text>
+<circle cx="60" cy="670.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="71" y="674.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<circle cx="360" cy="488.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="349" y="492.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IO7</text>
+<circle cx="360" cy="566.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="349" y="570.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IO11</text>
+<circle cx="360" cy="644.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="349" y="648.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IO12</text>
+<circle cx="360" cy="722.0" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="349" y="726.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IO13</text>
+<rect x="760" y="140" width="360" height="150" rx="10" fill="#f5f7fa" stroke="#b71c1c" stroke-width="2"/>
+<rect x="760" y="140" width="360" height="30" rx="8" fill="#b71c1c" stroke="#b71c1c" stroke-width="1"/>
+<rect x="760" y="161" width="360" height="10" rx="0" fill="#b71c1c" stroke="#b71c1c" stroke-width="1"/>
+<text x="940.0" y="160.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">限位开关 A（展开终点）</text>
+<text x="940.0" y="186.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">V-156-1C25 长柄滚轮</text>
+<circle cx="760" cy="210.0" r="6" fill="#fffde7" stroke="#b71c1c" stroke-width="2"/>
+<text x="771" y="214.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">NO 常开</text>
+<circle cx="760" cy="250.0" r="6" fill="#fffde7" stroke="#b71c1c" stroke-width="2"/>
+<text x="771" y="254.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">COM 公共</text>
+<rect x="760" y="330" width="360" height="150" rx="10" fill="#f5f7fa" stroke="#b71c1c" stroke-width="2"/>
+<rect x="760" y="330" width="360" height="30" rx="8" fill="#b71c1c" stroke="#b71c1c" stroke-width="1"/>
+<rect x="760" y="351" width="360" height="10" rx="0" fill="#b71c1c" stroke="#b71c1c" stroke-width="1"/>
+<text x="940.0" y="350.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">限位开关 B（收网终点）</text>
+<circle cx="760" cy="400.0" r="6" fill="#fffde7" stroke="#b71c1c" stroke-width="2"/>
+<text x="771" y="404.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">NO 常开</text>
+<circle cx="760" cy="440.0" r="6" fill="#fffde7" stroke="#b71c1c" stroke-width="2"/>
+<text x="771" y="444.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">COM 公共</text>
+<rect x="760" y="520" width="360" height="150" rx="10" fill="#f5f7fa" stroke="#b71c1c" stroke-width="2"/>
+<rect x="760" y="520" width="360" height="30" rx="8" fill="#b71c1c" stroke="#b71c1c" stroke-width="1"/>
+<rect x="760" y="541" width="360" height="10" rx="0" fill="#b71c1c" stroke="#b71c1c" stroke-width="1"/>
+<text x="940.0" y="540.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">急停按钮（必须用常闭 NC）</text>
+<text x="940.0" y="566.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">22mm 蘑菇头，一常闭</text>
+<circle cx="760" cy="590.0" r="6" fill="#fffde7" stroke="#b71c1c" stroke-width="2"/>
+<text x="771" y="594.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">COM 公共</text>
+<circle cx="760" cy="630.0" r="6" fill="#fffde7" stroke="#b71c1c" stroke-width="2"/>
+<text x="771" y="634.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">NC 常闭</text>
+<rect x="760" y="710" width="360" height="170" rx="10" fill="#f5f7fa" stroke="#4a148c" stroke-width="2"/>
+<rect x="760" y="710" width="360" height="30" rx="8" fill="#4a148c" stroke="#4a148c" stroke-width="1"/>
+<rect x="760" y="731" width="360" height="10" rx="0" fill="#4a148c" stroke="#4a148c" stroke-width="1"/>
+<text x="940.0" y="730.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">手动 / 自动 旋钮开关</text>
+<text x="940.0" y="756.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">2 档拨动 或 3 档旋钮</text>
+<circle cx="760" cy="775.0" r="6" fill="#fffde7" stroke="#4a148c" stroke-width="2"/>
+<text x="771" y="779.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">COM 公共</text>
+<circle cx="760" cy="810.0" r="6" fill="#fffde7" stroke="#4a148c" stroke-width="2"/>
+<text x="771" y="814.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">手动档</text>
+<circle cx="760" cy="845.0" r="6" fill="#fffde7" stroke="#4a148c" stroke-width="2"/>
+<text x="771" y="849.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">自动档</text>
+<polyline points="60,540.0 20,540.0 20,100 1000,100" fill="none" stroke="#7b1fa2" stroke-width="5" stroke-linejoin="round"/>
+<rect x="544.0" y="90.25" width="112.0" height="19.5" rx="4" fill="#ffffff" stroke="#7b1fa2" stroke-width="1"/>
+<text x="600" y="104.68" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#7b1fa2" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">3V3（只给急停用）</text>
+<polyline points="760,590.0 700,590.0 700,100" fill="none" stroke="#7b1fa2" stroke-width="3" stroke-linejoin="round"/>
+<rect x="672.0" y="341.0" width="56.0" height="18.0" rx="4" fill="#ffffff" stroke="#7b1fa2" stroke-width="1"/>
+<text x="700" y="354.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#7b1fa2" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">← 3V3</text>
+<polyline points="20,1000 1740,1000" fill="none" stroke="#212121" stroke-width="6" stroke-linejoin="round"/>
+<rect x="839.6" y="966.25" width="80.8" height="19.5" rx="4" fill="#ffffff" stroke="#212121" stroke-width="1"/>
+<text x="880.0" y="980.68" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#212121" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">公共地 GND</text>
+<polyline points="60,670.0 42,670.0 42,1000" fill="none" stroke="#212121" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="360,488.0 740,488.0 740,210.0 760,210.0" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round"/>
+<rect x="532.0" y="459.0" width="56.0" height="18.0" rx="4" fill="#ffffff" stroke="#2e7d32" stroke-width="1"/>
+<text x="560" y="472.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#2e7d32" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ IO7</text>
+<polyline points="760,250.0 730,250.0 730,1000" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="360,566.0 690,566.0 690,400.0 760,400.0" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round"/>
+<rect x="527.2" y="537.0" width="65.6" height="18.0" rx="4" fill="#ffffff" stroke="#2e7d32" stroke-width="1"/>
+<text x="560" y="550.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#2e7d32" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ IO11</text>
+<polyline points="760,440.0 680,440.0 680,1000" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="360,644.0 670,644.0 670,630.0 760,630.0" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round"/>
+<rect x="527.2" y="615.0" width="65.6" height="18.0" rx="4" fill="#ffffff" stroke="#2e7d32" stroke-width="1"/>
+<text x="560" y="628.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#2e7d32" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ IO12</text>
+<polyline points="360,722.0 650,722.0 650,775.0 760,775.0" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round"/>
+<rect x="527.2" y="693.0" width="65.6" height="18.0" rx="4" fill="#ffffff" stroke="#2e7d32" stroke-width="1"/>
+<text x="560" y="706.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#2e7d32" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ IO13</text>
+<polyline points="760,810.0 640,810.0 640,1000" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="760,845.0 600,845.0" fill="none" stroke="#78909c" stroke-width="3" stroke-linejoin="round" stroke-dasharray="7,5"/>
+<text x="585" y="872.875" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12.5" fill="#78909c" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">自动档：不接（悬空 = 内部上拉 = 自动）</text>
+<rect x="60" y="1045" width="800" height="135" rx="8" fill="#fff8e1" stroke="#e65100" stroke-width="2"/>
+<text x="72" y="1067.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#e65100" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">接线要点</text>
+<text x="72" y="1091.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 限位开关用 NO（常开）：压下才闭合到 GND，固件读成“触发”。</text>
+<text x="72" y="1112.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 开关上标着 COM / NO / NC 三只脚，用 COM 和 NO，NC 空着。</text>
+<text x="72" y="1133.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 急停必须用 NC（常闭）：3V3→COM，NC→IO12。正常是高电平；</text>
+<text x="72" y="1154.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">  按下 或 线断 都变低 = 急停 → 失效安全（所以它要接 3V3，不是 GND）。</text>
+<text x="72" y="1175.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 旋钮：COM→IO13，手动档→GND，自动档留空。</text>
+<rect x="890" y="1045" width="830" height="135" rx="8" fill="#ffebee" stroke="#b71c1c" stroke-width="2"/>
+<text x="902" y="1067.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#b71c1c" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">排错</text>
+<text x="902" y="1091.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 一上电就报 fault/estop：多半是急停没接或接错（它默认“断线=急停”）。</text>
+<text x="902" y="1112.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">  临时可 set hwEstopEnabled 0 跳过，正式使用一定要接好。</text>
+<text x="902" y="1133.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 没装限位就先 set limitEnabled 0 旁路；旁路后 deploy/stow 会被固件拒绝</text>
+<text x="902" y="1154.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">  （没有终点不准盲走）。</text>
+<text x="902" y="1175.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">· 限位/急停是长线，户外用屏蔽线，屏蔽层只在 ESP32 这一端接 GND。</text>
+</svg>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1780" height="1210" viewBox="0 0 1780 1210">
+<rect width="1780" height="1210" fill="#ffffff"/>
+<text x="40" y="45.95" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="21" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">太阳网自动控制器 · 散装模块版 【总览】</text>
+<text x="40" y="73.3" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">全部用现成模块 + 端子接线，不用画 PCB。每一步的细接线看第 2~5 张图。</text>
+<rect x="40" y="120" width="150" height="90" rx="10" fill="#f5f7fa" stroke="#455a64" stroke-width="2"/>
+<rect x="40" y="120" width="150" height="30" rx="8" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<rect x="40" y="141" width="150" height="10" rx="0" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<text x="115.0" y="140.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">市电 220V</text>
+<circle cx="190" cy="170.0" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="179" y="174.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">L</text>
+<circle cx="190" cy="190.0" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="179" y="194.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">N</text>
+<rect x="250" y="110" width="200" height="110" rx="10" fill="#f5f7fa" stroke="#455a64" stroke-width="2"/>
+<rect x="250" y="110" width="200" height="30" rx="8" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<rect x="250" y="131" width="200" height="10" rx="0" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<text x="350.0" y="130.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">12V / 3A 电源适配器</text>
+<text x="350.0" y="156.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">输出 ≥3A</text>
+<circle cx="250" cy="166.66666666666666" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="261" y="170.98666666666665" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">L</text>
+<circle cx="250" cy="193.33333333333334" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="261" y="197.65333333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">N</text>
+<circle cx="450" cy="166.66666666666666" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="439" y="170.98666666666665" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">+12V</text>
+<circle cx="450" cy="193.33333333333334" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="439" y="197.65333333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<rect x="510" y="135" width="130" height="60" rx="10" fill="#f5f7fa" stroke="#455a64" stroke-width="2"/>
+<rect x="510" y="135" width="130" height="26" rx="8" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<rect x="510" y="152" width="130" height="10" rx="0" fill="#455a64" stroke="#455a64" stroke-width="1"/>
+<text x="575.0" y="153.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">3A 保险丝</text>
+<circle cx="510" cy="178.0" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="521" y="182.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IN</text>
+<circle cx="640" cy="178.0" r="6" fill="#fffde7" stroke="#455a64" stroke-width="2"/>
+<text x="629" y="182.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">OUT</text>
+<rect x="688" y="120" width="16" height="90" rx="3" fill="#212121" stroke="#212121" stroke-width="1"/>
+<polyline points="190,170 250,167" fill="none" stroke="#d32f2f" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="190,190 250,193" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="450,167 510,152" fill="none" stroke="#d32f2f" stroke-width="5" stroke-linejoin="round"/>
+<polyline points="450,193 490,193" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<rect x="516.4" y="187.75" width="87.2" height="16.5" rx="4" fill="#ffffff" stroke="#212121" stroke-width="1"/>
+<text x="560" y="199.96" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#212121" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ 公共地 GND</text>
+<polyline points="640,152 688,165" fill="none" stroke="#d32f2f" stroke-width="5" stroke-linejoin="round"/>
+<rect x="760" y="60" width="230" height="110" rx="10" fill="#f5f7fa" stroke="#00695c" stroke-width="2"/>
+<rect x="760" y="60" width="230" height="30" rx="8" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<rect x="760" y="81" width="230" height="10" rx="0" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<text x="875.0" y="80.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">MOS 触发开关模块</text>
+<text x="875.0" y="106.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">母线总闸，高电平触发</text>
+<circle cx="760" cy="116.66666666666667" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="120.98666666666668" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VIN+</text>
+<circle cx="760" cy="143.33333333333334" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="147.65333333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VIN-</text>
+<circle cx="990" cy="116.66666666666667" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="979" y="120.98666666666668" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VOUT+</text>
+<circle cx="990" cy="143.33333333333334" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="979" y="147.65333333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VOUT-</text>
+<rect x="760" y="230" width="230" height="110" rx="10" fill="#f5f7fa" stroke="#00695c" stroke-width="2"/>
+<rect x="760" y="230" width="230" height="30" rx="8" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<rect x="760" y="251" width="230" height="10" rx="0" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<text x="875.0" y="250.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">LM2596 降压模块</text>
+<text x="875.0" y="276.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">12V → 5.0V</text>
+<circle cx="760" cy="286.6666666666667" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="290.9866666666667" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IN+</text>
+<circle cx="760" cy="313.3333333333333" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="771" y="317.6533333333333" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IN-</text>
+<circle cx="990" cy="286.6666666666667" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="979" y="290.9866666666667" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">OUT+</text>
+<circle cx="990" cy="313.3333333333333" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="979" y="317.6533333333333" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">OUT-</text>
+<polyline points="704,167 730,167 730,117 760,117" fill="none" stroke="#d32f2f" stroke-width="5" stroke-linejoin="round"/>
+<polyline points="704,167 730,167 730,287 760,287" fill="none" stroke="#d32f2f" stroke-width="5" stroke-linejoin="round"/>
+<polyline points="760,143 720,143" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<rect x="624.0" y="134.75" width="52.0" height="16.5" rx="4" fill="#ffffff" stroke="#212121" stroke-width="1"/>
+<text x="650" y="146.96" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#212121" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ 公共地</text>
+<polyline points="760,313 715,313" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<rect x="619.0" y="304.75" width="52.0" height="16.5" rx="4" fill="#ffffff" stroke="#212121" stroke-width="1"/>
+<text x="645" y="316.96" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#212121" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">→ 公共地</text>
+<rect x="1060" y="60" width="240" height="120" rx="10" fill="#f5f7fa" stroke="#00695c" stroke-width="2"/>
+<rect x="1060" y="60" width="240" height="30" rx="8" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<rect x="1060" y="81" width="240" height="10" rx="0" fill="#00695c" stroke="#00695c" stroke-width="1"/>
+<text x="1180.0" y="80.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">DRV8871 电机驱动模块</text>
+<text x="1180.0" y="106.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IN1/IN2 控方向</text>
+<circle cx="1060" cy="120.0" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="1071" y="124.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VM</text>
+<circle cx="1060" cy="150.0" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="1071" y="154.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<circle cx="1300" cy="120.0" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="1289" y="124.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">OUT1</text>
+<circle cx="1300" cy="150.0" r="6" fill="#fffde7" stroke="#00695c" stroke-width="2"/>
+<text x="1289" y="154.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">OUT2</text>
+<rect x="1370" y="70" width="170" height="100" rx="10" fill="#f5f7fa" stroke="#37474f" stroke-width="2"/>
+<rect x="1370" y="70" width="170" height="30" rx="8" fill="#37474f" stroke="#37474f" stroke-width="1"/>
+<rect x="1370" y="91" width="170" height="10" rx="0" fill="#37474f" stroke="#37474f" stroke-width="1"/>
+<text x="1455.0" y="90.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">直流减速电机</text>
+<text x="1455.0" y="116.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">收网 / 展开</text>
+<circle cx="1370" cy="123.33333333333333" r="6" fill="#fffde7" stroke="#37474f" stroke-width="2"/>
+<text x="1381" y="127.65333333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">+</text>
+<circle cx="1370" cy="146.66666666666666" r="6" fill="#fffde7" stroke="#37474f" stroke-width="2"/>
+<text x="1381" y="150.98666666666665" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">-</text>
+<polyline points="990,117 1030,117 1030,120 1060,120" fill="none" stroke="#d32f2f" stroke-width="5" stroke-linejoin="round"/>
+<polyline points="990,143 1020,143 1020,150 1060,150" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="1300,120 1335,120 1335,123 1370,123" fill="none" stroke="#d32f2f" stroke-width="5" stroke-linejoin="round"/>
+<polyline points="1300,150 1352,150 1352,147 1370,147" fill="none" stroke="#1565c0" stroke-width="5" stroke-linejoin="round"/>
+<rect x="600" y="480" width="360" height="300" rx="10" fill="#f5f7fa" stroke="#1a237e" stroke-width="2"/>
+<rect x="600" y="480" width="360" height="34" rx="8" fill="#1a237e" stroke="#1a237e" stroke-width="1"/>
+<rect x="600" y="505" width="360" height="10" rx="0" fill="#1a237e" stroke="#1a237e" stroke-width="1"/>
+<text x="780.0" y="502.04" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#ffffff" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">ESP32-S3-DevKitC-1</text>
+<text x="780.0" y="530.45" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="11" fill="#546e7a" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">N16R8 双 Type-C</text>
+<circle cx="960" cy="602.6666666666666" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="949" y="606.9866666666667" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">5V</text>
+<circle cx="960" cy="691.3333333333334" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="949" y="695.6533333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<circle cx="600" cy="602.6666666666666" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="611" y="606.9866666666667" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">3V3</text>
+<circle cx="600" cy="691.3333333333334" r="6" fill="#fffde7" stroke="#1a237e" stroke-width="2"/>
+<text x="611" y="695.6533333333334" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#263238" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">GND</text>
+<polyline points="990,287 1005,287 1005,602 960,602" fill="none" stroke="#ef6c00" stroke-width="5" stroke-linejoin="round"/>
+<rect x="986.6" y="441.0" width="36.8" height="18.0" rx="4" fill="#ffffff" stroke="#ef6c00" stroke-width="1"/>
+<text x="1005" y="454.32" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12" fill="#ef6c00" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">+5V</text>
+<polyline points="960,691 975,691 975,960" fill="none" stroke="#212121" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="700,480 700,240" fill="none" stroke="#2e7d32" stroke-width="4" stroke-linejoin="round" stroke-dasharray="11,7"/>
+<text x="694" y="265.875" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="12.5" fill="#2e7d32" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">↑ 控制线（IO4 / IO5 / IO6、母线使能）去电机 → 第 3 张图</text>
+<rect x="60" y="480" width="480" height="460" rx="12" fill="#fbfbfd" stroke="#90a4ae" stroke-width="2" stroke-dasharray="8,6"/>
+<text x="80" y="508.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#37474f" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">安全链（干接点，低 = 触发）　→ 第 4 张图</text>
+<rect x="80" y="535" width="440" height="62" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="96" y="558.3" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">限位 A（展开终点）</text>
+<text x="96" y="581.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">NO → IO7　　　COM → GND</text>
+<rect x="80" y="617" width="440" height="62" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="96" y="640.3" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">限位 B（收网终点）</text>
+<text x="96" y="663.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">NO → IO11　　 COM → GND</text>
+<rect x="80" y="699" width="440" height="62" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="96" y="722.3" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">急停按钮（常闭 NC）</text>
+<text x="96" y="745.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">3V3 → COM　　 NC → IO12</text>
+<rect x="80" y="781" width="440" height="62" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="96" y="804.3" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="14" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">手动 / 自动 旋钮</text>
+<text x="96" y="827.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">COM → IO13　　手动档 → GND</text>
+<rect x="1020" y="480" width="700" height="460" rx="12" fill="#fbfbfd" stroke="#90a4ae" stroke-width="2" stroke-dasharray="8,6"/>
+<text x="1040" y="508.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#37474f" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">传感器 + 面板　→ 第 5 张图</text>
+<rect x="1040" y="532" width="660" height="48" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="1054" y="551.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">光照模块 AO</text>
+<text x="1240" y="552.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VCC → 3V3　　AO → IO1</text>
+<rect x="1040" y="594" width="660" height="48" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="1054" y="613.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">雨滴模块 AO</text>
+<text x="1240" y="614.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">VCC → 3V3（必须）　AO → IO2</text>
+<rect x="1040" y="656" width="660" height="48" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="1054" y="675.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">风速开关</text>
+<text x="1240" y="676.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">一线 → IO14　　另一线 → GND</text>
+<rect x="1040" y="718" width="660" height="48" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="1054" y="737.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">设定点电位器</text>
+<text x="1240" y="738.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">两端 3V3/GND　中点 → IO3</text>
+<rect x="1040" y="780" width="660" height="48" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="1054" y="799.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">按键 ×3</text>
+<text x="1240" y="800.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">一脚 GND　　另一脚 IO21 / IO38 / IO39</text>
+<rect x="1040" y="842" width="660" height="48" rx="8" fill="#ffffff" stroke="#cfd8dc" stroke-width="2"/>
+<text x="1054" y="861.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#102027" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">指示灯 ×2</text>
+<text x="1240" y="862.35" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#455a64" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">IO47 / IO48 → 1kΩ → LED → GND</text>
+<polyline points="600,640 560,640 560,700 542,700" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round" stroke-dasharray="11,7"/>
+<polyline points="960,640 980,640 980,700 1018,700" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linejoin="round" stroke-dasharray="11,7"/>
+<polyline points="60,985 1720,985" fill="none" stroke="#212121" stroke-width="6" stroke-linejoin="round"/>
+<rect x="563.5999999999999" y="951.25" width="652.8000000000001" height="19.5" rx="4" fill="#ffffff" stroke="#212121" stroke-width="1"/>
+<text x="890.0" y="965.68" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13" fill="#212121" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">公共地 GND —— ESP32 / MOS / DRV8871 / LM2596 / 所有传感器开关的 GND 都接到这里</text>
+<polyline points="300,940 300,985" fill="none" stroke="#212121" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="1370,940 1370,985" fill="none" stroke="#212121" stroke-width="4" stroke-linejoin="round"/>
+<rect x="40" y="1040" width="1700" height="93" rx="8" fill="#fff8e1" stroke="#e65100" stroke-width="2"/>
+<text x="52" y="1062.25" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="15" fill="#e65100" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}" font-weight="bold">※ 三步安全顺序</text>
+<text x="52" y="1086.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">① 先只接电源部分（第 2 张图），用万用表确认 +12V 和 +5V 都对，再插 ESP32。</text>
+<text x="52" y="1107.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">② 所有模块的模拟输出只能 3.3V：光敏 / 雨滴模块一律用 3.3V 供电，不要用 5V。</text>
+<text x="52" y="1128.825" font-family="'Microsoft YaHei','SimHei',sans-serif" font-size="13.5" fill="#4e342e" text-anchor="{'lt': 'start', 'lm': 'start', 'ct': 'middle', 'cm': 'middle', 'rt': 'end', 'rm': 'end'}">③ 任何接线、改线之前，先拔掉 12V 电源；接完先用万用表量一遍再上电。</text>
+</svg>
