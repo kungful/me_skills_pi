@@ -108,16 +108,14 @@ const V2 = (function () {
       txt(g, c.tw.toFixed(2) + 'm', f.X((bd[k] + bd[k + 1]) / 2), f.Y(geo.netW) + 12, COL.warn, 10.5, 'center', true);
     });
 
-    // L 形墙
+    // 围墙（一道）
     g.strokeStyle = COL.wall; g.lineWidth = 8; g.lineCap = 'butt';
-    g.beginPath(); g.moveTo(f.X(0), f.Y(0)); g.lineTo(f.X(P.Wx), f.Y(0)); g.stroke();
-    g.beginPath(); g.moveTo(f.X(0), f.Y(0)); g.lineTo(f.X(0), f.Y(P.Wy)); g.stroke();
+    g.beginPath(); g.moveTo(f.X(-0.2), f.Y(0)); g.lineTo(f.X(geo.netL + 0.2), f.Y(0)); g.stroke();
     g.strokeStyle = '#c39a80'; g.lineWidth = 1.5; g.setLineDash([3, 3]);
-    g.beginPath(); g.moveTo(f.X(0), f.Y(0)); g.lineTo(f.X(P.Wx), f.Y(0)); g.stroke();
-    g.beginPath(); g.moveTo(f.X(0), f.Y(0)); g.lineTo(f.X(0), f.Y(P.Wy)); g.stroke();
+    g.beginPath(); g.moveTo(f.X(-0.2), f.Y(0)); g.lineTo(f.X(geo.netL + 0.2), f.Y(0)); g.stroke();
     g.setLineDash([]);
-    txt(g, `长边墙 ${P.Wx.toFixed(1)} m　墙高 ${P.Hw.toFixed(1)} m`, f.X(P.Wx / 2), f.Y(0) + 15, COL.wall, 10.5, 'center');
-    vtxt(g, `短边墙 ${P.Wy.toFixed(1)} m`, f.X(0) - 15, f.Y(P.Wy / 2), COL.wall, 10.5);
+    txt(g, `砖围墙 ${geo.netL.toFixed(1)} m　高 ${P.Hw.toFixed(1)} m　（扛不了上拔）`,
+        f.X(geo.netL / 2), f.Y(0) + 16, COL.wall, 10.5, 'center');
 
     // 柱与挑梁
     geo.cols.forEach((c, ci) => {

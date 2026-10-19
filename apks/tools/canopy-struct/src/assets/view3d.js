@@ -244,22 +244,14 @@ const V3 = (function () {
 
     /* 墙 */
     const bt = brickTexture(); bt.repeat.set(Math.max(1, P.Wx / 1.2), Math.max(1, P.Hw / 0.6));
-    const bw = new THREE.Mesh(new THREE.BoxGeometry(P.Wx, P.Hw, 0.24),
+    const bw = new THREE.Mesh(new THREE.BoxGeometry(geo.netL + 0.6, P.Hw, 0.36),
       new THREE.MeshStandardMaterial({ map: bt, roughness: .95 }));
-    bw.position.set(P.Wx / 2, P.Hw / 2, -0.12);
+    bw.position.set(geo.netL / 2, P.Hw / 2, -0.18);
     G.wall.add(bw);
-    const bt2 = brickTexture(); bt2.repeat.set(Math.max(1, P.Wy / 1.2), Math.max(1, P.Hw / 0.6));
-    const bw2 = new THREE.Mesh(new THREE.BoxGeometry(0.24, P.Hw, P.Wy),
-      new THREE.MeshStandardMaterial({ map: bt2, roughness: .95 }));
-    bw2.position.set(-0.12, P.Hw / 2, P.Wy / 2);
-    G.wall.add(bw2);
     if (o.showNet !== false) {
-      const l1 = labelSprite(`长边墙 ${P.Wx.toFixed(1)}m`, '#a8846c');
+      const l1 = labelSprite(`砖围墙 ${P.Hw.toFixed(1)}m 高（扛不了上拔）`, '#a8846c');
       l1.scale.multiplyScalar(0.8);
-      l1.position.set(P.Wx * 0.88, P.Hw + 0.25, 0.35); G.label.add(l1);
-      const l2 = labelSprite(`短边墙 ${P.Wy.toFixed(1)}m`, '#a8846c');
-      l2.scale.multiplyScalar(0.8);
-      l2.position.set(0.35, P.Hw + 0.25, P.Wy * 0.9); G.label.add(l2);
+      l1.position.set(geo.netL * 0.8, P.Hw + 0.4, 0.3); G.label.add(l1);
     }
 
     /* 网面 */
