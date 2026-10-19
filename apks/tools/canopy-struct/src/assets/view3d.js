@@ -102,9 +102,14 @@ const V3 = (function () {
 
   function resize() {
     if (!ok) return;
-    const w = host.clientWidth || 320, h = host.clientHeight || 300;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.updateProjectionMatrix();
+    const W = host.clientWidth || 320, H = host.clientHeight || 300;
+    // 竖屏时不要把画布拉成一根长条：限高 ≈ 1.02×宽，竖直居中
+    const h = Math.max(200, Math.min(H, W * 1.02));
+    canvas.style.width = W + 'px';
+    canvas.style.height = h + 'px';
+    canvas.style.top = Math.max(0, (H - h) / 2) + 'px';
+    renderer.setSize(W, h, false);
+    camera.aspect = W / h; camera.updateProjectionMatrix();
     draw();
   }
 
@@ -146,6 +151,19 @@ const V3 = (function () {
   function frontView() { cam = { az: 0.0001, pol: 1.30, dist: 11.5, tx: 4, ty: 1.4, tz: 2.0 }; draw(); }
   function endView() { cam = { az: 1.5708, pol: 1.35, dist: 11, tx: 1.2, ty: 1.4, tz: 2.0 }; draw(); }
 
+  function fitDist() {
+    // 用当前模型的实际包围球算"刚好装得下"的距离
+    let R = 6;
+    try {
+      const box = new THREE.Box3().setFromObject(scene);
+      const sph = box.getBoundingSphere(new THREE.Sphere());
+      R = Math.max(2.5, sph.radius);
+    } catch (e) { }
+    const halfY = camera.fov * Math.PI / 360;
+    const halfX = Math.atan(Math.tan(halfY) * Math.max(camera.aspect, 0.2));
+    const half = Math.min(halfY, halfX);
+    return R / Math.sin(half) * 0.92;
+  }
   function draw() {
     if (!ok) return;
     const t = new THREE.Vector3(cam.tx, cam.ty, cam.tz);
@@ -153,10 +171,10 @@ const V3 = (function () {
       t.x + cam.dist * Math.sin(cam.pol) * Math.sin(cam.az),
       t.y + cam.dist * Math.cos(cam.pol),
       t.z + cam.dist * Math.sin(cam.pol) * Math.cos(cam.az));
-    // 竖屏时把相机拉远一点，否则模型会顶出屏幕
-    const asp = (host.clientWidth || 1) / Math.max(1, host.clientHeight || 1);
-    const fitK = Math.max(1, Math.min(1.38, 1.18 / Math.max(asp, 0.34)));
-    camera.position.sub(t).multiplyScalar(fitK).add(t);
+    // 远程只有"不超过装得下的距离"时才拉远，绝不缩小到看不见
+    const fd = fitDist();
+    const d = Math.min(cam.dist, fd);
+    camera.position.sub(t).multiplyScalar(d / Math.max(cam.dist, 0.001)).add(t);
     camera.lookAt(t);
     renderer.render(scene, camera);
   }

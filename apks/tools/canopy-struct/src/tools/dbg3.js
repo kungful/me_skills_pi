@@ -6,7 +6,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const c = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, '--no-sandbox',
     '--allow-file-access-from-files', '--no-first-run',
-    `--user-data-dir=${path.join(require('os').tmpdir(), 'csd' + Date.now())}`, '--window-size=420,860', url], { stdio: 'ignore' });
+    `--user-data-dir=${path.join(require('os').tmpdir(), 'csd' + Date.now())}`, '--window-size=400,880', url], { stdio: 'ignore' });
   let pg = null;
   for (let i = 0; i < 60; i++) { await sleep(250); try { pg = (JSON.parse(await get('/json/list')) || []).find(t => t.type === 'page' && t.webSocketDebuggerUrl); } catch (e) { } if (pg) break; }
   const ws = new WebSocket(pg.webSocketDebuggerUrl); let id = 0; const pend = {};

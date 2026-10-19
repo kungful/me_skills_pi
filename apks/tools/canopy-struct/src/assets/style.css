@@ -105,7 +105,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 tr.pick td{background:#10241F}
 
 /* ---------- 3D ---------- */
-#cv3{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#cv3{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
 .ov{position:absolute;z-index:3;font-size:11px;color:var(--dim)}
 #hint3{position:absolute;left:9px;bottom:9px;background:rgba(11,16,20,.72);padding:4px 9px;
   border-radius:7px;border:1px solid var(--line);z-index:4}
