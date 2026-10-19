@@ -56,8 +56,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   const expr = `
     new Promise(function(res){
-      setTimeout(function(){
+      setTimeout(async function(){
         var ST=window.__ST, errs=[], log=[];
+        var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
         // 离屏容器：不要把测试用的 canvas 塞进 body（body 是 flex 列，会把主视图挤没）
         var host=document.getElementById('testcv');
         if(!host){host=document.createElement('div');host.id='testcv';
@@ -113,7 +114,32 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
           });
           T('柱位滑杆', function(){ var s=document.querySelector('input[data-tx="1"]');
             s.value='2.5'; s.dispatchEvent(new Event('input',{bubbles:true})); });
-          T('换管截面', function(){ var s=document.querySelector('select[data-k="secBeam"]');
+          T('固化档位：套用 P3', function(){
+            var b=Array.prototype.find.call(document.querySelectorAll('#tabs .tab'),function(x){return x.dataset.t==='par';}); b.click();
+            var chip=document.querySelector('.pchip[data-p=\"P3\"]'); if(!chip) throw new Error('没有档位按钮');
+            chip.click();
+            return 'P3 套用后 v_max='+ST.R.vmax.toFixed(1)+' m/s, u='+ST.R.uMax.toFixed(2);
+          });
+          T('固化档位：P5', function(){
+            var chip=document.querySelector('.pchip[data-p=\"P5\"]'); if(!chip) throw new Error('no chip');
+            chip.click();
+            if(chip.classList.contains('on')===false) throw new Error('未高亮');
+            return 'P5 v_max='+ST.R.vmax.toFixed(1)+' m/s, 悬臂='+ST.R.geo.cols.map(function(c){return c.L.toFixed(1)}).join('/');
+          });
+          await sleep(1200);
+          T('固化档位：对比页表格', function(){
+            window.__presets=null;
+            var b=Array.prototype.find.call(document.querySelectorAll('#tabs .tab'),function(x){return x.dataset.t==='cmp';}); b.click();
+            var rows=document.querySelectorAll('tr.prow'); if(rows.length<5) throw new Error('档位行 '+rows.length);
+            return rows.length+' 行';
+          });
+          T('固化档位：点表格行', function(){
+            var r=document.querySelector('tr.prow[data-p=\"P1\"]'); if(!r) throw new Error('no row'); r.click();
+            return '点 P1 后 v_max='+ST.R.vmax.toFixed(1);
+          });
+          T('换管截面', function(){
+            var bt=Array.prototype.find.call(document.querySelectorAll('#tabs .tab'),function(x){return x.dataset.t==='par';}); bt.click();
+            var s=document.querySelector('select[data-k="secBeam"]');
             s.value='□150x150x5'; s.dispatchEvent(new Event('input',{bubbles:true})); });
         }catch(e){ errs.push('外层异常 '+e.message+' | '+(e.stack||'').split('\\n')[1]); }
         res(log.join('\\n')+'\\n---- 页面内错误 ----\\n'+(errs.join('\\n')||'(无)')+'\\n---- 结论 ----\\n'+(errs.length?('FAIL '+errs.length):'ALL PASS'));

@@ -187,8 +187,12 @@
     if (!pane.querySelector('#parBody')) {
       pane.innerHTML = `<div id="parBody"></div>`;
       const body = pane.querySelector('#parBody');
-      body.innerHTML = UI.paramsHTML(ST.P);
+      body.innerHTML = UI.presetBarHTML() + UI.paramsHTML(ST.P);
       UI.bindParams(body, ST.P, () => { save(); recompute(); });
+      body.addEventListener('click', e => {
+        const b = e.target.closest('[data-p]');
+        if (b) { applyPreset(b.dataset.p); return; }
+      });
       const btn = document.createElement('div');
       btn.className = 'card';
       btn.innerHTML = `<h3>柱位（各柱挑梁端部）</h3><div id="colPos"></div>
@@ -208,6 +212,7 @@
       });
     }
     renderColPos();
+    markChips();
   }
   function renderColPos() {
     const box = document.querySelector('#colPos');
@@ -245,6 +250,7 @@
   function syncParamUI() {
     const body = document.querySelector('#parBody');
     if (!body) return;
+    UI.bindDeps(body, ST.P);
     body.querySelectorAll('[data-k]').forEach(el => {
       const k = el.dataset.k;
       if (el.type === 'range' && ST.P[k] !== undefined) {
@@ -281,8 +287,11 @@
       pane.innerHTML = `<div class="card"><h3>方案对比</h3><div class="hint">正在算…</div></div>`;
       return;
     }
-    pane.innerHTML = UI.compareHTML(cmpRows, window.__auto || null);
+    const pre = window.__presets || (window.__presets = MODEL.presetSummary());
+    pane.innerHTML = UI.presetTable(pre, ST.presetId || '') + UI.compareHTML(cmpRows, window.__auto || null);
     pane.addEventListener('click', e => {
+      const pr = e.target.closest('[data-p]');
+      if (pr && pr.classList.contains('prow')) { applyPreset(pr.dataset.p); return; }
       if (e.target.id === 'doAuto') {
         busy(true, '扫方案…');
         setTimeout(() => {
@@ -356,7 +365,14 @@
     if (!bad.length) L.push('无。');
     bad.slice(0, 30).forEach(c => L.push(`- [${c.group}] ${c.name}：${c.value.toFixed(2)} ${c.unit} / 限 ${c.limit.toFixed(2)}　→ ${(c.ratio * 100).toFixed(0)}%　（${c.note || ''}）`));
     L.push('');
-    L.push('## 六、提醒');
+    L.push('## 六、加固档位（同一套参数实算）');
+    L.push('| 档位 | 能扛 | 风级 | 利用率 | 钢材 | 混凝土 |');
+    L.push('|---|---|---|---|---|---|');
+    try {
+      MODEL.presetSummary().forEach(o => L.push(`| ${o.id} ${o.name} | ${o.vmax.toFixed(1)} m/s | ${o.beaufort} | ${(o.u*100).toFixed(0)}% | ${o.steel.toFixed(0)} kg | ${o.conc.toFixed(2)} m³ |`));
+    } catch (e) { }
+    L.push('');
+    L.push('## 七、提醒');
     (R.warn || []).forEach(w => L.push('- ' + w));
     L.push('- 本模型为简化平面杆系手算模型，未做整体空间分析、节点刚度、二阶效应和网面张拉找形。');
     L.push('- 镀锌管焊接后必须重新防腐。基础土参数须现场确认。');
@@ -364,12 +380,28 @@
     return L.join('\n');
   }
 
+  /* ---------------- 套用加固档位 ---------------- */
+  function applyPreset(id) {
+    ST.P = MODEL.applyPreset(id, ST.P);
+    ST.presetId = id;
+    save();
+    syncParamUI();          // 就地刷新滑杆，不重建面板（保住滚动位置）
+    markChips();
+    recompute(true);
+    const d = UI.presetDesc(id);
+    toast('已套用 ' + d.split('：')[0] + '　' + (ST.R ? '能扛 ' + ST.R.vmax.toFixed(1) + ' m/s' : ''));
+  }
+  function markChips() {
+    document.querySelectorAll('.pchip').forEach(b => b.classList.toggle('on', b.dataset.p === ST.presetId));
+  }
+
   /* ---------------- 存取 ---------------- */
-  function save() { try { localStorage.setItem(LS, JSON.stringify(ST.P)); } catch (e) { } }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(ST.P)); localStorage.setItem(LS + '.preset', ST.presetId || ''); } catch (e) { } }
   function load() {
     try {
       const s = localStorage.getItem(LS);
       if (s) ST.P = Object.assign(MODEL.defaults(), JSON.parse(s));
+      ST.presetId = localStorage.getItem(LS + '.preset') || '';
     } catch (e) { }
   }
 

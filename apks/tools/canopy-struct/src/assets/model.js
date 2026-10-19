@@ -580,6 +580,61 @@ const MODEL = (function () {
     return out.slice(0, 12);
   }
 
-  return { defaults, build, run, bracketFrame, solveCase, checkMember, compare, autofix, colPositions, SCHEMES };
+
+  /* ------------------------------------------------------------------
+     加固档位预设：从"原方案"一档一档加上去，看每一步涨多少风
+     （数字来自 run() 实算，不是估的）
+     ------------------------------------------------------------------ */
+  const PRESETS = [
+    { id: 'P0', name: '原方案', desc: '3柱 Φ89 + ⌀12 上斜拉 + 0.8m 基础',
+      over: { tipX: [0.4, 2.2, 6.2], baseY: [2.4, 0.4, 0.4] } },
+    { id: 'P1', name: '换粗管', desc: '立柱/挑梁换成 Φ219×6（或 □200×200×6），上斜拉改成刚性下撑 r=1.2',
+      over: { tipX: [0.4, 3.0, 6.6], baseY: [2.4, 0.4, 0.4],
+              secCol: 'Φ219x6.0', secBeam: 'Φ219x6.0', secDiag: '□80x80x4',
+              diagType: 'below', diagCable: false, r: 1.2 } },
+    { id: 'P2', name: '＋大基础', desc: 'P1 再加独立基础 1.6×1.6×1.0 m（每根柱一个）',
+      over: { tipX: [0.4, 3.0, 6.6], baseY: [2.4, 0.4, 0.4],
+              secCol: 'Φ219x6.0', secBeam: 'Φ219x6.0', secDiag: '□80x80x4',
+              diagType: 'below', diagCable: false, r: 1.2, footB: 1.6, footH: 1.0 } },
+    { id: 'P3', name: '★完整三管方案', desc: 'P2 再把柱脚锚固做足：底板力臂 a=0.6m + 2×M20 化学锚栓（或柱脚埋入混凝土 1.0m）',
+      over: { tipX: [0.4, 3.0, 6.6], baseY: [2.4, 0.4, 0.4],
+              secCol: 'Φ219x6.0', secBeam: 'Φ219x6.0', secDiag: '□80x80x4',
+              diagType: 'below', diagCable: false, r: 1.2, footB: 1.6, footH: 1.0,
+              basePlateLever: 0.60, anchorCap: 60, anchorN: 2 } },
+    { id: 'P4', name: '＋挑出缩到 3m', desc: 'P3 再把悬挑从 4.0m 收到 3.0m（网 8×3，或沿两墙做 L 形网保住面积）',
+      over: { tipX: [0.4, 3.0, 6.6], baseY: [2.4, 0.4, 0.4],
+              secCol: 'Φ219x6.0', secBeam: 'Φ219x6.0', secDiag: '□80x80x4',
+              diagType: 'below', diagCable: false, r: 1.2, footB: 1.5, footH: 1.0,
+              basePlateLever: 0.60, anchorCap: 60, anchorN: 2, netW: 3.0 } },
+    { id: 'P5', name: '＋柱脚外移0.8m', desc: 'P4 再把三根柱脚从离墙 0.4m 挪到 1.2m —— 悬臂再短 0.8m，是最狠的一招',
+      over: { tipX: [0.4, 3.0, 6.6], baseY: [1.8, 1.2, 1.2],
+              secCol: 'Φ219x6.0', secBeam: 'Φ219x6.0', secDiag: '□80x80x4',
+              diagType: 'below', diagCable: false, r: 1.2, footB: 1.5, footH: 1.0,
+              basePlateLever: 0.60, anchorCap: 60, anchorN: 2, netW: 3.0 } },
+    { id: 'P6', name: '＝P3 + 大风前收网', desc: 'P3 不动结构，只加一条：预报大风就把网收起来（受风面积折到 15%）',
+      over: { tipX: [0.4, 3.0, 6.6], baseY: [2.4, 0.4, 0.4],
+              secCol: 'Φ219x6.0', secBeam: 'Φ219x6.0', secDiag: '□80x80x4',
+              diagType: 'below', diagCable: false, r: 1.2, footB: 1.6, footH: 1.0,
+              basePlateLever: 0.60, anchorCap: 60, anchorN: 2, netDeployed: false },
+    },
+  ];
+  function applyPreset(id, cur) {
+    const pr = PRESETS.find(p => p.id === id);
+    if (!pr) return cur;
+    return Object.assign(defaults(), cur, pr.over);
+  }
+  function presetSummary() {
+    return PRESETS.map(p => {
+      const R = run(applyPreset(p.id, defaults()));
+      const steel = R.geo.cols.reduce((a, c) => a + R.secs.secCol.A * R.P.h + R.secs.secBeam.A * c.L, 0) * 7850
+                  + R.secs.secDiag.A * 3.7 * R.geo.cols.length * 7850;
+      const conc = R.P.footB * R.P.footB * R.P.footH * R.geo.cols.length;
+      return { id: p.id, name: p.name, desc: p.desc, vmax: R.vmax, u: R.uMax,
+               beaufort: WIND.beaufort(R.vmax), gov: R.vGovern, steel, conc,
+               cost: steel * 9 + conc * 600, state: R.state };
+    });
+  }
+
+  return { defaults, build, run, bracketFrame, solveCase, checkMember, compare, autofix, colPositions, SCHEMES, PRESETS, applyPreset, presetSummary };
 })();
 if (typeof module !== 'undefined') module.exports = MODEL;

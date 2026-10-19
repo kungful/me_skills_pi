@@ -124,20 +124,61 @@ const UI = (function () {
             const wi = root.querySelector('[data-k="w0"]');
             if (wi && k === 'region') { wi.value = P.w0; root.querySelector('[data-o="w0"]').textContent = (+P.w0).toFixed(2); }
           }
-          syncDeps(root, P);
+          bindDeps(root, P);
           onChange(k);
         });
       }
     });
-    syncDeps(root, P);
+    bindDeps(root, P);
   }
-  function syncDeps(root, P) {
+  function bindDeps(root, P) {
     root.querySelectorAll('[data-k][data-dep]').forEach(row => {
       const d = row.dataset.dep;
       if (!d) return;
       const dep = d === 'stowInverse' ? !P.netDeployed : !!P[d];
       row.style.display = dep ? '' : 'none';
     });
+  }
+
+
+  /* ---------------- 加固档位（预设） ---------------- */
+  function presetBarHTML(cur) {
+    let h = `<div class="card"><h3>加固档位<span class="sub">点一下直接套用</span></h3>
+      <div class="chips">`;
+    for (const p of MODEL.PRESETS) {
+      h += `<button class="pchip" data-p="${p.id}">${p.name.replace('★', '★ ')}</button>`;
+    }
+    h += `</div><div class="hint" id="pdesc">档位从“原方案”一档一档加上去：每加一档都实算一遍，
+      能看到风从 5 级一路涨到 14 级。具体数值见「对比」页。</div></div>`;
+    return h;
+  }
+  function presetDesc(id) {
+    const p = MODEL.PRESETS.find(x => x.id === id);
+    return p ? `${p.name}：${p.desc}` : '';
+  }
+
+  /* ---------------- 加固档位表（对比页） ---------------- */
+  function presetTable(rows, curId) {
+    let h = `<div class="card"><h3>加固档位：每一步值多少<span class="sub">同一套参数实算</span></h3>
+      <div class="tw"><table><tr><th>档位</th><th class="num">能扛</th><th class="num">风级</th>
+      <th class="num">利用率</th><th class="num">钢材</th><th class="num">砼</th><th class="num">估算</th></tr>`;
+    rows.forEach(r => {
+      const col = r.u <= 0.85 ? '#44C7A9' : r.u <= 1.0 ? '#FFB84D' : '#FF6B6B';
+      h += `<tr class="prow${r.id === curId ? ' pick' : ''}" data-p="${r.id}">
+        <td><b>${r.id}</b> ${esc(r.name)}<br><span style="color:#5F7381;font-size:10px">${esc(r.desc)}</span></td>
+        <td class="num" style="color:${col};font-weight:600">${r.vmax.toFixed(1)}</td>
+        <td class="num">${esc(r.beaufort)}</td>
+        <td class="num">${(r.u * 100).toFixed(0)}%</td>
+        <td class="num">${r.steel.toFixed(0)}kg</td>
+        <td class="num">${r.conc.toFixed(2)}</td>
+        <td class="num">${r.cost.toFixed(0)}</td></tr>`;
+    });
+    h += `</table></div>
+      <div class="hint">点任意一行就套用这个档位。<b>注意卡口会搬家</b>：先是管子截面 → 然后是基础配重 →
+      然后是柱脚锚栓 → 最后才轮到“挑出长度”。所以只换粗管子没用，得一路做到底。<br>
+      P3（★完整三管方案）= Φ219×6 管子 + 刚性下撑 + 1.6m 独立基础 + 做足柱脚锚固，
+      <b>三根柱子就能扛 12 级飓风</b>，钢材约 630kg、混凝土约 7.7m³。</div></div>`;
+    return h;
   }
 
   /* ---------------- 结论文字 ---------------- */
@@ -358,5 +399,6 @@ const UI = (function () {
 </div>`;
   }
 
-  return { paramsHTML, bindParams, checksHTML, compareHTML, docHTML, verdictHTML, setR0, rootCause, f2, esc, SPEC };
+  return { paramsHTML, bindParams, checksHTML, compareHTML, docHTML, verdictHTML, setR0, rootCause, f2, esc, SPEC,
+           presetBarHTML, presetDesc, presetTable, bindDeps };
 })();
