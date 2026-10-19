@@ -10,10 +10,10 @@
   "apkName": "棚架受力分析.apk",
   "apkSize": 263567,
   "apkSha256": "8cbef4528553d8f68a2f5a0c965d8f4f0337ec90cd8acbe2d57379b6d97d1d89",
-  "srcSha": "c0b4e5137a978f76ade49685d05b1325b94ba562",
+  "srcSha": "f39dac64a9715977774af2610c262425c9abbdc8",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/CanopyStruct-Android",
   "builtAt": "2026-10-19 08:00:12",
-  "syncedAt": "2026-10-19 09:31:44",
+  "syncedAt": "2026-10-19 10:01:44",
   "auto": false
 }

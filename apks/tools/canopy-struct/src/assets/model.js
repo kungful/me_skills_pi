@@ -7,6 +7,21 @@ const MODEL = (function () {
   const G = 9.81, RHO_STEEL = 7850;
 
   /* ------------------------------------------------------------------
+     真实场地（按用户在 Blender 里重建的模型量出来，单位 m）
+     坐标系：x 沿主楼正面，y = 从主楼墙面向院子里的距离（正装在院子里）
+     ------------------------------------------------------------------ */
+  const SITE = {
+    house: { x0: 0, x1: 9.6, y0: -10.0, y1: 0, h: 13.6 },      // 4 层主楼
+    yard:  { x0: -1.04, x1: 10.69, y0: 0, y1: 9.79 },          // 门前院子 11.7 × 9.8
+    wallS: { x0: -1.28, x1: 10.69, y: 9.79, h: 2.0 },          // 南围墙
+    wallW: { x: -1.04, y0: 0, y1: 9.79, h: 2.0 },              // 西围墙
+    wallN: { x0: -1.28, x1: 9.65, y: 10.95, h: 2.0 },          // 北围墙（主楼后）
+    door:  { x0: 4.10, x1: 5.90 },                             // 大门位置（南面）
+    slabZ: [3.40, 6.40, 9.40, 12.70],                          // 楼板/圈梁标高
+    anchorOK: [[0, 4.0], [5.3, 6.9]],                          // z≈4.5 处的实体墙段（能打锚栓）
+  };
+
+  /* ------------------------------------------------------------------
      默认参数：按用户说的条件——L 形墙 8m + 5m，墙高 2m，网 8×4=32m²，
      三根柱子贴墙，镀锌管焊三角挑梁，上斜拉，太阳网可收
      ------------------------------------------------------------------ */
@@ -14,6 +29,11 @@ const MODEL = (function () {
     return {
       /* 场地 */
       region: '广州', w0: 0.60, w0Factor: 1.0, rough: 'C', z: 3.0,
+      /* 场地布局：'house' 靠主楼悬挑（地面零占用）| 'yard' 院子独立三柱 */
+      layout: 'house',
+      wallZs: 3.05,                 // 挑臂标高（靠主楼方案）
+      anchorZ: 4.40,                // 刚性斜撑在墙上的锚固标高
+      houseShare: 0.50,             // 主楼分担竖向荷载比例（4 层框架，上下都算数）
       /* 几何 */
       Wx: 8.0, Wy: 5.0, Hw: 2.0,
       netL: 8.0, netW: 4.0, slopeDeg: 4,
@@ -24,9 +44,9 @@ const MODEL = (function () {
       baseY: [2.4, 0.4, 0.4],       // 各柱柱脚 y
       r: 0.8,                       // 三角高（斜拉杆锚点在挑梁上方 r）
       diagType: 'above',            // above | below | none
-      diagCable: true,              // true=拉索/圆钢（仅受拉），false=刚性管
+      diagCable: false,             // ★ 靠主楼悬挑必须用刚性斜撑：拉索受压会失效
       /* 构件 */
-      secCol: 'Φ89x3.0', secBeam: 'Φ89x3.0', secDiag: '⌀12',
+      secCol: 'Φ89x3.0', secBeam: 'Φ89x3.0', secDiag: 'Φ114x4.0',
       secLong: 'Φ60x2.5',
       kCol: 2.0, kBeam: 2.0,        // 计算长度系数
       /* 材料 */
@@ -52,6 +72,7 @@ const MODEL = (function () {
 
   /* ---------------- 几何 ---------------- */
   function build(P) {
+    if (P.layout === 'house') return buildHouse(P);
     const netW = P.netW, slope = P.slopeDeg * Math.PI / 180;
     const rise = netW * Math.sin(slope);                 // 网外侧比墙侧低/高
     // 网面：y=0（墙侧）z=P.h，y=netW（外侧）z=P.h - rise（向外排水，外侧低）
@@ -94,6 +115,32 @@ const MODEL = (function () {
     };
   }
 
+  /* ---------------- 靠主楼悬挑：墙面托架布置 ---------------- */
+  function buildHouse(P) {
+    const slope = P.slopeDeg * Math.PI / 180;
+    const netW = P.netW, rise = netW * Math.sin(slope);
+    const n = Math.max(2, Math.min(6, P.nCol | 0));
+    const x0 = P.tipX0 !== undefined ? P.tipX0 : 0.45;
+    const x1 = P.tipX1 !== undefined ? P.tipX1 : (SITE.house.x1 - 0.15);
+    const tw = (x1 - x0) / n;
+    const cols = [];
+    for (let i = 0; i < n; i++) {
+      const x = x0 + tw * (i + 0.5);
+      cols.push({
+        i, id: 'T' + (i + 1), kind: 'wall',
+        base: { x, y: 0 }, tip: { x, y: netW },       // 墙面起挑 → 外端
+        L: netW, h: P.wallZs, r: P.anchorZ - (P.wallZs - rise),
+        anchorZ: P.anchorZ, tw,
+      });
+    }
+    cols.forEach(c => c.share = c.tw / (x1 - x0));
+    return {
+      cols, netL: x1 - x0, netW, rise, slope, area: (x1 - x0) * netW,
+      x0, x1, site: SITE, house: true,
+      walls: [], Hw: 0,
+    };
+  }
+
   /* ---------------- 单榀（柱 + 挑梁 + 斜杆）平面刚架 ---------------- */
   function bracketFrame(P, geo, c, tipP, tipFx, cableActive) {
     const S = SOLVER;
@@ -101,7 +148,9 @@ const MODEL = (function () {
     const secBeam = S.PIPE_MAP[P.secBeam] || S.SEC.round(89, 3);
     const secDiag = S.PIPE_MAP[P.secDiag] || S.SEC.bar(12);
     const E = 2.06e11;
-    const L = c.L, h = P.h, r = (P.diagType === 'none' ? 0 : P.r);
+    const L = c.L;
+    if (c.kind === 'wall') return wallBracket(P, geo, c, tipP, tipFx);
+    const h = P.h, r = (P.diagType === 'none' ? 0 : P.r);
 
     const nodes = [
       { x: 0, y: 0, fix: [true, true, true] },   // 0 柱脚
@@ -170,15 +219,59 @@ const MODEL = (function () {
     };
   }
 
+  /* ---------------- 墙面托架（靠主楼悬挑）：墙上两个支座 + 一根斜撑 ---------------- */
+  function wallBracket(P, geo, c, tipP, tipFx) {
+    const S = SOLVER;
+    const secBeam = S.PIPE_MAP[P.secBeam] || S.SEC.round(89, 3);
+    const secDiag = S.PIPE_MAP[P.secDiag] || S.SEC.round(89, 3);
+    const E = 2.06e11, L = c.L, ZB = c.h, ZA = c.anchorZ;
+    const TIPZ = ZB - geo.rise;
+    const nodes = [
+      { x: 0, y: ZA, fix: [true, true, true] },   // 0 墙上斜撑锚点（可拉可压）
+      { x: 0, y: ZB, fix: [true, true, true] },   // 1 墙根底板（弯矩+剪力+轴力）
+      { x: L, y: TIPZ },                          // 2 挑臂外端
+    ];
+    const elems = [
+      { i: 0, j: 2, E, A: secDiag.A, I: secDiag.I, truss: true,
+        tensionOnly: !!(P.diagCable && P.diagType !== 'none'), name: '斜杆', sec: secDiag, idx: 0 },
+      { i: 1, j: 2, E, A: secBeam.A, I: secBeam.I, name: '挑臂', sec: secBeam, idx: 1 },
+    ];
+    const wBeam = -secBeam.A * RHO_STEEL * G;
+    const loads = [{ node: 2, fx: tipFx, fy: tipP }];
+    const res = S.analyze({ nodes, elems, loads, udl: [{ elem: 1, w: wBeam }] });
+    const beam = res.elems.find(e => e.name === '挑臂');
+    const diag = res.elems.find(e => e.name === '斜杆');
+    const R0 = res.R[0] || { fx: 0, fy: 0, mz: 0 };   // 斜撑锚点
+    const R1 = res.R[1] || { fx: 0, fy: 0, mz: 0 };   // 墙根底板
+    const tip = res.U;
+    return {
+      res, nodes, elems, secBeam, secDiag, beam, diag, colSegs: [],
+      colM: { M: 0, N: 0, V: 0 }, colN: { N: 0 }, colV: { V: 0 },
+      wallAnchor: { M: -R1.mz, V: R1.fx, N: R1.fy },      // 墙根底板受力
+      diagAnchor: { H: R0.fx, V: R0.fy },                 // 斜撑锚点受力
+      base: { N: 0, V: 0, M: 0 },
+      tipDefl: tip[2 * 3 + 1] || 0, tipDeflX: tip[2 * 3] || 0,
+      udlBeam: wBeam, diagForce: diag ? (diag.dropped ? 0 : -diag._fl[0]) : 0,
+      diagDropped: diag ? !!diag.dropped : false,
+      diagTension: diag ? (-diag._fl[0] > 0) : false,
+      wBeam,
+    };
+  }
+
   /* ---------------- 工况求解 ---------------- */
   function solveCase(P, geo, W, kind, opts) {
     opts = opts || {};
     const cols = geo.cols;
     const out = [];
     const stow = P.netDeployed ? 1 : P.stowFactor;
-    let wallShare = P.wallAnchored ? P.wallShare : 0;
-    if (kind === 'up') wallShare = 0;              // 风吸：砖墙拉不住，不能帮忙
-    if (!P.wallAnchored) wallShare = 0;
+    let wallShare;
+    if (P.layout === 'house') {
+      wallShare = P.houseShare;                    // 主楼是 4 层框架，上下都能扛
+    } else {
+      wallShare = P.wallAnchored ? P.wallShare : 0;
+      if (kind === 'up') wallShare = 0;            // 2m 砖墙拉不住，风吸时不算它
+      if (!P.wallAnchored) wallShare = 0;
+    }
 
     for (const c of cols) {
       const A = c.tw * geo.netW;                                  // 该柱分担网面积 m²
@@ -258,20 +351,31 @@ const MODEL = (function () {
       const row = { col: c, cases: {} };
       for (const k of ['up', 'down', 'wind']) {
         const fr = results[k][ci].frame;
-        const beam = checkMember(secBeam, fr.beam.Mmax.M, fr.beam.Nmax.N, fr.beam.Vmax.V, c.L, { fd: P.fd, fv: P.fv, fy: P.fy, k: P.kBeam });
+        const kB = (c.kind === 'wall' ? 1.0 : P.kBeam);   // 墙托架的挑臂是桁架弦杆 → k=1.0
+        const beam = checkMember(secBeam, fr.beam.Mmax.M, fr.beam.Nmax.N, fr.beam.Vmax.V, c.L, { fd: P.fd, fv: P.fv, fy: P.fy, k: kB });
         const col = checkMember(secCol, fr.colM.M, fr.colN.N, fr.colV.V, P.h, { fd: P.fd, fv: P.fv, fy: P.fy, k: P.kCol });
         let diag = null;
         if (fr.diag && !fr.diagDropped) {
           const N = -fr.diag._fl[0];
           diag = { N, sec: secDiag, L: fr.diag._L,
                    util: N > 0 ? N / (secDiag.A * P.fd * 1e6)
-                               : (() => { const lam = P.kBeam * fr.diag._L / secDiag.i;
+                               : (() => { const lam = fr.diag._L / secDiag.i;   // 桁架杆两端铰接 → k=1.0
                                           const phi = S.phiBuckling(lam, P.fy * 1e6);
                                           return Math.abs(N) / (phi * secDiag.A * P.fd * 1e6); })(),
                    tension: N > 0 };
         }
+        const Ld = Math.hypot(c.L, (c.anchorZ !== undefined ? c.anchorZ : P.h + P.r) - c.h);
+        const diagLam = fr.diag ? Ld / secDiag.i : 0;
+        const wall = c.kind === 'wall' ? {
+          plateM: Math.abs(fr.wallAnchor.M),
+          plateV: Math.abs(fr.wallAnchor.V),
+          plateN: fr.wallAnchor.N,
+          anchorT: Math.hypot(fr.diagAnchor.H, fr.diagAnchor.V),
+          diagLam,
+        } : null;
         const deflLim = c.L / 150;
         row.cases[k] = {
+          wall,
           beam, col, diag, frame: fr,
           defl: Math.abs(fr.tipDefl), deflLim, deflUtil: Math.abs(fr.tipDefl) / deflLim,
           Pvert: results[k][ci].Pvert, Fx: results[k][ci].Fx, A: results[k][ci].A,
@@ -294,6 +398,30 @@ const MODEL = (function () {
     const foot = [];
     for (const row of perCol) {
       const c = row.col;
+      if (c.kind === 'wall') {                       // 靠主楼悬挑：没有基础，只有墙锚
+        let Tmax = 0, Mmax = 0, Vmax2 = 0, Nmin = 1e9, lamMax = 0;
+        for (const k of ['up', 'down', 'wind']) {
+          const w = row.cases[k].wall;
+          Tmax = Math.max(Tmax, w.anchorT);
+          Mmax = Math.max(Mmax, w.plateM);
+          Vmax2 = Math.max(Vmax2, w.plateV);
+          Nmin = Math.min(Nmin, w.plateN);
+          lamMax = Math.max(lamMax, w.diagLam);
+        }
+        const a = P.basePlateLever || 0.35;
+        const Tplate = Mmax / a - Math.min(0, Nmin) / 2;      // 底板锚栓
+        const Tbolt = Math.max(Tplate, 0) / Math.max(1, P.anchorN);
+        const Tanchor = Tmax / Math.max(1, P.anchorN);
+        foot.push({
+          col: c, wall: true, Tbolt, Tanchor, Mmax, Vmax2, lamMax,
+          ballast: 0, uplift: 0, kUp: 99, kOver: 99, Mup: 0, Mres: 0,
+          pMax: 0, pLim: P.soilFa * 1000, e: 0, B: 0, leverUp: 0,
+          Tutil: Math.max(Tbolt, Tanchor) / (P.anchorCap * 1000),
+          pUtil: 0, overUtil: 0, upUtil: 0,
+          lamUtil: lamMax / 150,
+        });
+        continue;
+      }
       const Wf = P.footB * P.footB * P.footH * 25 * 1000 * P.footN;   // N（混凝土 25kN/m³）
       const Wcol = secCol.A * RHO_STEEL * P.h * G;
       const r = row.cases.up;
@@ -338,7 +466,7 @@ const MODEL = (function () {
     /* ---- 整体抗倾覆（绕墙线） ---- */
     const totalUplift = results.up.reduce((a, r) => a + Math.max(0, -r.frame.base.N), 0);
     const totalBallast = foot.reduce((a, f) => a + f.ballast, 0);
-    const kWall = totalUplift > 0 ? totalBallast / totalUplift : 99;
+    const kWall = totalBallast > 0 ? (totalUplift > 0 ? totalBallast / totalUplift : 99) : 99;
     // 绕 y=0（墙线）的水平风力倾覆
     const Mot = results.wind.reduce((a, r) => a + Math.abs(r.Fx) * P.h, 0);
     const MresG = totalBallast * P.wallGap + (P.wallAnchored ? 0 : 0);
@@ -377,6 +505,17 @@ const MODEL = (function () {
       else if (P.diagType !== 'none' && P.diagCable) add('斜杆', `${tag} 斜杆`, 0, 'kN', 1, 0, '该工况下斜杆退出工作（拉索不能受压）', '—');
     }
     for (const f of foot) {
+      if (f.wall) {
+        add('墙锚固', `${f.col.id} 斜撑锚点抗拔`, f.Tanchor / 1000, 'kN', P.anchorCap, f.Tanchor / Math.max(1, P.anchorN) / (P.anchorCap * 1000),
+            `锚进主楼混凝土梁/柱，${P.anchorN} 个 M16 化学锚栓`, 'T_锚 = 斜撑轴力，每个锚栓分摊');
+        add('墙锚固', `${f.col.id} 墙根底板抗拔`, f.Tbolt / 1000, 'kN', P.anchorCap, f.Tbolt / (P.anchorCap * 1000),
+            `底板弯矩 ${(f.Mmax / 1000).toFixed(2)} kN·m / 力臂 ${(P.basePlateLever || 0.35).toFixed(2)} m`, 'T = M/a − N/2');
+        add('墙锚固', `${f.col.id} 斜撑长细比 λ`, f.lamMax, '—', 150, f.lamUtil,
+            'GB50017 受压构件 λ ≤ 150', 'λ = L斜 / i');
+        add('墙锚固', `${f.col.id} 墙根剪力`, f.Vmax2 / 1000, 'kN', P.anchorCap * P.anchorN, f.Vmax2 / (P.anchorCap * P.anchorN * 1000),
+            '底板抗剪（锚栓受剪 + 摩擦）', 'V ≤ [V]');
+        continue;
+      }
       add('基础', `${f.col.id} 抗拔（配重/锚固）`, f.uplift / 1000, 'kN', f.ballast / 1000 / 1.5,
           f.upUtil, `基础+柱自重 = ${(f.ballast/1000).toFixed(2)}kN，需 ≥ 1.5×上拔力`, 'K = (G柱+G基)/N拔 ≥ 1.5');
       add('基础', `${f.col.id} 抗倾覆（上抬绕柱脚）`, f.Mup / 1000, 'kN·m', f.Mres / 1000 / 1.5,
@@ -386,10 +525,19 @@ const MODEL = (function () {
       add('柱脚', `${f.col.id} 锚栓抗拔`, f.Tbolt / 1000, 'kN', P.anchorCap, f.Tutil,
           `每栓；M/lever - N/2，共 ${P.anchorN} 栓/受拉侧`, 'T = M/a - N/2 ≤ [T]');
     }
+    if (P.layout !== 'house') {
     add('整体', '整体抗倾覆（绕墙线）', Mot / 1000, 'kN·m', MresG / 1000 / 1.5, Mot > 0 ? 1.5 / Math.max(kGlobal, 1e-6) : 0,
-        `抵抗 ${(MresG/1000).toFixed(2)} kN·m；柱子贴墙 → 力臂只有 ${P.wallGap} m`, 'K = Σ(G·d)/Σ(M风) ≥ 1.5');
-    add('整体', '风吸总上抬力 / 总配重', totalUplift / 1000, 'kN', totalBallast / 1000 / 1.5, 1.5 / Math.max(kWall, 1e-6),
-        `总配重 ${(totalBallast/1000).toFixed(2)} kN`, 'K ≥ 1.5');
+          `抵抗 ${(MresG/1000).toFixed(2)} kN·m；柱子贴墙 → 力臂只有 ${P.wallGap} m`, 'K = Σ(G·d)/Σ(M风) ≥ 1.5');
+      if (P.layout === 'house') {
+        const tot = W.qUp * geo.area;
+        }
+    add('整体', '风吸总上抬力 → 交给主楼', tot, 'kN', 99999, tot / 500,
+          `主楼是 4 层混凝土框架，${(tot).toFixed(1)} kN 上抬力对它可忽略（但锚栓必须打进混凝土梁柱）`,
+          '结构自平衡 / 传给主楼');
+    } else {
+      add('整体', '风吸总上抬力 / 总配重', totalUplift / 1000, 'kN', totalBallast / 1000 / 1.5, 1.5 / Math.max(kWall, 1e-6),
+          `总配重 ${(totalBallast/1000).toFixed(2)} kN`, 'K ≥ 1.5');
+    }
     add('纵梁', '柱间纵梁应力比（平面外）', longChk.sigma / 1e6, 'MPa', P.fd, longChk.sigmaUtil,
         `最大柱距 ${spanMax.toFixed(2)} m；平面外风靠纵梁+平面斜撑`, 'σ = M/W ≤ f');
 
@@ -403,7 +551,7 @@ const MODEL = (function () {
         for (let ci = 0; ci < rr.length; ci++) {
           const fr = rr[ci].frame, c0 = geo.cols[ci];
           const bm = checkMember(secBeam, fr.beam.Mmax.M, fr.beam.Nmax.N, fr.beam.Vmax.V, c0.L,
-                                 { fd: P.fd, fv: P.fv, fy: P.fy, k: P.kBeam });
+                                 { fd: P.fd, fv: P.fv, fy: P.fy, k: (c0.kind === 'wall' ? 1.0 : P.kBeam) });
           const cc = checkMember(secCol, fr.colM.M, fr.colN.N, fr.colV.V, P.h,
                                  { fd: P.fd, fv: P.fv, fy: P.fy, k: P.kCol });
           const cand = [[bm.sigmaUtil, '挑梁应力(' + c0.id + ')'],
@@ -412,12 +560,14 @@ const MODEL = (function () {
             const NN = -fr.diag._fl[0];
             const du = NN > 0
               ? NN / (secDiag.A * P.fd * 1e6)
-              : Math.abs(NN) / (SOLVER.phiBuckling(P.kBeam * fr.diag._L / secDiag.i, P.fy * 1e6) * secDiag.A * P.fd * 1e6);
+              : Math.abs(NN) / (SOLVER.phiBuckling(fr.diag._L / secDiag.i, P.fy * 1e6) * secDiag.A * P.fd * 1e6);
             cand.push([du, '斜杆(' + c0.id + ')']);
           }
           if (k === 'up') {
             const f0 = foot[ci], upN = Math.max(0, -fr.base.N);
-            if (upN > 0) {
+            if (f0 && f0.wall) {
+              const w = rr[ci] && null;
+            } else if (upN > 0) {
               cand.push([1.5 * upN / f0.ballast, '基础抗拔(' + c0.id + ')']);
               cand.push([1.5 * upN * f0.leverUp / f0.Mres, '基础抗倾覆(' + c0.id + ')']);
             }
@@ -429,8 +579,8 @@ const MODEL = (function () {
       // 锚栓拉力基本随风压线性放大
       for (let ci = 0; ci < foot.length; ci++) {
         const f0 = foot[ci];
-        const t2 = f0.Tbolt / (P.anchorCap * 1000);
-        if (t2 > 0 && t2 * mult > us) { us = t2 * mult; who = '锚栓(' + f0.col.id + ')'; }
+        const t2 = Math.max(f0.Tbolt, f0.Tanchor || 0) / (P.anchorCap * 1000);
+        if (t2 > 0 && t2 * mult > us) { us = t2 * mult; who = (f0.wall ? '墙锚栓(' : '锚栓(') + f0.col.id + ')'; }
       }
       return { us, ud, who };
     };

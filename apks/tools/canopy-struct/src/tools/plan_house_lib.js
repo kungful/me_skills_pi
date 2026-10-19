@@ -101,10 +101,13 @@ function evaluate(cfg) {
       if (res.col) {
         const cm = M.checkMember(secCol, res.col.Mmax.M, res.col.Nmax.N, res.col.Vmax.V, P.hp || 2.2, { fd: P.fd, fv: P.fv, fy: P.fy, k: 2.0 });
         colU = cm.sigmaUtil;
+        // 柱脚：轴向抗拔 + 绕基础边抗倾覆（力臂用真实柱底弯矩，不是悬臂长度）
         const up = Math.max(0, -res.R3.fy);
-        const Gf = (cfg.footB || 1.0) ** 2 * (cfg.footH || 0.8) * 25 * 1000;
+        const Mb = Math.abs(res.R3.mz) + Math.abs(res.R3.fx) * (cfg.footH || 0.6);
+        const B = cfg.footB || 1.0;
+        const Gf = B * B * (cfg.footH || 0.8) * 25 * 1000;
         footU = Math.max(up > 0 ? 1.5 * up / Gf : 0,
-                         up > 0 ? 1.5 * up * res.L / (Gf * (cfg.footB || 1) / 2) : 0);
+                         Mb > 0 ? 1.5 * Mb / (Gf * B / 2) : 0);
       }
       const defl = Math.abs(res.r.U[7] || 0);
       const lamT = Ld / secTie.i, lamTUtil = lamT / 150;
