@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19 10:42:06",
+  "generatedAt": "2026-10-19 10:46:45",
   "count": 15,
   "totalApkBytes": 50341575,
   "categories": [
@@ -158,8 +158,8 @@
           "apk": "tools/canopy-struct/canopy-struct.apk",
           "source": "tools/canopy-struct/src/",
           "size": 267663,
-          "sha256": "bfd809cbbed4df3ed3c0f9e148bd3cbb536a3dfddf2f24bc2516138b49c60d95",
-          "builtAt": "2026-10-19 10:37:12",
+          "sha256": "17840ce9a7ad1b695ed6d9b99406b8694d5ec51bd528b868510f1e9e1bc744a7",
+          "builtAt": "2026-10-19 10:46:43",
           "notes": "L形墙内角太阳网车棚受力分析：GB50009风荷载 + 平面刚架矩阵位移法 + 柱脚/基础抗拔抗倾覆校核 + three.js三维可视化"
         },
         {
