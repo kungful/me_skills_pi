@@ -71,6 +71,7 @@ const V2 = (function () {
 
   /* ==================== 平面图 ==================== */
   function plan(cv, R, opt) {
+    if (R.P.layout === 'house') return planHouse(cv, R, opt);
     opt = opt || {};
     const { g, w, h } = prep(cv, opt.hpx);
     const geo = R.geo, P = R.P;
@@ -150,15 +151,98 @@ const V2 = (function () {
     return f;
   }
 
+
+  /* ==================== 平面图（靠主楼悬挑） ==================== */
+  function planHouse(cv, R, opt) {
+    opt = opt || {};
+    const { g, w, h } = prep(cv, opt.hpx);
+    const geo = R.geo, P = R.P;
+    const S = { house: { x0: 0, x1: 9.6, y0: -3.2, y1: 0 }, yard: { x0: -1.04, x1: 10.69, y1: 9.79 } };
+    const f = fit(w, h, -1.9, 11.4, -3.6, 10.8, 24);
+
+    // 网格
+    g.strokeStyle = COL.grid; g.lineWidth = 1;
+    for (let i = -1; i <= 11; i++) { g.beginPath(); g.moveTo(f.X(i), f.Y(-3.6)); g.lineTo(f.X(i), f.Y(10.8)); g.stroke(); }
+    for (let j = -3; j <= 10; j++) { g.beginPath(); g.moveTo(f.X(-1.9), f.Y(j)); g.lineTo(f.X(11.4), f.Y(j)); g.stroke(); }
+
+    // 主楼（在墙后面）
+    g.fillStyle = 'rgba(150,146,140,.30)';
+    g.fillRect(f.X(0), f.Y(0), 9.6 * f.s, 3.2 * f.s);
+    g.strokeStyle = '#8e8b86'; g.lineWidth = 1.5;
+    g.strokeRect(f.X(0), f.Y(0), 9.6 * f.s, 3.2 * f.s);
+    txt(g, '主楼 9.6 × 10 m　4 层　13.6 m 高', f.X(4.8), f.Y(-1.6), '#b9b4ad', 12, 'center', true);
+    txt(g, '（混凝土框架 —— 真正的支座）', f.X(4.8), f.Y(-2.35), '#8e8b86', 10.5, 'center');
+
+    // 院子
+    g.fillStyle = 'rgba(47,191,155,.05)';
+    g.fillRect(f.X(S.yard.x0), f.Y(S.yard.y1), (S.yard.x1 - S.yard.x0) * f.s, S.yard.y1 * f.s);
+    // 围墙
+    g.strokeStyle = COL.wall; g.lineWidth = 8;
+    g.beginPath(); g.moveTo(f.X(-1.28), f.Y(9.79)); g.lineTo(f.X(10.69), f.Y(9.79)); g.stroke();
+    g.beginPath(); g.moveTo(f.X(-1.04), f.Y(0)); g.lineTo(f.X(-1.04), f.Y(9.79)); g.stroke();
+    txt(g, '南围墙 12m × 2.0m 高', f.X(4.8), f.Y(9.79) + 15, COL.wall, 10.5, 'center');
+    vtxt(g, '西围墙 2.0m 高', f.X(-1.04) - 15, f.Y(4.9), COL.wall, 10.5);
+
+    // 网面
+    g.fillStyle = 'rgba(47,191,155,.17)';
+    g.fillRect(f.X(geo.x0), f.Y(geo.netW), geo.netL * f.s, geo.netW * f.s);
+    g.strokeStyle = 'rgba(47,191,155,.25)'; g.lineWidth = 1;
+    for (let i = .5; i < geo.netL; i += .5) { g.beginPath(); g.moveTo(f.X(geo.x0 + i), f.Y(0)); g.lineTo(f.X(geo.x0 + i), f.Y(geo.netW)); g.stroke(); }
+    for (let j = .5; j < geo.netW; j += .5) { g.beginPath(); g.moveTo(f.X(geo.x0), f.Y(j)); g.lineTo(f.X(geo.x1), f.Y(j)); g.stroke(); }
+    g.strokeStyle = COL.net; g.lineWidth = 2;
+    g.strokeRect(f.X(geo.x0), f.Y(geo.netW), geo.netL * f.s, geo.netW * f.s);
+    txt(g, `太阳网 ${geo.area.toFixed(1)} m²　透风率 ${(P.porosity * 100).toFixed(0)}%`,
+        f.X((geo.x0 + geo.x1) / 2), f.Y(geo.netW * 0.55), COL.net, 12, 'center', true);
+
+    // 分担线
+    g.strokeStyle = 'rgba(255,184,77,.5)'; g.lineWidth = 1; g.setLineDash([5, 4]);
+    for (let i = 1; i < geo.cols.length; i++) {
+      const x = geo.x0 + geo.cols[i].tw * i;
+      g.beginPath(); g.moveTo(f.X(x), f.Y(-0.2)); g.lineTo(f.X(x), f.Y(geo.netW)); g.stroke();
+    }
+    g.setLineDash([]);
+
+    // 托架
+    geo.cols.forEach((c, ci) => {
+      const bx = f.X(c.base.x), by = f.Y(0), tx = f.X(c.tip.x), ty = f.Y(c.tip.y);
+      g.strokeStyle = COL.steel; g.lineWidth = 4; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(bx, by); g.lineTo(tx, ty); g.stroke();
+      g.fillStyle = '#22303B'; g.strokeStyle = COL.steel; g.lineWidth = 1.6;
+      g.beginPath(); g.rect(bx - 7, by - 7, 14, 14); g.fill(); g.stroke();
+      g.beginPath(); g.arc(tx, ty, 4.5, 0, 6.3); g.fillStyle = COL.acc; g.fill();
+      txt(g, c.id, bx, by + 17, COL.text, 11, 'center', true);
+      txt(g, c.tw.toFixed(2) + 'm', f.X(c.tip.x), f.Y(geo.netW) + 13, COL.warn, 10.5, 'center', true);
+      vtxt(g, `挑 ${c.L.toFixed(1)}m`, tx + 10, (by + ty) / 2, COL.dim, 9.5);
+    });
+
+    // 风
+    const cx = (geo.x0 + geo.x1) / 2, cy = geo.netW + 0.75;
+    for (let k = 0; k < 3; k++) {
+      const ox = (k - 1) * geo.netL / 4.2;
+      arrow(g, f.X(cx + ox), f.Y(cy + 0.4), f.X(cx + ox), f.Y(cy - 0.3), COL.blue, 2, 8);
+    }
+    txt(g, `风 ${R.W.v.toFixed(0)} m/s · w=${R.W.wk.toFixed(2)} kN/m²`, f.X(cx), f.Y(cy + 0.7), COL.blue, 11, 'center', true);
+
+    // 尺寸
+    const d1 = dimLine(g, f, geo.x0, geo.netW, geo.x1, geo.netW, -16, COL.dim2);
+    txt(g, `${geo.netL.toFixed(1)} m`, d1.mx, d1.my - 9, COL.dim, 10.5, 'center');
+    const d2 = dimLine(g, f, geo.x1, 0, geo.x1, geo.netW, 22, COL.dim2);
+    vtxt(g, `挑出 ${geo.netW.toFixed(2)} m`, d2.mx + 12, d2.my, COL.dim, 10.5);
+
+    txt(g, '平面示意（非施工图）　地面零柱子：车能直接开进来', 8, h - 9, COL.dim2, 10);
+    return f;
+  }
+
   /* ==================== 立面 + 弯矩图 ==================== */
   function elev(cv, R, colIdx, caseKey, opt) {
     opt = opt || {};
     const { g, w, h } = prep(cv, opt.hpx || 262);
     const P = R.P, c = R.geo.cols[colIdx];
     const row = R.perCol[colIdx].cases[caseKey];
-    const fr = row.frame, L = c.L, hh = P.h;
-    const r = (P.diagType === 'none' ? 0 : P.r);
-    const yA0 = P.diagType === 'below' ? hh - r : hh + r;
+    const isHouse = P.layout === 'house';
+    const fr = row.frame, L = c.L, hh = isHouse ? c.h : P.h;
+    const r = isHouse ? (c.anchorZ - c.h) : (P.diagType === 'none' ? 0 : P.r);
+    const yA0 = isHouse ? c.anchorZ : (P.diagType === 'below' ? hh - r : hh + r);
     const x0 = -1.95, x1 = L + 0.95, y0 = -1.05, y1 = Math.max(hh + r + 1.45, 4.1);
     const f = fit(w, h, x0, x1, y0, y1, 26);
 
@@ -173,8 +257,20 @@ const V2 = (function () {
     g.strokeStyle = '#1B2731';
     for (let x = -10; x < w; x += 9) { g.beginPath(); g.moveTo(x, f.Y(0)); g.lineTo(x + 8, f.Y(0) + 8); g.stroke(); }
 
-    // 砖墙
-    if (P.Hw > 0) {
+    // 主楼墙（靠主楼悬挑时）
+    if (isHouse) {
+      g.fillStyle = 'rgba(150,146,140,.22)';
+      g.fillRect(f.X(-0.95), f.Y(13.6), 0.95 * f.s, 13.6 * f.s);
+      g.strokeStyle = '#8e8b86'; g.lineWidth = 1.2;
+      g.strokeRect(f.X(-0.95), f.Y(13.6), 0.95 * f.s, 13.6 * f.s);
+      for (const z of [3.4, 6.4, 9.4]) {
+        g.strokeStyle = 'rgba(142,139,134,.7)'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(f.X(-0.95), f.Y(z)); g.lineTo(f.X(0), f.Y(z)); g.stroke();
+      }
+      vtxt(g, '主楼（4 层混凝土框架）', f.X(-0.5), f.Y(8.0), '#b9b4ad', 10);
+    }
+    // 砖围墙
+    if (!isHouse && P.Hw > 0) {
       g.fillStyle = 'rgba(139,106,88,.35)';
       g.fillRect(f.X(-1.72), f.Y(P.Hw), 0.46 * f.s, P.Hw * f.s);
       g.strokeStyle = 'rgba(139,106,88,.8)'; g.lineWidth = 1;

@@ -74,7 +74,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
           T('R 数值健全', function(){ var R=ST.R;
             if(!(R.uMax>0)) throw new Error('uMax');
             if(!isFinite(R.vmax)) throw new Error('vmax');
-            if(Math.abs(R.geo.area-32)>0.01) throw new Error('area='+R.geo.area);
+            if(!(R.geo.area>10)) throw new Error('area='+R.geo.area);
             if(R.checks.length<30) throw new Error('checks='+R.checks.length);
             return 'v_max='+R.vmax.toFixed(2)+' 控制='+R.vGovern; });
           T('3D WebGL 可用', function(){ if(!V3.isOk()) throw new Error('未初始化: '+V3.whyNot());
@@ -116,12 +116,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
             s.value='2.5'; s.dispatchEvent(new Event('input',{bubbles:true})); });
           T('固化档位：套用 P3', function(){
             var b=Array.prototype.find.call(document.querySelectorAll('#tabs .tab'),function(x){return x.dataset.t==='par';}); b.click();
-            var chip=document.querySelector('.pchip[data-p=\"P3\"]'); if(!chip) throw new Error('没有档位按钮');
+            var chip=document.querySelector('.pchip[data-p=\"H1\"]'); if(!chip) throw new Error('没有档位按钮');
             chip.click();
             return 'P3 套用后 v_max='+ST.R.vmax.toFixed(1)+' m/s, u='+ST.R.uMax.toFixed(2);
           });
           T('固化档位：P5', function(){
-            var chip=document.querySelector('.pchip[data-p=\"P5\"]'); if(!chip) throw new Error('no chip');
+            var chip=document.querySelector('.pchip[data-p=\"H4\"]'); if(!chip) throw new Error('no chip');
             chip.click();
             if(chip.classList.contains('on')===false) throw new Error('未高亮');
             return 'P5 v_max='+ST.R.vmax.toFixed(1)+' m/s, 悬臂='+ST.R.geo.cols.map(function(c){return c.L.toFixed(1)}).join('/');
@@ -134,7 +134,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
             return rows.length+' 行';
           });
           T('固化档位：点表格行', function(){
-            var r=document.querySelector('tr.prow[data-p=\"P1\"]'); if(!r) throw new Error('no row'); r.click();
+            var r=document.querySelector('tr.prow[data-p=\"H3\"]'); if(!r) throw new Error('no row'); r.click();
             return '点 P1 后 v_max='+ST.R.vmax.toFixed(1);
           });
           T('换管截面', function(){

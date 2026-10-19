@@ -4,9 +4,12 @@
    ===================================================================== */
 const V3 = (function () {
 
-  let ok = false, why = '', renderer, scene, camera, canvas, host;
+  let ok = false, why = '', renderer, scene, camera, canvas, host, lastLayout = '';
   let groups = {}, labels = [], R = null, opt = null;
   let cam = { az: 0.62, pol: 1.02, dist: 14, tx: 4, ty: 1.35, tz: 1.9 };
+  const CAM_DEFAULT = () => (R && R.P.layout === 'house')
+    ? { az: 0.60, pol: 0.92, dist: 18, tx: 4.8, ty: 2.0, tz: 2.2 }
+    : { az: 0.62, pol: 1.02, dist: 14, tx: 4, ty: 1.35, tz: 1.9 };
   let dragging = false, lastX = 0, lastY = 0, pinch = 0, lastTap = 0;
 
   const UTIL = u => u > 1 ? 0xFF5A5A : u > 0.85 ? 0xFFB84D : 0x44C7A9;
@@ -146,7 +149,7 @@ const V3 = (function () {
     canvas.addEventListener('wheel', e => { e.preventDefault(); cam.dist = Math.max(4, Math.min(70, cam.dist * (1 + e.deltaY * 0.0012))); draw(); }, { passive: false });
   }
 
-  function resetView() { cam = { az: 0.62, pol: 1.02, dist: 14, tx: 4, ty: 1.35, tz: 1.9 }; draw(); }
+  function resetView() { cam = CAM_DEFAULT(); draw(); }
   function topView() { cam = { az: 0.0001, pol: 0.20, dist: 13, tx: 4, ty: 0.5, tz: 2.0 }; draw(); }
   function frontView() { cam = { az: 0.0001, pol: 1.30, dist: 11.5, tx: 4, ty: 1.4, tz: 2.0 }; draw(); }
   function endView() { cam = { az: 1.5708, pol: 1.35, dist: 11, tx: 1.2, ty: 1.4, tz: 2.0 }; draw(); }
@@ -155,14 +158,19 @@ const V3 = (function () {
     // 用当前模型的实际包围球算"刚好装得下"的距离
     let R = 6;
     try {
-      const box = new THREE.Box3().setFromObject(scene);
+      const box = new THREE.Box3();
+      let any = false;
+      for (const k of ['frame', 'net', 'found', 'load', 'reac']) {
+        if (groups[k] && groups[k].children.length) { box.expandByObject(groups[k]); any = true; }
+      }
+      if (!any) box.setFromObject(scene);
       const sph = box.getBoundingSphere(new THREE.Sphere());
       R = Math.max(2.5, sph.radius);
     } catch (e) { }
     const halfY = camera.fov * Math.PI / 360;
     const halfX = Math.atan(Math.tan(halfY) * Math.max(camera.aspect, 0.2));
     const half = Math.min(halfY, halfX);
-    return R / Math.sin(half) * 0.92;
+    return R / Math.sin(half) * 1.05;
   }
   function draw() {
     if (!ok) return;
@@ -218,7 +226,9 @@ const V3 = (function () {
   /* ---------------- 建模 ---------------- */
   function build(RR, o) {
     if (!ok) return;
+    if (RR.P.layout !== lastLayout) { lastLayout = RR.P.layout; cam = CAM_DEFAULT(); }
     R = RR; opt = o || {};
+    if (RR.P.layout === 'house') return buildHouse(RR, o);
     const P = R.P, geo = R.geo;
 
     Object.values(groups).forEach(gp => scene.remove(gp));
@@ -378,6 +388,106 @@ const V3 = (function () {
     resize();
     return true;
   }
+  /* ---------------- 靠主楼悬挑：主楼 + 院子围墙 + 墙面托架 ---------------- */
+  function buildHouse(RR, o) {
+    const P = RR.P, geo = RR.geo, S = P.siteInfo || {};
+    const HOUSE = { x0: 0, x1: 9.6, z0: -10, z1: 0, h: 13.6 };
+    const YARD = { x0: -1.04, x1: 10.69, z0: 0, z1: 9.79, wh: 2.0 };
+
+    Object.values(groups).forEach(gp => scene.remove(gp));
+    labels.forEach(sp => scene.remove(sp));
+    groups = {}; labels = [];
+    const G = { wall: new THREE.Group(), net: new THREE.Group(), frame: new THREE.Group(),
+                found: new THREE.Group(), load: new THREE.Group(), reac: new THREE.Group(), label: new THREE.Group() };
+    Object.values(G).forEach(gp => scene.add(gp));
+    groups = G;
+
+    // 主楼
+    const bt = brickTexture();
+    const hw = HOUSE.x1 - HOUSE.x0, hd = HOUSE.z1 - HOUSE.z0;
+    const house = box(HOUSE.x0 + hw / 2, HOUSE.h / 2, HOUSE.z0 + hd / 2, hw, HOUSE.h, hd, 0x8e8b86, G.wall);
+    house.material.transparent = true; house.material.opacity = 0.92;
+    // 楼层线
+    for (const z of [3.4, 6.4, 9.4]) {
+      const m = box(HOUSE.x0 + hw / 2, z, HOUSE.z0 + hd / 2, hw + 0.16, 0.22, hd + 0.16, 0x6f6c68, G.wall);
+    }
+    // 南面窗带（示意）
+    for (let i = 0; i < 3; i++) for (let k = 0; k < 4; k++) {
+      const wx = 1.2 + k * 2.4, wz = 2.2 + i * 3.0;
+      box(wx, wz, 0.02, 1.6, 1.5, 0.06, 0x38505e, G.wall);
+    }
+    const hl = labelSprite('主楼 9.6×10m / 13.6m 高（4 层）', '#9a938a');
+    hl.position.set(HOUSE.x1 / 2, HOUSE.h + 0.9, HOUSE.z0 + 2); G.label.add(hl);
+
+    // 院子围墙
+    box((YARD.x0 + YARD.x1) / 2, YARD.wh / 2, YARD.z1, YARD.x1 - YARD.x0, YARD.wh, 0.48, 0x8b6a58, G.wall);
+    box(YARD.x0, YARD.wh / 2, YARD.z1 / 2, 0.48, YARD.wh, YARD.z1, 0x8b6a58, G.wall);
+    const wl = labelSprite('围墙 2.0m（不能当主受力）', '#a8846c');
+    wl.scale.multiplyScalar(0.85);
+    wl.position.set(YARD.x1 * 0.55, YARD.wh + 0.5, YARD.z1); G.label.add(wl);
+
+    // 网面
+    const nt = netTexture();
+    nt.repeat.set(Math.round(geo.netL * 4), Math.round(geo.netW * 4));
+    const slope = P.slopeDeg * Math.PI / 180;
+    const netMat = new THREE.MeshStandardMaterial({ map: nt, transparent: true, opacity: 0.78,
+      side: THREE.DoubleSide, roughness: .9, alphaTest: 0.05, depthWrite: false });
+    const net = new THREE.Mesh(new THREE.PlaneGeometry(geo.netL, geo.netW / Math.cos(slope)), netMat);
+    net.rotation.x = -Math.PI / 2 + slope;
+    net.position.set(geo.x0 + geo.netL / 2, P.wallZs - geo.rise / 2, geo.netW / 2);
+    G.net.add(net);
+
+    const caseKey = o.caseKey || 'up';
+    const ZB = P.wallZs, ZA = P.anchorZ, TIPZ = ZB - geo.rise;
+    geo.cols.forEach((c, ci) => {
+      const row = RR.perCol[ci].cases[caseKey];
+      const uc = v => v > 1 ? 0xFF5A5A : v > 0.85 ? 0xFFB84D : 0x44C7A9;
+      // 挑臂
+      tube({ x: c.base.x, y: ZB, z: 0 }, { x: c.tip.x, y: TIPZ, z: c.tip.y }, 0.048, uc(row.beam.sigmaUtil), G.frame);
+      // 刚性斜撑
+      const diagU = row.diag ? row.diag.util : 0;
+      tube({ x: c.base.x, y: ZA, z: 0 }, { x: c.tip.x, y: TIPZ, z: c.tip.y }, 0.057,
+           row.frame.diagDropped ? 0x3a4a55 : uc(diagU), G.frame);
+      // 墙底板 + 斜撑锚板
+      box(c.base.x, ZB, 0.09, 0.30, 0.30, 0.16, 0x3a424c, G.found);
+      box(c.base.x, ZA, 0.09, 0.26, 0.26, 0.16, 0x3a424c, G.found);
+      const lb = labelSprite(c.id + '  挑' + c.L.toFixed(1) + 'm/担' + c.tw.toFixed(1) + 'm', '#9FB4C2');
+      lb.scale.multiplyScalar(0.72);
+      lb.position.set(c.tip.x, TIPZ + 0.30 + (ci % 2) * 0.26, c.tip.y + 0.15); G.label.add(lb);
+      // 荷载箭头
+      const Pv = -row.Pvert, Fx = row.Fx;
+      if (Math.abs(Pv) > 1) {
+        const up = Pv > 0;
+        arrow3({ x: c.tip.x, y: up ? TIPZ + 0.9 : TIPZ - 0.9, z: c.tip.y },
+               { x: c.tip.x, y: up ? TIPZ + 0.06 : TIPZ - 0.06, z: c.tip.y }, 0xFF9F43, G.load, 0.038);
+      }
+      if (Math.abs(Fx) > 1) {
+        const sg = Fx > 0 ? 1 : -1;
+        arrow3({ x: c.tip.x, y: TIPZ + 0.22, z: c.tip.y - 0.9 * sg },
+               { x: c.tip.x, y: TIPZ + 0.22, z: c.tip.y - 0.06 * sg }, 0x5CC8FF, G.load, 0.034);
+      }
+    });
+    // 边梁 + 贴墙纵梁 + 上部纵梁
+    tube({ x: geo.x0, y: TIPZ, z: geo.netW }, { x: geo.x1, y: TIPZ, z: geo.netW }, 0.048, 0x7d8f9b, G.frame);
+    tube({ x: geo.x0, y: ZB, z: 0.1 }, { x: geo.x1, y: ZB, z: 0.1 }, 0.042, 0x7d8f9b, G.frame);
+    tube({ x: geo.x0, y: ZA, z: 0.1 }, { x: geo.x1, y: ZA, z: 0.1 }, 0.036, 0x7d8f9b, G.frame);
+
+    if (o.showWind !== false) {
+      for (let k = 0; k < 5; k++) {
+        const x = geo.x0 + geo.netL * (0.12 + 0.19 * k);
+        arrow3({ x, y: ZB + 1.3, z: geo.netW + 1.7 }, { x, y: ZB + 1.3, z: geo.netW + 0.16 }, 0x4FA8FF, G.load, 0.028);
+      }
+      const wl2 = labelSprite('风 ' + RR.W.v.toFixed(0) + ' m/s  ' + RR.W.beaufort, '#5CC8FF');
+      wl2.position.set(geo.x0 + geo.netL / 2, ZB + 1.85, geo.netW + 1.0); G.label.add(wl2);
+    }
+    if (o.showNet === false) G.net.visible = false;
+    if (o.showLoad === false) G.load.visible = false;
+    if (o.showReac === false) G.reac.visible = false;
+    if (o.showLabel === false) G.label.visible = false;
+    if (o.showFound === false) G.found.visible = false;
+    draw();
+  }
+
   function setVisible(g, v) { if (ok && groups[g]) { groups[g].visible = v; draw(); } }
   function isOk() { return ok; }
   function whyNot() { return why; }
