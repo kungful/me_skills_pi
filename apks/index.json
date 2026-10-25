@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25 21:31:45",
+  "generatedAt": "2026-10-25 21:58:00",
   "count": 15,
-  "totalApkBytes": 50349959,
+  "totalApkBytes": 50352219,
   "categories": [
     {
       "id": "design",
@@ -82,13 +82,13 @@
         {
           "slug": "vocabtype",
           "title": "词打",
-          "version": "1.0",
+          "version": "1.1",
           "apk": "learning/vocabtype/vocabtype.apk",
           "source": "learning/vocabtype/src/",
-          "size": 7185927,
-          "sha256": "59a9334d082e28d8d4cebdd0eb0be9b7075ef531bf4fbdfcd0e9760df670ab46",
-          "builtAt": "2026-10-25 21:11:56",
-          "notes": "单词打字背单词"
+          "size": 7188187,
+          "sha256": "a65f55206e8ff2a42794f6df1b486411b786c7f199471b7111d8bd27914addaa",
+          "builtAt": "2026-10-25 21:57:42",
+          "notes": "打字记单词：有道/百度在线真人发音 + 播放器式自动连播 + 后台锁屏播放 + 中文释义朗读"
         }
       ]
     },

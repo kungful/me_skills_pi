@@ -94,6 +94,11 @@ class Speaker(ctx: Context) {
 
     private var loopWord: String? = null
     private var loopSent: String? = null
+    private var series: List<List<String>>? = null
+    private var seriesAt = 0
+    private var seriesOnGroup: ((Int) -> Unit)? = null
+    private var seriesOnDone: (() -> Unit)? = null
+
     private var queue: List<String> = emptyList()
     private var qi = 0
     private var loop = false
@@ -230,10 +235,37 @@ class Speaker(ctx: Context) {
         start(items, loop = false, onLast = onSecond)
     }
 
+    /**
+     * 播放器式连播：把 [groups] 一组一组播下去，
+     * 每组内部按顺序念（单词 → 中文 → 句子），组与组之间自动衔接。
+     * [onGroup] 每组开始前回调（界面靠它翻页），[onDone] 整批播完回调。
+     */
+    fun playSeries(
+        groups: List<List<String>>,
+        from: Int,
+        onGroup: (Int) -> Unit,
+        onDone: () -> Unit
+    ) {
+        if (groups.isEmpty()) return
+        series = groups
+        seriesAt = from.coerceIn(0, groups.size - 1)
+        seriesOnGroup = onGroup
+        seriesOnDone = onDone
+        loopWord = null
+        loopSent = null
+        nowLoop = false
+        val t = ++gen
+        stepSeries(t)
+    }
+
+    /** 当前是不是在连播 */
+    val inSeries: Boolean get() = series != null
+
     /** 停掉循环（同时也停掉正在播的） */
     fun stopLoop() = stop()
 
     fun stop() {
+        series = null
         loopWord = null
         loopSent = null
         gen++
@@ -256,6 +288,13 @@ class Speaker(ctx: Context) {
     }
 
     fun resume() {
+        if (series != null) {
+            val t = ++gen
+            nowPlaying = true
+            fire()
+            stepSeries(t)
+            return
+        }
         if (queue.isEmpty()) return
         val t = ++gen
         nowPlaying = true
@@ -263,7 +302,7 @@ class Speaker(ctx: Context) {
         step(queue, qi.coerceIn(0, queue.size - 1), t, loop, onLast)
     }
 
-    val canResume: Boolean get() = queue.isNotEmpty()
+    val canResume: Boolean get() = series != null || queue.isNotEmpty()
 
     fun shutdown() {
         gen++
@@ -299,6 +338,36 @@ class Speaker(ctx: Context) {
         step(items, 0, t, loop, onLast)
     }
 
+    private fun stepSeries(t: Int) {
+        if (t != gen) return
+        val g = series
+        if (g == null || seriesAt !in g.indices) {
+            series = null
+            nowPlaying = false
+            fire()
+            seriesOnDone?.invoke()
+            return
+        }
+        seriesOnGroup?.invoke(seriesAt)
+        val items = g[seriesAt].filter { it.isNotBlank() }
+        if (items.isEmpty()) {
+            seriesAt++
+            stepSeries(t)
+            return
+        }
+        queue = items
+        qi = 0
+        nowLabel = items.first()
+        nowPlaying = true
+        fire()
+        step(items, 0, t, false) {
+            if (t == gen) {
+                seriesAt++
+                stepSeries(t)
+            }
+        }
+    }
+
     private fun step(items: List<String>, i: Int, t: Int, loop: Boolean, onLast: (() -> Unit)?) {
         if (t != gen) return
         if (i >= items.size) {
@@ -329,8 +398,12 @@ class Speaker(ctx: Context) {
         }
         lastSpokeAt = System.currentTimeMillis()
         val tryNet = engine == 1 && voice.canSay(text)
+        android.util.Log.i("VT", "utter t=$t tryNet=$tryNet engine=$engine canSay=${voice.canSay(text)} text=${text.take(30)}")
         if (tryNet) {
-            voice.play(text, { if (t == gen) onEnd() }, { if (t == gen) utterTts(text, t, onEnd) })
+            voice.play(text, { if (t == gen) onEnd() }, {
+                android.util.Log.w("VT", "net FAIL -> tts: ${text.take(30)}")
+                if (t == gen) utterTts(text, t, onEnd)
+            })
         } else {
             utterTts(text, t, onEnd)
         }
@@ -344,6 +417,7 @@ class Speaker(ctx: Context) {
         }
         ttsDone = onEnd
         lastSpokeAt = System.currentTimeMillis()
+        android.util.Log.i("VT", "tts speak ready=$ready: ${text.take(30)}")
         val chinese = voice.isChinese(text)
         runCatching {
             tts?.setLanguage(

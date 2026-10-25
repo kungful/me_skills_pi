@@ -411,6 +411,9 @@ class MainActivity : AppCompatActivity() {
 
     private var footFlash: Runnable? = null
 
+    /** 播放器式自动连播 */
+    private var autoPlaying = false
+
     private fun flashFoot(msg: String) {
         tvFoot.text = msg
         footFlash?.let { handler.removeCallbacks(it) }
@@ -420,11 +423,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** 把当前词的例句（离线 + 可选 AI）准备好 */
-    private fun showCurrent() {
+    private fun showCurrent(silent: Boolean = false) {
         val w = cur()
         aiToken++
-        speaker.stopLoop()
-        speaker.stop()
+        if (!silent) {
+            speaker.stopLoop()
+            speaker.stop()
+        }
         if (w == null) {
             targets = emptyList()
             buf = ""
@@ -466,7 +471,7 @@ class MainActivity : AppCompatActivity() {
         updateStats()
         maybeAi(w)
 
-        if (prefs.autoPlayWord) {
+        if (!silent && !autoPlaying && prefs.autoPlayWord) {
             val say = if (mode == MODE_WORD || targets.size == 1) w.name else w.name
             val sent = if (mode == MODE_WORD) null else curSentenceText()
             if (sent != null && prefs.autoPlaySentence) {
@@ -475,7 +480,7 @@ class MainActivity : AppCompatActivity() {
                 speaker.sayWord(say, w.trans)
             }
         }
-        if (prefs.loopAudio) startLoop()
+        if (!silent && !autoPlaying && prefs.loopAudio) startLoop()
     }
 
     private fun fillTargets(w: W) {
@@ -934,13 +939,82 @@ class MainActivity : AppCompatActivity() {
 
     // ---------------------------------------------------------------- 播放
 
+    /** 把当前词序排成播放列表：每组 = 英文单词 →（中文）→ 句子 */
+    private fun buildSeries(): List<List<String>> {
+        val out = ArrayList<List<String>>()
+        val total = if (customWords != null) customWords!!.size else order.size
+        for (i in 0 until total) {
+            val w = wordAt(i) ?: continue
+            val g = ArrayList<String>(3)
+            g.add(w.name)
+            if (prefs.readZh) Speaker.zhSpeech(w.trans).takeIf { it.isNotBlank() }?.let { g.add(it) }
+            val sent = sentEnAt(i)
+            if (!sent.isNullOrBlank()) g.add(sent)
+            out.add(g)
+        }
+        return out
+    }
+
+    private fun wordAt(i: Int): W? {
+        customWords?.let { return it.getOrNull(i) }
+        val oi = order.getOrNull(i) ?: return null
+        return dict.getOrNull(oi)
+    }
+
+    private fun sentEnAt(i: Int): String? = when (mode) {
+        MODE_SHORT -> wordAt(i)?.let { Sent.short(this, it.name)?.en }
+        MODE_COMPLEX -> wordAt(i)?.let { Sent.complex(this, it.name)?.en }
+        else -> null
+    }
+
+    /** 播放器式自动连播：从当前词开始，一个接一个念下去 */
+    private fun startAutoPlay(from: Int = pos) {
+        val list = buildSeries()
+        if (list.isEmpty()) {
+            toast("词库是空的")
+            return
+        }
+        autoPlaying = true
+        paintPlayState()
+        speaker.playSeries(
+            list, from,
+            onGroup = { idx ->
+                // 播放器翻页：界面跟着走（但不打断播放）
+                if (idx != pos && idx in 0 until list.size) {
+                    pos = idx
+                    if (customWords == null) prefs.setDictProgress(prefs.dictId, pos)
+                    showCurrent(silent = true)
+                }
+                paintPlayState()
+            },
+            onDone = {
+                autoPlaying = false
+                paintPlayState()
+                toast("全部播完")
+            }
+        )
+        SpeakService.ensure(this)
+    }
+
+    private fun stopAutoPlay() {
+        autoPlaying = false
+        speaker.stop()
+        paintPlayState()
+    }
+
+    private fun paintPlayState() {
+        findViewById<ImageButton>(R.id.btnPlay)?.isSelected = autoPlaying
+        findViewById<ImageButton>(R.id.btnPlay)?.contentDescription =
+            if (autoPlaying) "停止自动连播" else "播放"
+    }
+
     private fun playAll() {
-        val w = cur() ?: return
-        val sent = curSentenceText()
-        if (sent != null) {
-            speaker.saySentence(sent, curSentenceZh())
+        if (autoPlaying) {
+            stopAutoPlay()
+            flashFoot("自动连播已停止")
         } else {
-            speaker.sayWord(w.name, w.trans)
+            startAutoPlay()
+            flashFoot("自动连播开始 · 退到后台/锁屏也会继续")
         }
     }
 

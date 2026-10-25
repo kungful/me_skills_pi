@@ -124,7 +124,7 @@ def main():
     n = nodes(x)
     tv = next((e for e in alln(x) if e["desc"].startswith("VT|")), None)
     print("  当前目标: %s" % (tv["desc"] if tv else "?"))
-    print("  打字区   : %s" % (n.get("typeView", {}).get("bounds")))
+    print("  打字区   : %s" % (n.get("typeView", {}).get("bounds"),))
 
     print("=" * 64)
     print("1) 点 PLAY → 看网络计数")
