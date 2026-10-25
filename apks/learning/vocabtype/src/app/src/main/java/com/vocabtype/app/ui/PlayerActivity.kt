@@ -16,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.vocabtype.app.R
+import com.vocabtype.app.core.EdgeTts
 import com.vocabtype.app.core.Insets
 import com.vocabtype.app.core.Prefs
 import com.vocabtype.app.core.SpeakService
@@ -370,6 +371,16 @@ class PlayerActivity : AppCompatActivity() {
         }
         seg("发音引擎", arrayOf("系统 TTS", "有道在线"), { prefs.voiceEngine }) {
             prefs.voiceEngine = it; applyParams(); afterChange()
+        }
+        toggle("微软神经语音", "音质最好（晓晓/云希），需联网；第一次慢，之后走缓存", { prefs.edgeVoiceOn }) {
+            prefs.edgeVoiceOn = it; applyParams(); afterChange()
+        }
+        seg(
+            "微软中文音色",
+            EdgeTts.ZH_VOICES.map { it.label.substringBefore("（") }.toTypedArray(),
+            { prefs.edgeZhVoice.let { id -> EdgeTts.ZH_VOICES.indexOfFirst { it.id == id }.coerceAtLeast(0) } }
+        ) {
+            prefs.edgeZhVoice = EdgeTts.ZH_VOICES[it].id; applyParams()
         }
 
         head("SCOPE // 范围")

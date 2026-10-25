@@ -172,6 +172,8 @@ class Speaker(ctx: Context) {
     /** 按设置项配好引擎 / 口音 / 语速 / 中文 */
     fun applyPrefs(p: Prefs): Speaker {
         voice.netOn = p.voiceEngine == 1
+        voice.edgeOn = p.edgeVoiceOn
+        voice.edgeVoice = if (voice.isChinese("中")) p.edgeZhVoice else p.edgeZhVoice
         engine = p.voiceEngine
         accent = p.accent
         rate = p.ttsRate

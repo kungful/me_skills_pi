@@ -72,6 +72,14 @@ class Voice(private val ctx: Context) {
     @Volatile
     var netOn = true
 
+    /** 0 = 有道/百度（快）; 1 = 微软神经语音（音质最好，稍慢） */
+    @Volatile
+    var edgeOn = false
+
+    /** 微软音色 id */
+    @Volatile
+    var edgeVoice: String = if (accent == UK) EdgeTts.VOICE_ARIA else EdgeTts.VOICE_ARIA
+
     private val handler = Handler(Looper.getMainLooper())
     private val dir = File(ctx.filesDir, DIR)
     private val pool = Executors.newFixedThreadPool(3)
@@ -279,13 +287,14 @@ class Voice(private val ctx: Context) {
         val q = URLEncoder.encode(t, "UTF-8").replace("+", "%20")
         val out = ArrayList<Src>(3)
         if (isChinese(t)) {
-            // 中文：有道真人词库最自然（但只吃词条，整句会 500）
+            if (edgeOn) out.add(Src("edge", "EDGE"))
             if (isEntry(t)) {
                 out.add(Src("youdao-zh", "https://dict.youdao.com/dictvoice?le=zh&audio=$q"))
             }
             out.add(Src("baidu-z", "https://fanyi.baidu.com/gettts?lan=zh&text=$q&spd=$spd&source=web"))
             out.add(Src("google-z", "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=zh-CN&q=$q"))
         } else {
+            if (edgeOn) out.add(Src("edge", "EDGE"))
             if (isEntry(t)) {
                 out.add(Src("youdao-$accent", "https://dict.youdao.com/dictvoice?audio=$q&type=$accent"))
             }
@@ -339,6 +348,7 @@ class Voice(private val ctx: Context) {
 
     private fun fetch(s: Src, text: String, deadKey: String, cacheKey: String): File? {
         if (!netOn) return null
+        if (s.url == "EDGE") return fetchEdge(text, deadKey, cacheKey)
         var conn: HttpURLConnection? = null
         var tmp: File? = null
         return try {
@@ -390,6 +400,24 @@ class Voice(private val ctx: Context) {
             null
         } finally {
             runCatching { conn?.disconnect() }
+        }
+    }
+
+    /** 微软神经语音：WebSocket 合成后落盘 */
+    private fun fetchEdge(text: String, deadKey: String, cacheKey: String): File? {
+        return try {
+            val body = EdgeTts.synth(text, edgeVoice, ((rate - 1f) * 100).toInt())
+            if (body == null || body.size < 1024) {
+                dead.add(deadKey)
+                return null
+            }
+            dir.mkdirs()
+            val out = File(dir, sha1("C|" + cacheKey) + ".mp3")
+            out.writeBytes(body)
+            out
+        } catch (e: Exception) {
+            dead.add(deadKey)
+            null
         }
     }
 

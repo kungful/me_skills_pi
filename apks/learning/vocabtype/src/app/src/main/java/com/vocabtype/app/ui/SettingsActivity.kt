@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.vocabtype.app.R
 import com.vocabtype.app.core.Insets
 import com.vocabtype.app.core.Prefs
+import com.vocabtype.app.core.EdgeTts
 import com.vocabtype.app.core.Voice
 import com.vocabtype.app.data.Dicts
 import java.util.Locale
@@ -106,6 +107,16 @@ class SettingsActivity : AppCompatActivity() {
             toast(if (it == 1) "已切到有道在线真人发音" else "已切回系统 TTS")
         })
         seg("口音", arrayOf("英音 UK", "美音 US"), { prefs.accent - 1 }, { prefs.accent = it + 1 })
+        toggle(
+            "微软神经语音", "音质最好（晓晓/云希），需要联网；第一次合成稍慢，之后走缓存",
+            { prefs.edgeVoiceOn }, { prefs.edgeVoiceOn = it }
+        )
+        seg(
+            "微软中文音色",
+            arrayOf("晓晓", "晓伊", "云希", "云扬"),
+            { edgeIdx() },
+            { prefs.edgeZhVoice = EdgeTts.ZH_VOICES[it].id }
+        )
         toggle(
             "中文释义朗读", "英文读完后接着用中文念一遍释义；句子里连中文翻译一起读",
             { prefs.readZh }, { prefs.readZh = it }
@@ -351,6 +362,12 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     // ------------------------------------------------------------ 发音缓存
+
+    private fun edgeIdx(): Int {
+        val id = prefs.edgeZhVoice
+        val i = EdgeTts.ZH_VOICES.indexOfFirst { it.id == id }
+        return if (i < 0) 0 else i
+    }
 
     private fun cacheInfo(): String =
         "${voice.cacheCount()} 条 / " + String.format(Locale.US, "%.1f MB", voice.sizeBytes() / 1048576.0)

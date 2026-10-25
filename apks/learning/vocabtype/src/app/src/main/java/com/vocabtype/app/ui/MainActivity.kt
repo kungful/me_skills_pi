@@ -149,6 +149,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         prefs = Prefs(this)
+        com.vocabtype.app.core.EdgeDrm.selfTest()
         speaker = VoiceBox.get(this, prefs)
         // 申请通知权限（Android 13+），后台朗读的常驻通知要用
         runCatching {

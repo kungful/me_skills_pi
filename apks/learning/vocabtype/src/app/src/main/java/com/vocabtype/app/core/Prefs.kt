@@ -95,6 +95,16 @@ class Prefs(ctx: Context) {
         get() = sp.getInt("accent", 2)
         set(v) = sp.edit().putInt("accent", v).apply()
 
+    /** 微软神经语音（音质最好，需要联网，稍慢） */
+    var edgeVoiceOn: Boolean
+        get() = sp.getBoolean("edgeVoiceOn", false)
+        set(v) = sp.edit().putBoolean("edgeVoiceOn", v).apply()
+
+    /** 微软中文音色 id */
+    var edgeZhVoice: String
+        get() = sp.getString("edgeZhVoice", "zh-CN-XiaoxiaoNeural") ?: "zh-CN-XiaoxiaoNeural"
+        set(v) = sp.edit().putString("edgeZhVoice", v).apply()
+
     /** 中文释义朗读：英文 → 释义（百度 zh） */
     var readZh: Boolean
         get() = sp.getBoolean("readZh", false)
