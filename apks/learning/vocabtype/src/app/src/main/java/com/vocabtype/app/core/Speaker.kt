@@ -374,8 +374,11 @@ class Speaker(ctx: Context) {
             qi = 0
             onLast?.invoke()
             if (!loop) {
-                nowPlaying = false
-                fire()
+                // 连播（series）由 stepSeries 决定何时真正结束，这里不动状态
+                if (series == null) {
+                    nowPlaying = false
+                    fire()
+                }
                 return
             }
             val gap = if (System.currentTimeMillis() - lastSpokeAt < 200) 600L else 500L
