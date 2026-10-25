@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19 11:01:44",
+  "generatedAt": "2026-10-25 21:31:45",
   "count": 15,
-  "totalApkBytes": 50341575,
+  "totalApkBytes": 50349959,
   "categories": [
     {
       "id": "design",
@@ -85,9 +85,9 @@
           "version": "1.0",
           "apk": "learning/vocabtype/vocabtype.apk",
           "source": "learning/vocabtype/src/",
-          "size": 7177543,
-          "sha256": "93c0a2613c0d06149e1188b7f98814b7ad7aaf6e30afdb3a88382c97bc53bcfe",
-          "builtAt": "2026-10-10 09:26:41",
+          "size": 7185927,
+          "sha256": "59a9334d082e28d8d4cebdd0eb0be9b7075ef531bf4fbdfcd0e9760df670ab46",
+          "builtAt": "2026-10-25 21:11:56",
           "notes": "单词打字背单词"
         }
       ]

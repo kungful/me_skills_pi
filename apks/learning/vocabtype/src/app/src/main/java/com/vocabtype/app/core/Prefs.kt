@@ -95,6 +95,16 @@ class Prefs(ctx: Context) {
         get() = sp.getInt("accent", 2)
         set(v) = sp.edit().putInt("accent", v).apply()
 
+    /** 中文释义朗读：英文 → 释义（百度 zh） */
+    var readZh: Boolean
+        get() = sp.getBoolean("readZh", false)
+        set(v) = sp.edit().putBoolean("readZh", v).apply()
+
+    /** 后台播放：切出去/锁屏也继续朗读（前台服务） */
+    var backgroundPlay: Boolean
+        get() = sp.getBoolean("bgPlay", true)
+        set(v) = sp.edit().putBoolean("bgPlay", v).apply()
+
     /** 换词时后台预下载单词发音，点播放零等待 */
     var prefetchVoice: Boolean
         get() = sp.getBoolean("prefetchVoice", true)

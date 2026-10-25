@@ -107,6 +107,15 @@ class SettingsActivity : AppCompatActivity() {
         })
         seg("口音", arrayOf("英音 UK", "美音 US"), { prefs.accent - 1 }, { prefs.accent = it + 1 })
         toggle(
+            "中文释义朗读", "英文读完后接着用中文念一遍释义；句子里连中文翻译一起读",
+            { prefs.readZh }, { prefs.readZh = it }
+        )
+        toggle(
+            "后台播放", "切出 App / 锁屏也继续朗读（通知栏有暂停、停止按钮）",
+            { prefs.backgroundPlay }, { prefs.backgroundPlay = it }
+        )
+        note("长句和中文走百度翻译的免费发音接口（lan=en/uk/zh），单词走有道词典真人音；两边都失败才退回手机自带 TTS。")
+        toggle(
             "换词预下载", "换词时后台先把单词发音下好，点播放零等待",
             { prefs.prefetchVoice }, { prefs.prefetchVoice = it }
         )

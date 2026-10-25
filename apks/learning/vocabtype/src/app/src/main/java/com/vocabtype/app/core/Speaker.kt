@@ -9,24 +9,25 @@ import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
 
 /**
- * 发音器。两套引擎，一个统一出口：
+ * 发音器。一个统一出口，内部三条路：
  *
- *   · [engine] = 0 —— 系统 TTS（离线，长句也能读，音色看手机装了什么包）
- *   · [engine] = 1 —— 有道在线真人发音（[Voice]，音质好、英音/美音可选）
+ *   · 在线免费发音（[Voice]）：有道（单词真人音）+ 百度（长句 / 中文）
+ *   · 系统 TTS：兜底，任何一条在线路失败都会自动退到它
+ *   · 中文释义朗读：复用同一条链（百度 zh 明显好于手机自带中文包）
  *
- * 在线引擎只吃得下**词典条目**（单词/常用短语），所以：
- *   · 单词、短语 → 走有道，播不了（没网/语料里没有）自动退回系统 TTS；
- *   · 长句 → 直接走系统 TTS。
+ * 播放调度是「串行队列 + 代号(gen)」：换词 / 停止 / 暂停都会让旧回调作废，
+ * 循环朗读用「上一段播完再排下一段」实现，不会自己叠在一起。
  *
- * 播放调度是「串行队列 + 代号(gen)」：换词、停止都会让旧回调作废，
- * 循环朗读用「上一段播完再排下一段」实现，所以不会自己叠在一起。
+ * 全局只有一个实例（[VoiceBox]），[SpeakService] 和界面共用它，
+ * 所以退到后台、锁屏都不会被掐断。
  */
 class Speaker(ctx: Context) {
 
-    /** 0 = 系统 TTS；1 = 有道在线真人发音 */
-    var engine = 0
+    /** 0 = 只用系统 TTS；1 = 在线真人音优先（默认） */
+    var engine = 1
         set(v) {
             field = if (v == 1) 1 else 0
+            voice.netOn = field == 1
         }
 
     private val voice = Voice(ctx.applicationContext)
@@ -41,11 +42,20 @@ class Speaker(ctx: Context) {
             }
         }
 
+    /** 语速 0.4x ~ 2.0x：同时喂给 MediaPlayer 和系统 TTS */
     var rate: Float = 1.0f
         set(v) {
             field = v.coerceIn(0.4f, 2.0f)
             voice.rate = field
+            voice.spd = (3 * field).toInt().coerceIn(1, 7)
             runCatching { if (ready) tts?.setSpeechRate(field) }
+        }
+
+    /** 中文释义朗读 */
+    var zhOn = false
+        set(v) {
+            field = v
+            voice.zhOn = v
         }
 
     var available = false
@@ -56,23 +66,38 @@ class Speaker(ctx: Context) {
 
     var onReady: (() -> Unit)? = null
 
-    /** 能出声吗（在线引擎不依赖语音包） */
     val canSpeak: Boolean get() = engine == 1 || available
+
+    // —— 给后台通知用的状态 ——
+    @Volatile
+    var nowLabel: String = ""
+        private set
+    @Volatile
+    var nowPlaying: Boolean = false
+        private set
+    @Volatile
+    var nowLoop: Boolean = false
+        private set
+
+    /** 播放状态变化（服务用它刷通知） */
+    var onState: (() -> Unit)? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private var tts: TextToSpeech? = null
     private var ready = false
 
-    /** 当前这一轮播放的代号：只有公开入口和 stop 才会动它 */
+    /** 当前这一轮播放的代号：只有公开入口和 stop/pause 才会动它 */
     private var gen = 0
-
-    /** 系统 TTS 这一句播完后要叫谁 */
     private var ttsDone: (() -> Unit)? = null
     private var uttId = 0
     private var lastSpokeAt = 0L
 
     private var loopWord: String? = null
     private var loopSent: String? = null
+    private var queue: List<String> = emptyList()
+    private var qi = 0
+    private var loop = false
+    private var onLast: (() -> Unit)? = null
 
     init {
         try {
@@ -116,66 +141,131 @@ class Speaker(ctx: Context) {
         }
     }
 
-    /** 按设置项配好引擎 / 口音 / 语速 */
+    /** 按设置项配好引擎 / 口音 / 语速 / 中文 */
     fun applyPrefs(p: Prefs): Speaker {
+        voice.netOn = p.voiceEngine == 1
         engine = p.voiceEngine
         accent = p.accent
         rate = p.ttsRate
+        zhOn = p.readZh
         return this
     }
 
+    /** 设置页预下载共用同一个缓存目录 */
     val voiceEngine: Voice get() = voice
 
     // ---------------------------------------------------------------- 对外
 
+    /** 读一段纯文本（句中单词、复习页的词、随机句子） */
     fun say(text: String) {
         if (text.isBlank()) return
-        dropLoop()
-        play(listOf(text), loop = false, onLast = null)
+        loopWord = null
+        loopSent = null
+        start(listOf(text), loop = false, onLast = null)
     }
 
-    /** 循环朗读某段文字（比如整句） */
+    /** 单词：英文 →（中文模式下）释义 */
+    fun sayWord(en: String, zh: String?) {
+        if (en.isBlank() && zh.isNullOrBlank()) return
+        val items = ArrayList<String>(2)
+        if (en.isNotBlank()) items.add(en)
+        if (zhOn && !zh.isNullOrBlank()) {
+            val c = zhSpeech(zh)
+            if (c.isNotBlank()) items.add(c)
+        }
+        loopWord = null
+        loopSent = null
+        start(items, loop = false, onLast = null)
+    }
+
+    /** 整句：英文 →（中文模式下）中文 */
+    fun saySentence(en: String, zh: String?) {
+        if (en.isBlank()) return
+        val items = ArrayList<String>(2)
+        items.add(en)
+        if (zhOn && !zh.isNullOrBlank()) {
+            val c = zhSpeech(zh)
+            if (c.isNotBlank()) items.add(c)
+        }
+        loopWord = null
+        loopSent = null
+        start(items, loop = false, onLast = null)
+    }
+
+    /** 循环朗读某段文字 */
     fun loopSay(text: String) {
         if (text.isBlank()) return
         if (loopWord == text && loopSent == null) return
         stop()
         loopWord = text
         loopSent = null
-        play(listOf(text), loop = true, onLast = null)
+        start(listOf(text), loop = true, onLast = null)
     }
 
-    /** 单词 → 句子 交替循环（单词能吃到真人音，句子交给系统 TTS） */
-    fun loopPair(word: String, sent: String?) {
+    /** 单词 →（中文释义）→ 句子，交替循环 */
+    fun loopPair(word: String, sent: String?, zh: String? = null) {
         if (word.isBlank()) return
         if (loopWord == word && loopSent == sent) return
         stop()
         loopWord = word
         loopSent = sent
-        val items = if (sent.isNullOrBlank()) listOf(word) else listOf(word, sent)
-        play(items, loop = true, onLast = null)
+        val items = ArrayList<String>(3)
+        items.add(word)
+        if (zhOn && !zh.isNullOrBlank()) {
+            val c = zhSpeech(zh)
+            if (c.isNotBlank()) items.add(c)
+        }
+        if (!sent.isNullOrBlank()) items.add(sent)
+        start(items, loop = true, onLast = null)
     }
 
-    /** 单词 → 停顿 → 句子 */
+    /** 单词 →→ 句子（按顺序播一遍） */
     fun sayThen(first: String, second: String, onSecond: (() -> Unit)? = null) {
-        dropLoop()
-        play(listOf(first, second), loop = false, onLast = onSecond)
+        val items = ArrayList<String>(2)
+        if (first.isNotBlank()) items.add(first)
+        if (second.isNotBlank()) items.add(second)
+        if (items.isEmpty()) return
+        loopWord = null
+        loopSent = null
+        start(items, loop = false, onLast = onSecond)
     }
 
-    fun stopLoop() {
-        dropLoop()
-        gen++
-    }
+    /** 停掉循环（同时也停掉正在播的） */
+    fun stopLoop() = stop()
 
     fun stop() {
-        dropLoop()
+        loopWord = null
+        loopSent = null
         gen++
         ttsDone = null
         runCatching { tts?.stop() }
         voice.stop()
+        nowPlaying = false
+        nowLoop = false
+        fire()
     }
 
+    /** 暂停：记住当前这一句，[resume] 从它继续 */
+    fun pause() {
+        gen++
+        ttsDone = null
+        runCatching { tts?.stop() }
+        voice.stop()
+        nowPlaying = false
+        fire()
+    }
+
+    fun resume() {
+        if (queue.isEmpty()) return
+        val t = ++gen
+        nowPlaying = true
+        fire()
+        step(queue, qi.coerceIn(0, queue.size - 1), t, loop, onLast)
+    }
+
+    val canResume: Boolean get() = queue.isNotEmpty()
+
     fun shutdown() {
-        dropLoop()
         gen++
         ttsDone = null
         runCatching { tts?.stop() }
@@ -183,47 +273,64 @@ class Speaker(ctx: Context) {
         tts = null
         ready = false
         voice.shutdown()
+        nowPlaying = false
+        nowLoop = false
+        fire()
     }
 
-    /** 换词时预热发音，让点播放零等待 */
+    /** 换词时预热发音 */
     fun prefetch(text: String) {
         if (engine == 1) voice.prefetch(text)
     }
 
     // ---------------------------------------------------------------- 调度
 
-    private fun dropLoop() {
-        loopWord = null
-        loopSent = null
-    }
-
-    private fun play(items: List<String>, loop: Boolean, onLast: (() -> Unit)?) {
-        gen++
-        step(items, 0, gen, loop, onLast)
+    private fun start(items: List<String>, loop: Boolean, onLast: (() -> Unit)?) {
+        if (items.isEmpty()) return
+        queue = items
+        qi = 0
+        this.loop = loop
+        this.onLast = onLast
+        nowLoop = loop
+        nowLabel = items.firstOrNull().orEmpty()
+        nowPlaying = true
+        fire()
+        val t = ++gen
+        step(items, 0, t, loop, onLast)
     }
 
     private fun step(items: List<String>, i: Int, t: Int, loop: Boolean, onLast: (() -> Unit)?) {
         if (t != gen) return
         if (i >= items.size) {
+            qi = 0
             onLast?.invoke()
-            if (!loop) return
-            // 上一段刚播完就接着播，中间留一点气口，但别叠得太密
-            val gap = if (System.currentTimeMillis() - lastSpokeAt < 200) 500L else 420L
-            handler.postDelayed({ if (t == gen) step(items, 0, t, loop, onLast) }, gap)
+            if (!loop) {
+                nowPlaying = false
+                fire()
+                return
+            }
+            val gap = if (System.currentTimeMillis() - lastSpokeAt < 200) 600L else 500L
+            handler.postDelayed({
+                if (t == gen) step(items, 0, t, loop, onLast)
+            }, gap)
             return
         }
+        qi = i
+        nowLabel = items[i]
+        fire()
         utter(items[i], t) { step(items, i + 1, t, loop, onLast) }
     }
 
     private fun utter(text: String, t: Int, onEnd: () -> Unit) {
         if (t != gen) return
+        if (text.isBlank()) {
+            handler.postDelayed({ onEnd() }, 60L)
+            return
+        }
         lastSpokeAt = System.currentTimeMillis()
-        if (engine == 1 && voice.fits(text)) {
-            voice.play(
-                text,
-                onDone = { if (t == gen) onEnd() },
-                onFail = { if (t == gen) utterTts(text, t, onEnd) }
-            )
+        val tryNet = engine == 1 && voice.canSay(text)
+        if (tryNet) {
+            voice.play(text, { if (t == gen) onEnd() }, { if (t == gen) utterTts(text, t, onEnd) })
         } else {
             utterTts(text, t, onEnd)
         }
@@ -232,12 +339,18 @@ class Speaker(ctx: Context) {
     private fun utterTts(text: String, t: Int, onEnd: () -> Unit) {
         if (t != gen) return
         if (!ready) {
-            // 没装英文语音包：给个节流，别把循环变成空转
-            handler.postDelayed({ if (t == gen) onEnd() }, if (engine == 1) 900L else 600L)
+            handler.postDelayed({ if (t == gen) onEnd() }, 600L)
             return
         }
         ttsDone = onEnd
         lastSpokeAt = System.currentTimeMillis()
+        val chinese = voice.isChinese(text)
+        runCatching {
+            tts?.setLanguage(
+                if (chinese) Locale.CHINA
+                else if (accent == Voice.UK) Locale.UK else Locale.US
+            )
+        }
         val id = "vt-" + (++uttId)
         val r = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -254,4 +367,46 @@ class Speaker(ctx: Context) {
             handler.postDelayed({ if (t == gen) onEnd() }, 600L)
         }
     }
+
+    private fun fire() {
+        onState?.invoke()
+    }
+
+    companion object {
+        /** 把释义洗成能朗读的中文：去掉词性、括号、分隔符 */
+        fun zhSpeech(s: String): String {
+            var t = s
+            t = t.replace(Regex("[a-zA-Z]{1,6}\\.\\s*"), " ")
+            t = t.replace(Regex("[（(\\[【].{0,20}?[)）\\]】]"), " ")
+            t = t.replace(Regex("[；;·•/\\\\|｜、]+"), "，")
+            t = t.replace(Regex("[：:]+"), " ")
+            t = t.replace(Regex("\\s+"), " ")
+            t = t.replace(Regex("^[，。、\\s]+"), "")
+            t = t.replace(Regex("[，。、\\s]+$"), "")
+            return t.trim().take(180)
+        }
+    }
+}
+
+/**
+ * 进程内唯一的 [Speaker]。界面和 [SpeakService] 取到的是同一个实例，
+ * 所以切后台、锁屏都不会断音。
+ */
+object VoiceBox {
+
+    @Volatile
+    private var inst: Speaker? = null
+
+    fun get(ctx: Context, p: Prefs? = null): Speaker {
+        var s = inst
+        if (s == null) {
+            synchronized(this) {
+                s = inst ?: Speaker(ctx.applicationContext).also { inst = it }
+            }
+        }
+        if (p != null) s?.applyPrefs(p)
+        return s!!
+    }
+
+    fun peek(): Speaker? = inst
 }

@@ -2,6 +2,7 @@ package com.vocabtype.app.ui
 
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -26,6 +27,8 @@ import com.vocabtype.app.core.Ai
 import com.vocabtype.app.core.Insets
 import com.vocabtype.app.core.Prefs
 import com.vocabtype.app.core.Speaker
+import com.vocabtype.app.core.SpeakService
+import com.vocabtype.app.core.VoiceBox
 import com.vocabtype.app.data.DictMeta
 import com.vocabtype.app.data.Dicts
 import com.vocabtype.app.data.Sent
@@ -146,7 +149,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         prefs = Prefs(this)
-        speaker = Speaker(this).applyPrefs(prefs)
+        speaker = VoiceBox.get(this, prefs)
+        // 申请通知权限（Android 13+），后台朗读的常驻通知要用
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission("android.permission.POST_NOTIFICATIONS") !=
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), 91)
+            }
+        }
+        // 提前把前台服务挂上，退到后台才不会被掐
+        SpeakService.ensure(this)
         Sfx.enabled = prefs.soundOn
         Vib.enabled = prefs.vibrateOn
         Vib.bind(this)
@@ -269,8 +283,12 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<ImageButton>(R.id.btnZen).setOnClickListener { toggleZen() }
 
-        findViewById<ImageButton>(R.id.shortPlay).setOnClickListener { shortS?.let { speaker.say(it.en) } }
-        findViewById<ImageButton>(R.id.complexPlay).setOnClickListener { complexS?.let { speaker.say(it.en) } }
+        findViewById<ImageButton>(R.id.shortPlay).setOnClickListener {
+            shortS?.let { speaker.saySentence(it.en, it.zh) }
+        }
+        findViewById<ImageButton>(R.id.complexPlay).setOnClickListener {
+            complexS?.let { speaker.saySentence(it.en, it.zh) }
+        }
         findViewById<ImageButton>(R.id.shortRegen).setOnClickListener { regen(short = true) }
         findViewById<ImageButton>(R.id.complexRegen).setOnClickListener { regen(short = false) }
 
@@ -452,9 +470,9 @@ class MainActivity : AppCompatActivity() {
             val say = if (mode == MODE_WORD || targets.size == 1) w.name else w.name
             val sent = if (mode == MODE_WORD) null else curSentenceText()
             if (sent != null && prefs.autoPlaySentence) {
-                speaker.sayThen(say, sent)
+                speaker.saySentence(sent, curSentenceZh())
             } else {
-                speaker.say(say)
+                speaker.sayWord(say, w.trans)
             }
         }
         if (prefs.loopAudio) startLoop()
@@ -497,6 +515,12 @@ class MainActivity : AppCompatActivity() {
     private fun curSentenceText(): String? = when (mode) {
         MODE_SHORT -> shortS?.en
         MODE_COMPLEX -> complexS?.en
+        else -> null
+    }
+
+    private fun curSentenceZh(): String? = when (mode) {
+        MODE_SHORT -> shortS?.zh
+        MODE_COMPLEX -> complexS?.zh
         else -> null
     }
 
@@ -840,7 +864,7 @@ class MainActivity : AppCompatActivity() {
     private fun onChip(word: String, tv: TextView) {
         tv.isActivated = true
         val w = Dicts.lookupAny(this, word)
-        speaker.say(word)
+        speaker.sayWord(word, w?.trans)
         if (w != null) {
             refWord = w
             if (prefs.prefetchVoice) speaker.prefetch(w.name)
@@ -913,14 +937,18 @@ class MainActivity : AppCompatActivity() {
     private fun playAll() {
         val w = cur() ?: return
         val sent = curSentenceText()
-        if (sent != null) speaker.sayThen(w.name, sent) else speaker.say(w.name)
+        if (sent != null) {
+            speaker.saySentence(sent, curSentenceZh())
+        } else {
+            speaker.sayWord(w.name, w.trans)
+        }
     }
 
     private fun startLoop() {
         if (!prefs.loopAudio) return
         val w = cur() ?: return
-        // 单词能吃到有道真人音，句子交给系统 TTS，交替循环
-        speaker.loopPair(w.name, curSentenceText())
+        // 单词走有道真人音 → （中文模式）释义 → 句子，交替循环
+        speaker.loopPair(w.name, curSentenceText(), w.trans)
     }
 
     private fun pauseLoopIfTyping() {
@@ -1021,14 +1049,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        speaker.stop()
+        // 后台播放开着就让它继续念；关掉才在这里停
+        if (!prefs.backgroundPlay) speaker.stop()
         saveSession()
         resetSession()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        speaker.shutdown()
+        // 进程内单例还被后台服务用着，这里不能 shutdown，只摘掉回调
+        speaker.onState = null
+        if (!prefs.backgroundPlay) {
+            speaker.shutdown()
+            SpeakService.stopService(this)
+        }
         Sfx.release()
     }
 

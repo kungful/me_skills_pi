@@ -18,6 +18,7 @@ import com.vocabtype.app.R
 import com.vocabtype.app.core.Insets
 import com.vocabtype.app.core.Prefs
 import com.vocabtype.app.core.Speaker
+import com.vocabtype.app.core.VoiceBox
 import com.vocabtype.app.data.Dicts
 
 /**
@@ -53,7 +54,7 @@ class ReviewActivity : AppCompatActivity() {
         setContentView(R.layout.activity_review)
         prefs = Prefs(this)
         Insets.apply(this, findViewById(R.id.root), top = false)
-        speaker = Speaker(this).applyPrefs(prefs)
+        speaker = VoiceBox.get(this, prefs)
 
         mode = intent.getIntExtra(EXTRA_MODE, MODE_PICK)
         words = intent.getStringArrayListExtra(EXTRA_WORDS) ?: ArrayList()
@@ -189,7 +190,7 @@ class ReviewActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        speaker.shutdown()
+        // 后台服务还在用同一个播放器，这里只停回声，不 shutdown
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density + 0.5f).toInt()
