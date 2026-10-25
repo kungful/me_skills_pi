@@ -87,8 +87,23 @@ class Speaker(ctx: Context) {
     var nowLoop: Boolean = false
         private set
 
-    /** 播放状态变化（服务用它刷通知） */
-    var onState: (() -> Unit)? = null
+    /** 播放状态变化：可能同时有多个订阅者（后台服务刷通知 + 界面刷按钮） */
+    private val stateListeners = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+
+    var onState: (() -> Unit)?
+        get() = stateListeners.firstOrNull()
+        set(v) {
+            stateListeners.clear()
+            if (v != null) stateListeners.add(v)
+        }
+
+    fun addStateListener(l: () -> Unit) {
+        if (!stateListeners.contains(l)) stateListeners.add(l)
+    }
+
+    fun removeStateListener(l: () -> Unit) {
+        stateListeners.remove(l)
+    }
 
     private val handler = Handler(Looper.getMainLooper())
     private var tts: TextToSpeech? = null
@@ -470,7 +485,7 @@ class Speaker(ctx: Context) {
     }
 
     private fun fire() {
-        onState?.invoke()
+        for (l in stateListeners) runCatching { l.invoke() }
     }
 
     companion object {

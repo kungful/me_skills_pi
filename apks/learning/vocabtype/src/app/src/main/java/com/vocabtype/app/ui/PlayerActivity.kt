@@ -121,19 +121,26 @@ class PlayerActivity : AppCompatActivity() {
             .coerceIn(0, (words.size - 1).coerceAtLeast(0))
         showCurrent(indexOnly = true)
 
-        // 一进来直接开始播
-        handler.postDelayed({ if (intent.getBooleanExtra("autoplay", true)) start() }, 380)
+        // 服务里已经在播同一个列表就跟着走，否则从当前词开始
+        if (speaker.nowPlaying && speaker.inSeries) {
+            playing = true
+            idx = speaker.seriesIndex.coerceIn(0, (words.size - 1).coerceAtLeast(0))
+            showCurrent(indexOnly = true)
+            paintPlay()
+        } else {
+            handler.postDelayed({ if (intent.getBooleanExtra("autoplay", true)) start() }, 380)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        speaker.onState = { onSpeakerState() }
+        speaker.addStateListener(stateHook)
         paintPlay()
     }
 
     override fun onPause() {
         super.onPause()
-        speaker.onState = null
+        speaker.removeStateListener(stateHook)
         // 后台播放关掉，就跟着界面一起停
         if (!prefs.backgroundPlay) {
             playing = false
@@ -186,9 +193,10 @@ class PlayerActivity : AppCompatActivity() {
     // ------------------------------------------------------------ 播放
 
     private fun toggle() {
-        if (playing) {
+        // 以 speaker 的真实状态为准，别被本地 playing 变量带偏
+        if (playing || speaker.nowPlaying) {
             playing = false
-            speaker.pause()
+            speaker.stop()
             paintPlay()
         } else {
             start()
@@ -259,12 +267,11 @@ class PlayerActivity : AppCompatActivity() {
         speaker.zhOn = prefs.playZh || prefs.readZh
     }
 
-    private fun onSpeakerState() {
-        paintPlay()
-    }
+    private val stateHook: () -> Unit = { paintPlay() }
 
     private fun paintPlay() {
         val on = playing || speaker.nowPlaying
+        if (!on && playing) playing = false
         btnPlay.setImageResource(if (on) R.drawable.ic_pause_big else R.drawable.ic_play_big)
         btnPlay.contentDescription = if (on) "暂停" else "播放"
     }
@@ -397,7 +404,8 @@ class PlayerActivity : AppCompatActivity() {
         bar.addView(go, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { rightMargin = dp(8) })
-        val info = txt("中文已缓存 0 条", 12f, "#FF8A9BB2")
+        val info = txt("中文已缓存 ${speaker.voiceEngine.cacheCount()} 条", 12f, "#FF8A9BB2")
+        info.tag = "warmInfo"
         warmInfo = info
         bar.addView(info)
         box.addView(bar)
@@ -435,20 +443,26 @@ class PlayerActivity : AppCompatActivity() {
             texts,
             onProgress = { d, t ->
                 runOnUiThread {
-                    val msg = "中文 $d / $t"
                     btn?.text = "取消"
-                    warmInfo?.text = msg
+                    curWarmInfo()?.text = "中文 $d / $t"
                 }
             },
             onFinish = { ok, fail ->
                 runOnUiThread {
                     warming = false
                     btn?.text = "预合成中文"
-                    warmInfo?.text = "中文已缓存 $ok 条" + (if (fail > 0) "（$fail 失败）" else "")
+                    curWarmInfo()?.text = "中文已缓存 $ok 条" + (if (fail > 0) "（$fail 失败）" else "")
                     toast("中文预合成完成：$ok 条")
                 }
             }
         )
+    }
+
+    /** 面板重建后 TextView 会被替换，所以每次都按 tag 现找 */
+    private fun curWarmInfo(): TextView? {
+        val v = box.findViewWithTag<TextView>("warmInfo")
+        if (v != null) warmInfo = v
+        return v ?: warmInfo
     }
 
     /** 参数变了：从当前位置重播，立刻听到效果 */

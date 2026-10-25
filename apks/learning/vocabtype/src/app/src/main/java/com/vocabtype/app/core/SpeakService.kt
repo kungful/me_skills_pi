@@ -55,13 +55,16 @@ class SpeakService : Service() {
     private lateinit var prefs: Prefs
     private var speaker: Speaker? = null
 
+    /** 用固定引用，方便解绑 */
+    private val stateHook: () -> Unit = { post() }
+
     override fun onCreate() {
         super.onCreate()
         alive = true
         prefs = Prefs(this)
         createChannel()
         speaker = VoiceBox.get(this, prefs)
-        speaker?.onState = { post() }
+        speaker?.addStateListener(stateHook)
         startForegroundCompat(build())
     }
 
@@ -84,7 +87,7 @@ class SpeakService : Service() {
 
     override fun onDestroy() {
         alive = false
-        speaker?.onState = null
+        speaker?.removeStateListener(stateHook)
         super.onDestroy()
     }
 

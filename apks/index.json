@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25 22:31:44",
+  "generatedAt": "2026-10-25 22:46:16",
   "count": 15,
-  "totalApkBytes": 50351775,
+  "totalApkBytes": 50369175,
   "categories": [
     {
       "id": "design",
@@ -82,13 +82,13 @@
         {
           "slug": "vocabtype",
           "title": "词打",
-          "version": "1.2",
+          "version": "1.3",
           "apk": "learning/vocabtype/vocabtype.apk",
           "source": "learning/vocabtype/src/",
-          "size": 7187743,
-          "sha256": "dd8d9ebab4090babc487e1da811379621d5bf3f77853adc811e59f8c3f4cb1ba",
-          "builtAt": "2026-10-25 22:03:13",
-          "notes": "打字记单词：有道+百度免费真人发音、播放器式自动连播、后台/锁屏播放、中文释义朗读"
+          "size": 7205143,
+          "sha256": "fd76dca3cbcd710c1b95d6cf5cb81268e64bbd48ad46dd8c2c926a8063563f87",
+          "builtAt": "2026-10-25 22:45:56",
+          "notes": "打字记单词：播放器式自动连播（顺序/随机/错词、选读单词/中文/例句、重复次数、语速、停顿）+ 后台锁屏播放 + 有道/百度免费真人发音，中文可批量预合成"
         }
       ]
     },

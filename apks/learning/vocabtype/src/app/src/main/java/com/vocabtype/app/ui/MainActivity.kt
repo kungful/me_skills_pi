@@ -1138,7 +1138,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         // 进程内单例还被后台服务用着，这里不能 shutdown，只摘掉回调
-        speaker.onState = null
+        speaker.stop()
         if (!prefs.backgroundPlay) {
             speaker.shutdown()
             SpeakService.stopService(this)
