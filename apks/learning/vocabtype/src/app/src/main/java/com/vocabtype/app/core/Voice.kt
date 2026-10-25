@@ -89,8 +89,9 @@ class Voice(private val ctx: Context) {
     /** 是"词典条目"吗（单词 / 两三个词的短语） */
     fun isEntry(text: String): Boolean {
         val t = text.trim()
-        if (t.isEmpty() || t.length > ENTRY_MAX_CHARS) return false
-        if (isChinese(t)) return false
+        if (t.isEmpty()) return false
+        if (isChinese(t)) return t.length <= 20        // 中文释义都是短词，<=20 字算词条
+        if (t.length > ENTRY_MAX_CHARS) return false
         val words = t.split(' ', '\t', '\n').filter { it.isNotBlank() }
         return words.size in 1..ENTRY_MAX_WORDS
     }
@@ -186,6 +187,43 @@ class Voice(private val ctx: Context) {
 
     // ------------------------------------------------------------ 批量预下载
 
+    /**
+     * 中文释义批量预合成。中文释义都是 2~8 字的短词，下载一次就永久缓存，
+     * 之后播放零等待 —— 这样即使引擎单次要 4~5 秒也不影响体验。
+     */
+    fun warmZh(texts: List<String>, onProgress: (Int, Int) -> Unit, onFinish: (Int, Int) -> Unit): Runnable {
+        val cancel = AtomicBoolean(false)
+        val uniq = texts.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val total = uniq.size
+        if (total == 0) {
+            handler.post { onFinish(0, 0) }
+            return Runnable { }
+        }
+        val idx = AtomicInteger(0)
+        val ok = AtomicInteger(0)
+        val fail = AtomicInteger(0)
+        val left = AtomicInteger(4)
+        repeat(4) {
+            sweepPool.execute {
+                try {
+                    while (!cancel.get()) {
+                        val i = idx.getAndIncrement()
+                        if (i >= total) break
+                        val t = uniq[i]
+                        val key = keyOf(t)
+                        val f = if (dead.contains(key)) null else download(t, key)
+                        if (f != null) ok.incrementAndGet() else fail.incrementAndGet()
+                        val d = idx.get().coerceAtMost(total)
+                        handler.post { onProgress(d, total) }
+                    }
+                } finally {
+                    if (left.decrementAndGet() == 0) handler.post { onFinish(ok.get(), fail.get()) }
+                }
+            }
+        }
+        return Runnable { cancel.set(true) }
+    }
+
     fun sweep(
         words: List<String>,
         onProgress: (Int, Int) -> Unit,
@@ -241,6 +279,10 @@ class Voice(private val ctx: Context) {
         val q = URLEncoder.encode(t, "UTF-8").replace("+", "%20")
         val out = ArrayList<Src>(3)
         if (isChinese(t)) {
+            // 中文：有道真人词库最自然（但只吃词条，整句会 500）
+            if (isEntry(t)) {
+                out.add(Src("youdao-zh", "https://dict.youdao.com/dictvoice?le=zh&audio=$q"))
+            }
             out.add(Src("baidu-z", "https://fanyi.baidu.com/gettts?lan=zh&text=$q&spd=$spd&source=web"))
             out.add(Src("google-z", "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=zh-CN&q=$q"))
         } else {
@@ -274,7 +316,7 @@ class Voice(private val ctx: Context) {
     }
 
     private fun cached(key: String): File? {
-        val b = sha1(key)
+        val b = sha1("C|" + key)
         for (e in EXT) {
             val f = File(dir, b + e)
             if (f.isFile && f.length() > 512) return f
@@ -282,18 +324,20 @@ class Voice(private val ctx: Context) {
         return null
     }
 
-    /** 按优先级挨个音源试，拿到就落盘 */
+    /** 按优先级挨个音源试，拿到就落盘（文件名只跟 key 有关，换音源也认） */
     private fun download(text: String, key: String): File? {
+        val hit = cached(key)
+        if (hit != null) return hit
         for (s in sources(text)) {
             val dk = "${s.tag}|$key"
             if (dead.contains(dk)) continue
-            val f = fetch(s, text, dk)
+            val f = fetch(s, text, dk, key)
             if (f != null) return f
         }
         return null
     }
 
-    private fun fetch(s: Src, text: String, deadKey: String): File? {
+    private fun fetch(s: Src, text: String, deadKey: String, cacheKey: String): File? {
         if (!netOn) return null
         var conn: HttpURLConnection? = null
         var tmp: File? = null
@@ -318,7 +362,7 @@ class Voice(private val ctx: Context) {
                 return null
             }
             dir.mkdirs()
-            tmp = File(dir, sha1(deadKey) + ".part")
+            tmp = File(dir, sha1("C|" + cacheKey) + ".part")
             conn.inputStream.use { ins ->
                 tmp.outputStream().use { out -> ins.copyTo(out, 16 * 1024) }
             }
@@ -330,7 +374,7 @@ class Voice(private val ctx: Context) {
             // 嗅探真实格式：各家返回 mp3 / wav / ogg 不等，Content-Type 不可信
             val head = ByteArray(4)
             tmp.inputStream().use { it.read(head) }
-            val out = File(dir, sha1(deadKey) + sniff(head))
+            val out = File(dir, sha1("C|" + cacheKey) + sniff(head))
             if (!tmp.renameTo(out)) {
                 tmp.copyTo(out, overwrite = true)
                 tmp.delete()

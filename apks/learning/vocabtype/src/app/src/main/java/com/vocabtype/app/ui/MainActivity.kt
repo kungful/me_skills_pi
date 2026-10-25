@@ -236,6 +236,12 @@ class MainActivity : AppCompatActivity() {
         tabComplex.setOnClickListener { setMode(MODE_COMPLEX) }
 
         findViewById<ImageButton>(R.id.btnPlay).setOnClickListener { playAll() }
+        findViewById<ImageButton>(R.id.btnPlayer).setOnClickListener {
+            val i = Intent(this, PlayerActivity::class.java)
+            i.putExtra("from", pos)
+            i.putExtra("autoplay", false)
+            startActivity(i)
+        }
 
         // 打字区显示大写 / 小写一键切（原版默认大写，这里给个开关）
         btnCase.setOnClickListener {

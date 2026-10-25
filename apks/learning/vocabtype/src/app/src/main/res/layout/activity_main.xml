@@ -55,6 +55,16 @@
                 android:text="@string/dict_title" />
 
             <ImageButton
+                android:id="@+id/btnPlayer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="播放器"
+                android:padding="8dp"
+                android:src="@drawable/ic_play" />
+
+            <ImageButton
                 android:id="@+id/btnStats"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -51,6 +51,14 @@ class Speaker(ctx: Context) {
             runCatching { if (ready) tts?.setSpeechRate(field) }
         }
 
+    /** 每组之间的停顿（毫秒），播放器界面可调 */
+    @Volatile
+    var gapMs: Long = 500L
+
+    /** 中文语速（相对英文的倍率） */
+    @Volatile
+    var zhRate: Float = 0.9f
+
     /** 中文释义朗读 */
     var zhOn = false
         set(v) {
@@ -261,6 +269,22 @@ class Speaker(ctx: Context) {
     /** 当前是不是在连播 */
     val inSeries: Boolean get() = series != null
 
+    /** 连播进行到第几组 */
+    val seriesIndex: Int get() = seriesAt
+
+    /** 跳到某一组并继续播 */
+    fun seekSeries(idx: Int) {
+        val g = series ?: return
+        seriesAt = idx.coerceIn(0, g.size - 1)
+        val t = ++gen
+        ttsDone = null
+        runCatching { tts?.stop() }
+        voice.stop()
+        nowPlaying = true
+        fire()
+        stepSeries(t)
+    }
+
     /** 停掉循环（同时也停掉正在播的） */
     fun stopLoop() = stop()
 
@@ -363,7 +387,7 @@ class Speaker(ctx: Context) {
         step(items, 0, t, false) {
             if (t == gen) {
                 seriesAt++
-                stepSeries(t)
+                handler.postDelayed({ if (t == gen) stepSeries(t) }, gapMs)
             }
         }
     }
@@ -400,6 +424,9 @@ class Speaker(ctx: Context) {
             return
         }
         lastSpokeAt = System.currentTimeMillis()
+        val zh = voice.isChinese(text)
+        val oldRate = voice.rate
+        if (zh && zhRate > 0f) voice.rate = (rate * zhRate).coerceIn(0.4f, 2.0f)
         val tryNet = engine == 1 && voice.canSay(text)
         if (tryNet) {
             voice.play(text, { if (t == gen) onEnd() }, {

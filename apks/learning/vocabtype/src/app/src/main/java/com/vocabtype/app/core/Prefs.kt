@@ -105,6 +105,40 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("bgPlay", true)
         set(v) = sp.edit().putBoolean("bgPlay", v).apply()
 
+    // ---------------- 播放器（自动连播）参数 ----------------
+    /** 连播顺序：0 顺序 / 1 随机 / 2 只练错词 */
+    var playOrder: Int
+        get() = sp.getInt("playOrder", 0)
+        set(v) = sp.edit().putInt("playOrder", v).apply()
+
+    /** 每轮读哪些内容（1 = 开） */
+    var playWord: Boolean
+        get() = sp.getBoolean("playWord", true)
+        set(v) = sp.edit().putBoolean("playWord", v).apply()
+
+    var playZh: Boolean
+        get() = sp.getBoolean("playZh", false)
+        set(v) = sp.edit().putBoolean("playZh", v).apply()
+
+    var playSentence: Boolean
+        get() = sp.getBoolean("playSentence", true)
+        set(v) = sp.edit().putBoolean("playSentence", v).apply()
+
+    /** 每个词重复读几遍 */
+    var playRepeat: Int
+        get() = sp.getInt("playRepeat", 1)
+        set(v) = sp.edit().putInt("playRepeat", v).apply()
+
+    /** 词与词之间的停顿（毫秒） */
+    var playGap: Int
+        get() = sp.getInt("playGap", 500)
+        set(v) = sp.edit().putInt("playGap", v).apply()
+
+    /** 读中文时也放慢一点（中文信息密度高） */
+    var playZhRate: Float
+        get() = sp.getFloat("playZhRate", 0.9f)
+        set(v) = sp.edit().putFloat("playZhRate", v).apply()
+
     /** 换词时后台预下载单词发音，点播放零等待 */
     var prefetchVoice: Boolean
         get() = sp.getBoolean("prefetchVoice", true)
