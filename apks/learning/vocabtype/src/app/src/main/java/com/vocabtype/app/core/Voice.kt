@@ -368,7 +368,6 @@ class Voice(private val ctx: Context) {
     // ------------------------------------------------------------ 播放器
 
     private fun start(f: File, onDone: () -> Unit, onFail: () -> Unit) {
-        android.util.Log.i("VT", "play start ${f.name} ${f.length()}B")
         stopPlayer()
         try {
             val mp = MediaPlayer()
@@ -393,7 +392,6 @@ class Voice(private val ctx: Context) {
             }
             player = mp
             mp.start()
-            android.util.Log.i("VT", "player started, isPlaying=${mp.isPlaying} dur=${mp.duration}")
         } catch (e: Exception) {
             stopPlayer()
             runCatching { f.delete() }        // 文件坏了，下次重下

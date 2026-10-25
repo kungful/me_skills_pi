@@ -398,10 +398,8 @@ class Speaker(ctx: Context) {
         }
         lastSpokeAt = System.currentTimeMillis()
         val tryNet = engine == 1 && voice.canSay(text)
-        android.util.Log.i("VT", "utter t=$t tryNet=$tryNet engine=$engine canSay=${voice.canSay(text)} text=${text.take(30)}")
         if (tryNet) {
             voice.play(text, { if (t == gen) onEnd() }, {
-                android.util.Log.w("VT", "net FAIL -> tts: ${text.take(30)}")
                 if (t == gen) utterTts(text, t, onEnd)
             })
         } else {
@@ -417,7 +415,6 @@ class Speaker(ctx: Context) {
         }
         ttsDone = onEnd
         lastSpokeAt = System.currentTimeMillis()
-        android.util.Log.i("VT", "tts speak ready=$ready: ${text.take(30)}")
         val chinese = voice.isChinese(text)
         runCatching {
             tts?.setLanguage(
