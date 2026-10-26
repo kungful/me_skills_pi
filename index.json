@@ -1,7 +1,12 @@
 {
-  "generatedAt": "2026-10-18 23:28:28",
-  "count": 39,
+  "generatedAt": "2026-10-26 09:58:28",
+  "count": 40,
   "skills": [
+    {
+      "name": "apk-autoinstall",
+      "description": "在没有 root 的国产手机（vivo/OPPO/小米/荣耀）上，用 adb 自动点掉\"未知来源 APK\"的安全守护弹窗，实现接近一键静默的安装。当用户说\"装 apk 老要我点已了解/继续安装\"、\"能不能自动安装 apk\"、\"adb install 被拦了\"、\"INSTALL_FAILED_ABORTED: User rejected permissions\"、\"跳过安装确认\"、\"免手动点安装弹窗\"时使用。配套一键安装脚本 + 坐标校准方法。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
     {
       "name": "apk-github-sync",
       "description": "把本机 Pi 开发出来的 Android APK 软件包和源代码镜像备份到 GitHub 仓库（自动提交 + 推送 + 定时/实时自动备份）。当用户说\"备份 apk / 把 apk 传到 GitHub / apk 自动上传 / 新做的安卓 app 传上去 / 备份安卓源码 / apks 文件夹更新一下 / 查 apk 备份状态\"时使用。和 skills-github-sync 是姊妹技能，共用同一个仓库。",

@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-18 23:28:28**
+最后同步：**2026-10-26 09:58:28**
 
-共 **39** 个 skill。
+共 **40** 个 skill。
 
 ## 安装
 
@@ -17,6 +17,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 
 | Skill | 说明 | 源 |
 |---|---|---|
+| [`apk-autoinstall`](skills/apk-autoinstall/) | 在没有 root 的国产手机（vivo/OPPO/小米/荣耀）上，用 adb 自动点掉"未知来源 APK"的安全守护弹窗，实现接近一键静默的安装。当用户说"装 apk 老要我点已了解/继续安装"、"能不能自动安装 apk"、"adb install 被拦了"、"INSTALL_FAILED_ABORTED: Us... | pi |
 | [`apk-github-sync`](skills/apk-github-sync/) | 把本机 Pi 开发出来的 Android APK 软件包和源代码镜像备份到 GitHub 仓库（自动提交 + 推送 + 定时/实时自动备份）。当用户说"备份 apk / 把 apk 传到 GitHub / apk 自动上传 / 新做的安卓 app 传上去 / 备份安卓源码 / apks 文件夹更新一下 / 查 a... | pi |
 | [`awesome-reverse-engineering`](skills/awesome-reverse-engineering/) | 逆向工程工具与学习资源选型索引（二进制、App、固件、文件格式、协议）。当需要"逆向 / 反编译 / 反汇编 / 脱壳 / 抓包分析协议 / 分析固件 / 分析恶意样本 / 该用哪个工具 / 有没有 xx 逆向工具"，或要在 IDA、Ghidra、radare2、Frida、JADX、Hopper、x64dbg、... | pi |
 | [`blender-motion-state-inspection`](skills/blender-motion-state-inspection/) | Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where s... | pi |
@@ -59,4 +60,4 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 
 ## APK 备份
 
-Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 14 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
+Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 15 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
