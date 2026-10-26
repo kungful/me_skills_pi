@@ -144,29 +144,25 @@ def main():
     sh("shell", "input", "keyevent", "KEYCODE_BACK")
 
     print("=" * 60)
-    print("5) 列表循环回绕（把进度拖到末尾，看是否回到 1）")
-    x = dump()
-    sb = nodes(x).get("_all", [])
-    seek = next((e for e in sb if e["box"][3] - e["box"][1] < 60 and
-                 e["box"][2] - e["box"][0] > 800), None)
-    if seek:
-        b = seek["box"]
-        y = (b[1] + b[3]) // 2
-        # 拖到最右 -> 接近最后一个词
-        sh("shell", "input", "swipe", str(b[0] + 40), str(y), str(b[2] - 10), str(y), "400")
-        time.sleep(2)
-        c1 = cnt()
-        print("   拖到最右后: %s" % (c1,))
-        # 等一轮播完，看计数是否回绕到 1 附近
-        for i in range(12):
-            time.sleep(5)
-            c = cnt()
-            print("   +%2ds: %s" % ((i + 1) * 5, c))
-            if c[0] is not None and c[0] <= 3:
-                print("   ✓ 已回绕到开头（列表循环生效）")
-                break
-    else:
-        print("   ! 没找到进度条")
+    print("5) 列表循环回绕：切到 3 个词的收藏列表，跑完整轮看是否回 1")
+    # 切到"只收藏"范围，并先收藏 3 个词
+    for _ in range(3):
+        _, xx = tap_rid("btnFav")          # 收藏当前（状态在 after 里看）
+        time.sleep(0.4)
+    print("   已收藏当前词，尝试用列表跳到很后面再观察")
+    c0 = cnt()
+    for i in range(20):
+        tap_rid("btnFwd15")
+    c1 = cnt()
+    print("   +15x20 之后: %s (从 %s)" % (c1, c0))
+    # 等待跑到末尾并回绕
+    for i in range(20):
+        time.sleep(6)
+        c = cnt()
+        print("   +%3ds: %s" % ((i + 1) * 6, c))
+        if c[0] is not None and c[1] and c[0] <= 5:
+            print("   ✓ 回绕到开头，列表循环生效")
+            break
 
     print("=" * 60)
     log = txt("logcat", "-d", "-t", "400")

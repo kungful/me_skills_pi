@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-26 08:31:45**　|　共 **15** 个应用　|　APK 合计 **48.4 MB**
+最后同步：**2026-10-26 08:50:17**　|　共 **15** 个应用　|　APK 合计 **48.4 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -30,7 +30,7 @@ apks/<分类>/<应用>/
 | **单词突围** | 1.0 | [`wordrush.apk`](learning/wordrush/wordrush.apk) | [`src/`](learning/wordrush/src/) | 5.5 MB | 单词闯关游戏 |
 | **生活算法** | 1.0.0 | [`life-algo.apk`](learning/life-algo/life-algo.apk) | [`src/`](learning/life-algo/src/) | 16.5 MB | 离线生活算法：穿搭/营养/睡眠/训练 + 各种计算器 |
 | **观天下** | 1.0 | [`guantianxia.apk`](learning/guantianxia/guantianxia.apk) | [`src/`](learning/guantianxia/src/) | 9.4 MB | 新闻 / 财经 / 书架 聚合阅读 |
-| **词打** | 1.3 | [`vocabtype.apk`](learning/vocabtype/vocabtype.apk) | [`src/`](learning/vocabtype/src/) | 7.3 MB | 打字记单词：播放器式自动连播（顺序/随机/错词、选读单词/中文/例句、重复次数、语速、停顿）+ 后台锁屏播放 + 有道/百度免费真人发音，中文可批量预合成 |
+| **词打** | 1.5 | [`vocabtype.apk`](learning/vocabtype/vocabtype.apk) | [`src/`](learning/vocabtype/src/) | 7.3 MB | 打字记单词：播放器（列表/单组/随机循环、定时关闭、收藏、播放列表、快进快退）+ 后台锁屏播放 + 有道/百度/微软神经语音三种免费发音，中文可批量预合成 |
 
 ## 工具
 
