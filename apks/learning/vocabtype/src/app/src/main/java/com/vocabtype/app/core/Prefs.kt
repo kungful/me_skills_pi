@@ -116,7 +116,39 @@ class Prefs(ctx: Context) {
         set(v) = sp.edit().putBoolean("bgPlay", v).apply()
 
     // ---------------- 播放器（自动连播）参数 ----------------
-    /** 连播顺序：0 顺序 / 1 随机 / 2 只练错词 */
+    /** 播放循环模式：0 列表循环 / 1 单组循环 / 2 顺序播完就停 / 3 随机循环 */
+    var playMode: Int
+        get() = sp.getInt("playMode", 0)
+        set(v) = sp.edit().putInt("playMode", v).apply()
+
+    /** 定时关闭（分钟，0 = 关） */
+    var sleepMinutes: Int
+        get() = sp.getInt("sleepMinutes", 0)
+        set(v) = sp.edit().putInt("sleepMinutes", v).apply()
+
+    /** 收藏的词 */
+    fun favs(): MutableSet<String> =
+        (sp.getStringSet("favs", emptySet()) ?: emptySet()).toMutableSet()
+
+    fun saveFavs(s: Set<String>) {
+        sp.edit().putStringSet("favs", s).apply()
+    }
+
+    fun isFav(w: String): Boolean = favs().contains(w.lowercase())
+
+    fun toggleFav(w: String): Boolean {
+        val s = favs()
+        val k = w.lowercase()
+        val now = if (s.contains(k)) {
+            s.remove(k); false
+        } else {
+            s.add(k); true
+        }
+        saveFavs(s)
+        return now
+    }
+
+    /** 连播顺序：0 顺序 / 1 随机 / 2 只练错词 / 3 只收藏 */
     var playOrder: Int
         get() = sp.getInt("playOrder", 0)
         set(v) = sp.edit().putInt("playOrder", v).apply()

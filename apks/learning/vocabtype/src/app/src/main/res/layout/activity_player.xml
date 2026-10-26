@@ -68,6 +68,16 @@
             android:paddingEnd="14dp"
             android:paddingBottom="12dp">
 
+            <ImageButton
+                android:id="@+id/btnFav"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="@drawable/bg_btn"
+                android:contentDescription="收藏"
+                android:padding="7dp"
+                android:src="@drawable/ic_heart" />
+
             <TextView
                 android:id="@+id/tvNow"
                 android:layout_width="match_parent"
@@ -152,9 +162,19 @@
                     android:text="0 / 0" />
 
                 <ImageButton
+                    android:id="@+id/btnMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_btn"
+                    android:contentDescription="循环模式"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_repeat" />
+
+                <ImageButton
                     android:id="@+id/btnPrev"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:background="@drawable/bg_btn"
                     android:contentDescription="上一个"
                     android:padding="10dp"
@@ -187,6 +207,53 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:text="顺序" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="9dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnBack15"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_btn"
+                    android:contentDescription="后退 15 个"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_back15" />
+
+                <ImageButton
+                    android:id="@+id/btnFwd15"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_btn"
+                    android:contentDescription="前进 15 个"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_fwd15" />
+
+                <Button
+                    android:id="@+id/btnTimer"
+                    style="@style/Btn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1.4"
+                    android:text="定时 关" />
+
+                <Button
+                    android:id="@+id/btnList"
+                    style="@style/Btn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="列表" />
             </LinearLayout>
         </LinearLayout>
 

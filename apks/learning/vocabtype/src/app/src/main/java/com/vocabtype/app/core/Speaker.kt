@@ -271,7 +271,11 @@ class Speaker(ctx: Context) {
         onGroup: (Int) -> Unit,
         onDone: () -> Unit
     ) {
-        if (groups.isEmpty()) return
+        if (groups.isEmpty()) {
+            // 空列表也要回调，否则播放器的"列表循环"会永久卡住
+            handler.post { onDone() }
+            return
+        }
         series = groups
         seriesAt = from.coerceIn(0, groups.size - 1)
         seriesOnGroup = onGroup

@@ -44,6 +44,13 @@ class PlayerActivity : AppCompatActivity() {
         const val ORD_SEQ = 0
         const val ORD_RANDOM = 1
         const val ORD_WRONG = 2
+        const val ORD_FAV = 3
+
+        // 循环模式
+        const val LOOP_LIST = 0      // 列表循环
+        const val LOOP_ONE = 1       // 单组循环
+        const val LOOP_ONCE = 2      // 顺序播完就停
+        const val LOOP_SHUFFLE = 3   // 随机循环
     }
 
     private lateinit var prefs: Prefs
@@ -59,6 +66,14 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var sbPos: SeekBar
     private lateinit var btnPlay: ImageButton
     private lateinit var btnOrder: Button
+    private lateinit var btnMode: android.widget.ImageButton
+    private lateinit var btnTimer: Button
+    private lateinit var btnList: Button
+    private lateinit var btnFav: android.widget.ImageButton
+    private var sleepRun: Runnable? = null
+    private var sleepEndAt = 0L
+    private var seriesSize = 0
+    private var gen = 0
     private lateinit var box: LinearLayout
 
     private var words: List<W> = emptyList()
@@ -92,6 +107,16 @@ class PlayerActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnNext).setOnClickListener { jump(1) }
         btnPlay.setOnClickListener { toggle() }
         btnOrder.setOnClickListener { cycleOrder() }
+        btnMode = findViewById(R.id.btnMode)
+        btnTimer = findViewById(R.id.btnTimer)
+        btnList = findViewById(R.id.btnList)
+        btnFav = findViewById(R.id.btnFav)
+        btnMode.setOnClickListener { cyclePlayMode() }
+        btnTimer.setOnClickListener { cycleTimer() }
+        btnList.setOnClickListener { showList() }
+        btnFav.setOnClickListener { toggleFavHere() }
+        findViewById<ImageButton>(R.id.btnBack15).setOnClickListener { jump(-15) }
+        findViewById<ImageButton>(R.id.btnFwd15).setOnClickListener { jump(15) }
 
         sbPos.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {}
@@ -137,6 +162,10 @@ class PlayerActivity : AppCompatActivity() {
         super.onResume()
         speaker.addStateListener(stateHook)
         paintPlay()
+        paintModeBtn()
+        paintFav()
+        if (prefs.sleepMinutes > 0 && sleepEndAt <= 0L) sleepEndAt = System.currentTimeMillis() + prefs.sleepMinutes * 60000L
+        btnTimer.text = if (prefs.sleepMinutes > 0) "定时 " + prefs.sleepMinutes + "m" else "定时 关"
     }
 
     override fun onPause() {
@@ -170,6 +199,11 @@ class PlayerActivity : AppCompatActivity() {
                 all.filter { it.name.lowercase() in set }.ifEmpty { all }
             }
 
+            ORD_FAV -> {
+                val f = prefs.favs()
+                all.filter { it.name.lowercase() in f }.ifEmpty { all }
+            }
+
             else -> all
         }
     }
@@ -197,6 +231,7 @@ class PlayerActivity : AppCompatActivity() {
         // 以 speaker 的真实状态为准，别被本地 playing 变量带偏
         if (playing || speaker.nowPlaying) {
             playing = false
+            gen++
             speaker.stop()
             paintPlay()
         } else {
@@ -208,24 +243,85 @@ class PlayerActivity : AppCompatActivity() {
         val list = buildSeries()
         if (list.isEmpty()) {
             toast("没有可播放的内容：至少勾选「单词」")
+            playing = false
+            paintPlay()
             return
         }
+        seriesSize = list.size
         playing = true
         startedAt = System.currentTimeMillis()
+        val my = ++gen
         speaker.playSeries(
             list, idx,
             onGroup = { i ->
-                idx = i
-                showCurrent(indexOnly = true)
+                if (my == gen) {
+                    idx = i
+                    showCurrent(indexOnly = true)
+                }
             },
-            onDone = {
+            onDone = { if (my == gen) onSeriesDone(list.size) }
+        )
+        paintPlay()
+        paintModeBtn()
+    }
+
+    /** 一批播完了：按循环模式决定接着干嘛 */
+    private fun onSeriesDone(total: Int) {
+        when (prefs.playMode) {
+            LOOP_LIST, LOOP_SHUFFLE -> {
+                if (prefs.playMode == LOOP_SHUFFLE) words = words.shuffled()
+                idx = 0
+                showCurrent(indexOnly = true)
+                playing = true          // 循环模式下播放状态保持
+                handler.postDelayed({ if (playing) start() }, 600)
+            }
+
+            LOOP_ONE -> {
+                speaker.stop()
+                handler.postDelayed({ if (playing) startOne() }, 600)
+            }
+
+            else -> {
                 playing = false
                 paintPlay()
                 saveProgress()
                 toast("播放完毕")
             }
+        }
+    }
+
+    /** 只循环当前这一组 */
+    private fun startOne() {
+        val w = words.getOrNull(idx) ?: return
+        val g = buildGroup(w)
+        if (g.isEmpty()) return
+        playing = true
+        speaker.playSeries(
+            listOf(g), 0,
+            onGroup = { showCurrent(indexOnly = true) },
+            onDone = {
+                if (prefs.playMode == LOOP_ONE && playing) {
+                    handler.postDelayed({ if (playing) startOne() }, 600)
+                } else {
+                    onSeriesDone(1)
+                }
+            }
         )
         paintPlay()
+    }
+
+    private fun buildGroup(w: W): List<String> {
+        val g = ArrayList<String>(6)
+        if (prefs.playWord) repeat(prefs.playRepeat.coerceIn(1, 4)) { g.add(w.name) }
+        if (prefs.playZh) {
+            val c = Speaker.zhSpeech(w.trans)
+            if (c.isNotBlank()) repeat(prefs.playRepeat.coerceIn(1, 2)) { g.add(c) }
+        }
+        if (prefs.playSentence) {
+            val sen = Sent.short(this, w.name)?.en ?: Sent.complex(this, w.name)?.en
+            if (!sen.isNullOrBlank()) g.add(sen)
+        }
+        return g
     }
 
     private fun jump(d: Int) {
@@ -234,8 +330,9 @@ class PlayerActivity : AppCompatActivity() {
         idx = (idx + d).coerceIn(0, words.size - 1)
         showCurrent(indexOnly = true)
         if (was) {
+            gen++
             speaker.stop()
-            start()
+            handler.postDelayed({ if (playing) start() }, 120)
         }
     }
 
@@ -299,6 +396,7 @@ class PlayerActivity : AppCompatActivity() {
         val s = Sent.short(this, w.name) ?: Sent.complex(this, w.name)
         tvSent.text = s?.en ?: ""
         tvSent.visibility = if (s == null) View.GONE else View.VISIBLE
+        paintFav()
         tick()
     }
 
@@ -313,6 +411,118 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private val tickR = Runnable { tick() }
+
+    // ------------------------------------------------------------ 循环模式
+
+    private fun cyclePlayMode() {
+        prefs.playMode = (prefs.playMode + 1) % 4
+        paintModeBtn()
+        val name = when (prefs.playMode) {
+            LOOP_ONE -> "单组循环"
+            LOOP_ONCE -> "顺序播完就停"
+            LOOP_SHUFFLE -> "随机循环"
+            else -> "列表循环"
+        }
+        toast(name)
+    }
+
+    private fun paintModeBtn() {
+        btnMode.setImageResource(
+            when (prefs.playMode) {
+                LOOP_ONE -> R.drawable.ic_repeat_one
+                LOOP_ONCE -> R.drawable.ic_list
+                LOOP_SHUFFLE -> R.drawable.ic_shuffle
+                else -> R.drawable.ic_repeat
+            }
+        )
+        btnMode.contentDescription = when (prefs.playMode) {
+            LOOP_ONE -> "单组循环"
+            LOOP_ONCE -> "顺序播完就停"
+            LOOP_SHUFFLE -> "随机循环"
+            else -> "列表循环"
+        }
+    }
+
+    // ------------------------------------------------------------ 定时关闭
+
+    private fun cycleTimer() {
+        val next = when (prefs.sleepMinutes) {
+            0 -> 15
+            15 -> 30
+            30 -> 60
+            60 -> 120
+            else -> 0
+        }
+        prefs.sleepMinutes = next
+        sleepRun?.let { handler.removeCallbacks(it) }
+        sleepRun = null
+        if (next == 0) {
+            btnTimer.text = "定时 关"
+            toast("定时关闭已取消")
+            return
+        }
+        sleepEndAt = System.currentTimeMillis() + next * 60000L
+        btnTimer.text = "定时 ${next}m"
+        toast("$next 分钟后自动停止")
+        val r = object : Runnable {
+            override fun run() {
+                val left = sleepEndAt - System.currentTimeMillis()
+                if (left <= 0) {
+                    playing = false
+                    speaker.stop()
+                    paintPlay()
+                    btnTimer.text = "定时 关"
+                    prefs.sleepMinutes = 0
+                    toast("定时到，已停止播放")
+                    return
+                }
+                btnTimer.text = "定时 " + (left / 60000 + 1) + "m"
+                handler.postDelayed(this, 30000L)
+            }
+        }
+        sleepRun = r
+        handler.postDelayed(r, 30000L)
+    }
+
+    // ------------------------------------------------------------ 收藏
+
+    private fun toggleFavHere() {
+        val w = words.getOrNull(idx) ?: return
+        val now = prefs.toggleFav(w.name)
+        paintFav()
+        toast(if (now) "已收藏「" + w.name + "」" else "已取消收藏")
+    }
+
+    private fun paintFav() {
+        val w = words.getOrNull(idx)
+        val on = w != null && prefs.isFav(w.name)
+        btnFav.setImageResource(if (on) R.drawable.ic_heart_on else R.drawable.ic_heart)
+        btnFav.contentDescription = if (on) "取消收藏" else "收藏"
+    }
+
+    // ------------------------------------------------------------ 播放列表
+
+    private fun showList() {
+        if (words.isEmpty()) {
+            toast("列表是空的")
+            return
+        }
+        val names = words.mapIndexed { i, w ->
+            (i + 1).toString() + ". " + w.name + "  " + w.trans.take(12)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("[ 播放列表 · " + words.size + " 首 ]")
+            .setItems(names.toTypedArray()) { _, which ->
+                idx = which
+                showCurrent(indexOnly = true)
+                if (playing) {
+                    speaker.stop()
+                    handler.postDelayed({ start() }, 150)
+                }
+            }
+            .setNegativeButton("关闭", null)
+            .show()
+    }
 
     private fun cycleOrder() {
         prefs.playOrder = when (prefs.playOrder) {
@@ -329,6 +539,7 @@ class PlayerActivity : AppCompatActivity() {
         btnOrder.text = when (prefs.playOrder) {
             ORD_RANDOM -> "随机"
             ORD_WRONG -> "只错词"
+            ORD_FAV -> "只收藏"
             else -> "顺序"
         }
     }
@@ -384,7 +595,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         head("SCOPE // 范围")
-        seg("顺序", arrayOf("顺序", "随机", "只错词"), { prefs.playOrder }) {
+        seg("顺序", arrayOf("顺序", "随机", "只错词", "只收藏"), { prefs.playOrder }) {
             prefs.playOrder = it
             paintOrder(); reloadOrder(); buildPanels()
         }
