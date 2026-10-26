@@ -75,10 +75,23 @@ class Voice(private val ctx: Context) {
     /** 0 = 有道/百度（快）; 1 = 微软神经语音（音质最好，稍慢） */
     @Volatile
     var edgeOn = false
+        set(v) {
+            val old = srcTag()
+            field = v
+            val now = srcTag()
+            if (old != now) dropCacheFor(now)
+        }
+
+    private fun srcTag(): String = if (edgeOn) "e:$edgeVoice" else "n"
 
     /** 微软音色 id */
     @Volatile
-    var edgeVoice: String = if (accent == UK) EdgeTts.VOICE_ARIA else EdgeTts.VOICE_ARIA
+    var edgeVoice: String = EdgeTts.VOICE_XIAOXIAO
+        set(v) {
+            val old = srcTag()
+            field = v
+            if (old != srcTag()) dropCacheFor(srcTag())
+        }
 
     private val handler = Handler(Looper.getMainLooper())
     private val dir = File(ctx.filesDir, DIR)
@@ -124,6 +137,16 @@ class Voice(private val ctx: Context) {
 
     fun sizeBytes(): Long =
         runCatching { dir.listFiles()?.sumOf { it.length() } ?: 0L }.getOrDefault(0L)
+
+    /**
+     * 换音色/切换音源后清掉旧缓存。
+     * 缓存文件名是内容哈希，无法反查属于哪个音色，所以只能全清
+     * —— 但这是对的：换了声音就该重新合成，否则会一直听到老声音。
+     */
+    fun dropCacheFor(srcTag: String) {
+        runCatching { dir.listFiles()?.forEach { it.delete() } }
+        dead.clear()
+    }
 
     fun clearCache() {
         runCatching { dir.listFiles()?.forEach { it.delete() } }
@@ -308,13 +331,18 @@ class Voice(private val ctx: Context) {
 
     // ------------------------------------------------------------ 下载
 
+    /**
+     * 缓存键必须带"用哪家音源合成的"指纹，否则：
+     *   先用百度合成中文 -> 缓存命中 -> 之后开微软也永远读不到新音质。
+     */
     private fun keyOf(text: String): String {
+        val src = if (edgeOn) "e:$edgeVoice" else "n"
         val kind = when {
             isChinese(text) -> "z"
             isEntry(text) -> "w$accent"
             else -> "s$accent"
         }
-        return "$kind|${text.trim().lowercase()}"
+        return "$kind|$src|${text.trim().lowercase()}"
     }
 
     private fun sha1(s: String): String {
@@ -407,6 +435,7 @@ class Voice(private val ctx: Context) {
     private fun fetchEdge(text: String, deadKey: String, cacheKey: String): File? {
         return try {
             val body = EdgeTts.synth(text, edgeVoice, ((rate - 1f) * 100).toInt())
+            android.util.Log.i("VTEDGE", "synth '$text' voice=$edgeVoice -> ${body?.size ?: -1}B")
             if (body == null || body.size < 1024) {
                 dead.add(deadKey)
                 return null
