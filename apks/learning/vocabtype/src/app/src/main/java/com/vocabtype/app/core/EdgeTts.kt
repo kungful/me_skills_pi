@@ -80,6 +80,7 @@ object EdgeTts {
         override fun lookup(hostname: String): List<InetAddress> {
             val raw = runCatching { Dns.SYSTEM.lookup(hostname) }.getOrDefault(emptyList())
             val ips = raw.map { it.hostAddress ?: "" }
+            Log.i(TAG, "lookup $hostname -> " + ips.joinToString(","))
             val good = raw.filterNot { isFake(it.hostAddress ?: "") }
             if (good.isNotEmpty() && good.size == raw.size) return raw
             if (hostname == HOST) {

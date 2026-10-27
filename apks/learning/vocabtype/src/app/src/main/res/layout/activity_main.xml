@@ -312,6 +312,32 @@
                         android:layout_gravity="center" />
                 </FrameLayout>
 
+                <!-- 单词配图：视觉绑定记忆 -->
+                <FrameLayout
+                    android:id="@+id/picBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="132dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_panel"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:id="@+id/ivPic"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="配图"
+                        android:scaleType="centerCrop" />
+
+                    <TextView
+                        android:id="@+id/tvPicLoading"
+                        style="@style/Txt.Label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="[ 配图中… ]"
+                        android:textColor="@color/text_dim" />
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/tvPhone"
                     style="@style/Txt"

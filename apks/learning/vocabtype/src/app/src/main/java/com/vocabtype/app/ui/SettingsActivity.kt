@@ -89,6 +89,7 @@ class SettingsActivity : AppCompatActivity() {
         toggle("显示音标", null, { prefs.showPhonetic }, { prefs.showPhonetic = it })
         toggle("显示中文释义", null, { prefs.showTranslation }, { prefs.showTranslation = it })
         toggle("全部大写", "打字区用大写字母显示（原版默认）", { prefs.upper }, { prefs.upper = it })
+        toggle("单词配图", "给每个词配一张尽量贴近词义的图，视觉绑定记忆", { prefs.showPic }, { prefs.showPic = it })
         toggle("代码雨背景", "关掉省电，老机器更顺", { prefs.matrix }, { prefs.matrix = it })
         seek("打字区字号", 22, 80, { prefs.fsType }, { prefs.fsType = it })
         seek("例句字号", 12, 34, { prefs.fsSent }, { prefs.fsSent = it })

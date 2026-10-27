@@ -336,12 +336,10 @@ class Voice(private val ctx: Context) {
      *   先用百度合成中文 -> 缓存命中 -> 之后开微软也永远读不到新音质。
      */
     private fun keyOf(text: String): String {
+        // 中文用固定键（对应 assets/zh 里预合成的微软语音），不随音色变
+        if (isChinese(text)) return "z|" + text.trim().lowercase()
         val src = if (edgeOn) "e:$edgeVoice" else "n"
-        val kind = when {
-            isChinese(text) -> "z"
-            isEntry(text) -> "w$accent"
-            else -> "s$accent"
-        }
+        val kind = if (isEntry(text)) "w$accent" else "s$accent"
         return "$kind|$src|${text.trim().lowercase()}"
     }
 
@@ -353,6 +351,11 @@ class Voice(private val ctx: Context) {
     }
 
     private fun cached(key: String): File? {
+        // 中文：固定用 sha1(key) 命名（和 assets/zh 预合成文件、packedZh 一致）
+        if (key.startsWith("z|")) {
+            val f = File(dir, sha1(key) + ".mp3")
+            if (f.isFile && f.length() > 512) return f
+        }
         val b = sha1("C|" + key)
         for (e in EXT) {
             val f = File(dir, b + e)
@@ -365,6 +368,10 @@ class Voice(private val ctx: Context) {
     private fun download(text: String, key: String): File? {
         val hit = cached(key)
         if (hit != null) return hit
+        // 中文：APK 里已经打包了微软晓晓的合成结果，先用它（离线、音质稳定）
+        if (isChinese(text)) {
+            packedZh(text)?.let { return it }
+        }
         for (s in sources(text)) {
             val dk = "${s.tag}|$key"
             if (dead.contains(dk)) continue
@@ -446,6 +453,37 @@ class Voice(private val ctx: Context) {
             out
         } catch (e: Exception) {
             dead.add(deadKey)
+            null
+        }
+    }
+
+    /**
+     * APK 自带的中文语音（tools/build_zh_voice.py 用微软晓晓预合成）。
+     * 手机上有 Clash/v2ray 时 WebSocket 会被掐断，在线合成本来就用不了，
+     * 所以内置一份最稳。
+     */
+    private fun packedZh(text: String): File? {
+        val key = "z|" + text.trim().lowercase()
+        val k = sha1(key)
+        val f = File(File(ctx.filesDir, DIR), "$k.mp3")
+        if (f.isFile && f.length() > 512) return f
+        return try {
+            ctx.assets.open("zh/$k.mp3").use { ins ->
+                dir.mkdirs()
+                val tmp = File(dir, "$k.part")
+                tmp.outputStream().use { out -> ins.copyTo(out, 16 * 1024) }
+                if (tmp.length() < 512) {
+                    tmp.delete()
+                    return null
+                }
+                val out = File(dir, "$k.mp3")
+                if (!tmp.renameTo(out)) {
+                    tmp.copyTo(out, overwrite = true)
+                    tmp.delete()
+                }
+                out
+            }
+        } catch (e: Exception) {
             null
         }
     }

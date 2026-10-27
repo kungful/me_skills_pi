@@ -95,6 +95,11 @@ class Prefs(ctx: Context) {
         get() = sp.getInt("accent", 2)
         set(v) = sp.edit().putInt("accent", v).apply()
 
+    /** 给单词自动配图（视觉绑定记忆） */
+    var showPic: Boolean
+        get() = sp.getBoolean("showPic", true)
+        set(v) = sp.edit().putBoolean("showPic", v).apply()
+
     /** 微软神经语音（音质最好，需要联网，稍慢） */
     var edgeVoiceOn: Boolean
         get() = sp.getBoolean("edgeVoiceOn", false)

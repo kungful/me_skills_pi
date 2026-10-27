@@ -66,6 +66,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: Prefs
     private lateinit var speaker: Speaker
+    private lateinit var ivPic: android.widget.ImageView
+    private lateinit var tvPicLoading: TextView
+    private lateinit var picBox: android.widget.FrameLayout
+    private val pix by lazy { com.vocabtype.app.core.Pix(applicationContext) }
     private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var rain: Rain
@@ -152,6 +156,9 @@ class MainActivity : AppCompatActivity() {
         com.vocabtype.app.core.EdgeDrm.selfTest()
         com.vocabtype.app.core.EdgeTts.selfTestAsync()
         speaker = VoiceBox.get(this, prefs)
+        ivPic = findViewById(R.id.ivPic)
+        tvPicLoading = findViewById(R.id.tvPicLoading)
+        picBox = findViewById(R.id.picBox)
         // 申请通知权限（Android 13+），后台朗读的常驻通知要用
         runCatching {
             if (Build.VERSION.SDK_INT >= 33 &&
@@ -473,6 +480,7 @@ class MainActivity : AppCompatActivity() {
         tvTrans.visibility = if ((prefs.showTranslation || blind) && w.trans.isNotBlank()) View.VISIBLE else View.GONE
         tvHint.text = if (blind) "[ 默写 ] 听发音 · 看释义 · 敲出单词" else getString(R.string.hint_idle)
 
+        showPic(w)
         paintMode()
         paintLoop()
         refreshCards()
@@ -489,6 +497,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
         if (!silent && !autoPlaying && prefs.loopAudio) startLoop()
+    }
+
+    /** 给当前词配一张图（缓存优先，没有就后台下） */
+    private fun showPic(w: W?) {
+        if (w == null || !prefs.showPic) {
+            picBox.visibility = View.GONE
+            return
+        }
+        picBox.visibility = View.VISIBLE
+        val cached = pix.cached(w.name)
+        if (cached != null) {
+            ivPic.setImageBitmap(cached)
+            ivPic.visibility = View.VISIBLE
+            tvPicLoading.visibility = View.GONE
+            return
+        }
+        ivPic.setImageDrawable(null)
+        ivPic.visibility = View.GONE
+        tvPicLoading.visibility = View.VISIBLE
+        val want = w.name
+        pix.load(want) { bmp ->
+            if (isFinishing) return@load
+            // 用户可能已经切词了
+            if (cur()?.name != want) return@load
+            if (bmp != null) {
+                ivPic.setImageBitmap(bmp)
+                ivPic.visibility = View.VISIBLE
+                tvPicLoading.visibility = View.GONE
+            } else {
+                ivPic.visibility = View.GONE
+                tvPicLoading.text = "[ 没找到配图 ]"
+            }
+        }
     }
 
     private fun fillTargets(w: W) {
@@ -1146,6 +1187,7 @@ class MainActivity : AppCompatActivity() {
             SpeakService.stopService(this)
         }
         Sfx.release()
+        runCatching { pix.shutdown() }
     }
 
     @Deprecated("")
