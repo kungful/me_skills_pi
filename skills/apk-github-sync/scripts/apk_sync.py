@@ -287,13 +287,27 @@ def sha256_file(path: Path) -> str:
 
 
 def sha_of_tree(root: Path, extra_dirs: set[str]) -> str:
-    """对目录内容做指纹（路径 + 内容），用于判断是否需要重新拷贝。"""
-    ignore_dirs = IGNORE_DIRS | set(extra_dirs or ())
+    """对目录内容做指纹（路径 + 内容），用于判断是否需要重新拷贝。
+
+    配置里的 excludeDirs 只在根下一层生效（与拷贝规则保持一致）。
+    """
+    ignore_dirs = set(IGNORE_DIRS)
     h = hashlib.sha1()
     if not root.exists():
         return h.hexdigest()
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = sorted(d for d in dirnames if d not in ignore_dirs)
+        try:
+            depth = len(Path(dirpath).relative_to(root).parts)
+        except ValueError:
+            depth = 99
+        keep = []
+        for d in dirnames:
+            if d in ignore_dirs:
+                continue
+            if d in (extra_dirs or ()) and depth <= 1:
+                continue
+            keep.append(d)
+        dirnames[:] = sorted(keep)
         for fn in sorted(filenames):
             if fn in IGNORE_FILE_NAMES or fn.endswith(IGNORE_FILE_SUFFIXES):
                 continue
@@ -431,10 +445,25 @@ def scan_apps(cfg: dict) -> list[dict]:
 
 # ----------------------------------------------------------------------------- 镜像
 
-def ignore_for_copy(dirpath, names, extra_dirs: set[str]):
+def ignore_for_copy(dirpath, names, extra_dirs: set[str], root: Path | None = None):
+    """拷贝时该忽略的目录名。
+
+    内置 IGNORE_DIRS（build/.gradle/node_modules…）任意层级都忽略；
+    配置里的 excludeDirs（data/logs/screens…）**只在项目根下一层**忽略，
+    否则会把 app/src/main/java/<包>/data 这种源码目录一起吃掉
+    （词打 VocabType 的 data 包就是这样从仓库里消失的）。
+    """
     ignored = set()
+    depth = None
+    if root is not None:
+        try:
+            depth = len(Path(dirpath).relative_to(root).parts)
+        except ValueError:
+            depth = None
     for n in names:
-        if n in IGNORE_DIRS or n in extra_dirs:
+        if n in IGNORE_DIRS:
+            ignored.add(n)
+        elif n in extra_dirs and (depth is None or depth <= 1):
             ignored.add(n)
         elif n in IGNORE_FILE_NAMES or n.endswith(IGNORE_FILE_SUFFIXES):
             ignored.add(n)
@@ -496,7 +525,7 @@ def mirror_apps(repo_dir: Path, subdir: str, apps: list[dict], cfg: dict,
         if app["source"]:
             shutil.copytree(
                 app["source"], dst / "src",
-                ignore=lambda d, n: ignore_for_copy(d, n, extra_dirs),
+                ignore=lambda d, n: ignore_for_copy(d, n, extra_dirs, app["source"]),
                 symlinks=True, ignore_dangling_symlinks=True,
             )
 
