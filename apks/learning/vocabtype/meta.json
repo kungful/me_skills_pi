@@ -1,0 +1,19 @@
+{
+  "slug": "vocabtype",
+  "title": "词打",
+  "category": "learning",
+  "categoryTitle": "学习 / 科普",
+  "package": "com.vocabtype.app",
+  "version": "1.5",
+  "notes": "打字记单词：播放器（列表/单组/随机循环、定时关闭、收藏、播放列表、快进快退）+ 后台锁屏播放 + 有道/百度/微软神经语音三种免费发音，中文可批量预合成",
+  "apk": "vocabtype.apk",
+  "apkName": "词打-v1.6.apk",
+  "apkSize": 41763211,
+  "apkSha256": "1beb8d25949e00cafacda8bcf22869953900e419b1af17e67053e41f8b919061",
+  "srcSha": "4b121503ebbec92a04b5880ccf1fe396886f1b9f",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/AndroidStudioProjects/VocabType",
+  "builtAt": "2026-10-27 11:51:49",
+  "syncedAt": "2026-10-30 20:52:47",
+  "auto": false
+}

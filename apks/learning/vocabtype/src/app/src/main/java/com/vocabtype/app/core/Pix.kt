@@ -106,6 +106,36 @@ class Pix(private val ctx: Context) {
         }
     }
 
+    /**
+     * 播放器用：提前把后面几个词的图抓好，切词时几乎零空窗。
+     * 单线程顺序抓，避免和正在播的那张抢带宽。
+     */
+    fun prefetchAhead(words: List<String>, from: Int, ahead: Int = 5) {
+        if (!netOn || words.isEmpty()) return
+        val todo = ArrayList<String>(ahead)
+        var i = from
+        var guard = 0
+        while (todo.size < ahead && guard < words.size * 2) {
+            val w = words[(i % words.size + words.size) % words.size]
+            if (w.isNotBlank() && cached(w) == null && !dead.contains(sha1(w.lowercase().trim()))) {
+                todo.add(w)
+            }
+            i++
+            guard++
+        }
+        if (todo.isEmpty()) return
+        pool.execute {
+            for (w in todo) {
+                val k = sha1(w.lowercase().trim())
+                if (cached(w) != null || dead.contains(k)) continue
+                if (inflight.putIfAbsent(k, true) == null) {
+                    fetch(w, k)
+                    inflight.remove(k)
+                }
+            }
+        }
+    }
+
     fun prefetch(word: String) {
         if (word.isBlank() || cached(word) != null) return
         val k = sha1(word.lowercase().trim())
@@ -143,38 +173,46 @@ class Pix(private val ctx: Context) {
         return sb.toString()
     }
 
-    /** 候选图地址：必应 → 百度 */
+    /**
+     * 候选图地址。**百度优先**：国内直连、快；
+     * 必应放后面 —— 走 Clash 等代理时常被投到失效节点，光等超时就浪费好几秒。
+     */
     private fun candidates(word: String): List<String> {
         val q = URLEncoder.encode(word, "UTF-8")
         val out = ArrayList<String>(8)
-        // 必应图片异步接口，返回 HTML 片段里带 murl
+
+        // 1) 百度图片
         runCatching {
-            val html = httpText("https://www.bing.com/images/async?q=$q&first=0&count=8&mkt=en-US")
-            val re = Regex("murl&quot;:&quot;(.*?)&quot;")
-            re.findAll(html).take(6).forEach { m ->
-                val u = m.groupValues[1]
+            val js = httpText("https://image.baidu.com/search/acjson?tn=resultjson_com&word=$q&pn=0&rn=8")
+            val re = Regex(THUMB_RE)
+            re.findAll(js).take(6).forEach { m ->
+                val u = m.groupValues.drop(1).firstOrNull { it.isNotEmpty() } ?: ""
                 if (u.startsWith("http")) out.add(u)
             }
         }
+
+        // 2) 必应图片（百度没结果时再试）
         if (out.isEmpty()) {
-            // 百度图片
             runCatching {
-                val js = httpText("https://image.baidu.com/search/acjson?tn=resultjson_com&word=$q&pn=0&rn=8")
-                val re = Regex(THUMB_RE)
-                re.findAll(js).take(6).forEach { m -> out.add(m.groupValues.drop(1).firstOrNull { it.isNotEmpty() } ?: "") }
+                val html = httpText("https://cn.bing.com/images/async?q=$q&first=0&count=8&mkt=zh-CN", 4000)
+                Regex("murl&quot;:&quot;(.*?)&quot;").findAll(html).take(6).forEach { m ->
+                    val u = m.groupValues[1]
+                    if (u.startsWith("http")) out.add(u)
+                }
             }
         }
-        // 兜底：必应每日壁纸（至少不是白板）
-        if (out.isEmpty()) out.add("https://picsum.photos/480/360?random=$q")
+
+        // 3) 兜底：随便给张图，总比空白强
+        if (out.isEmpty()) out.add("https://picsum.photos/480/360?random=" + q.hashCode())
         return out
     }
 
-    private fun httpText(url: String): String {
+    private fun httpText(url: String, readMs: Int = READ_MS): String {
         var conn: HttpURLConnection? = null
         return try {
             conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = CONNECT_MS
-                readTimeout = READ_MS
+                connectTimeout = 4000
+                readTimeout = readMs
                 setRequestProperty("User-Agent", UA)
                 setRequestProperty("Accept-Language", "en-US,en;q=0.9")
             }

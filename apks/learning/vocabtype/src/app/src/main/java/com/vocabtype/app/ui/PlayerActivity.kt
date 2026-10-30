@@ -73,6 +73,11 @@ class PlayerActivity : AppCompatActivity() {
     private var sleepRun: Runnable? = null
     private var sleepEndAt = 0L
     private var seriesSize = 0
+    private var names: List<String> = emptyList()
+    private lateinit var picBox: android.widget.FrameLayout
+    private lateinit var ivPic: android.widget.ImageView
+    private lateinit var tvPicLoading: android.widget.TextView
+    private val pix by lazy { com.vocabtype.app.core.Pix(applicationContext) }
     private var gen = 0
     private lateinit var box: LinearLayout
 
@@ -111,6 +116,9 @@ class PlayerActivity : AppCompatActivity() {
         btnTimer = findViewById(R.id.btnTimer)
         btnList = findViewById(R.id.btnList)
         btnFav = findViewById(R.id.btnFav)
+        picBox = findViewById(R.id.picBox)
+        ivPic = findViewById(R.id.ivPic)
+        tvPicLoading = findViewById(R.id.tvPicLoading)
         btnMode.setOnClickListener { cyclePlayMode() }
         btnTimer.setOnClickListener { cycleTimer() }
         btnList.setOnClickListener { showList() }
@@ -182,6 +190,7 @@ class PlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+        runCatching { pix.shutdown() }
         speaker.onState = null
     }
 
@@ -191,6 +200,7 @@ class PlayerActivity : AppCompatActivity() {
         val metas = Dicts.index(this)
         val meta = metas.firstOrNull { it.id == prefs.dictId } ?: metas.firstOrNull() ?: return
         val all = Dicts.words(this, meta)
+        loadNames()
         words = when (prefs.playOrder) {
             ORD_RANDOM -> all.shuffled()
             ORD_WRONG -> {
@@ -206,6 +216,13 @@ class PlayerActivity : AppCompatActivity() {
 
             else -> all
         }
+    }
+
+    private fun loadNames() {
+        names = ArrayList<String>()
+        val metas = Dicts.index(this)
+        val meta = metas.firstOrNull { it.id == prefs.dictId } ?: metas.firstOrNull() ?: return
+        names = runCatching { Dicts.words(this, meta).map { it.name } }.getOrDefault(emptyList())
     }
 
     private fun reloadOrder() {
@@ -397,7 +414,44 @@ class PlayerActivity : AppCompatActivity() {
         tvSent.text = s?.en ?: ""
         tvSent.visibility = if (s == null) View.GONE else View.VISIBLE
         paintFav()
+        showPic(w)
+        // 预取后面几张，切词时几乎零空窗
+        pix.prefetchAhead(names, idx, 6)
         tick()
+    }
+
+    /** 配图：缓存优先；没有就先占位再异步补，切词不会卡 */
+    private fun showPic(w: W) {
+        if (!prefs.showPic) {
+            picBox.visibility = View.GONE
+            return
+        }
+        picBox.visibility = View.VISIBLE
+        val hit = pix.cached(w.name)
+        if (hit != null) {
+            ivPic.setImageBitmap(hit)
+            ivPic.visibility = View.VISIBLE
+            tvPicLoading.visibility = View.GONE
+            return
+        }
+        ivPic.setImageDrawable(null)
+        ivPic.visibility = View.GONE
+        tvPicLoading.visibility = View.VISIBLE
+        tvPicLoading.text = "[ 配图中… ]"
+        val want = w.name
+        pix.load(want) { bmp ->
+            if (isFinishing) return@load
+            val now = words.getOrNull(idx)?.name
+            if (now != want) return@load
+            if (bmp != null) {
+                ivPic.setImageBitmap(bmp)
+                ivPic.visibility = View.VISIBLE
+                tvPicLoading.visibility = View.GONE
+            } else {
+                ivPic.visibility = View.GONE
+                tvPicLoading.text = "[ 没找到配图 ]"
+            }
+        }
     }
 
     private fun tick() {
@@ -626,7 +680,22 @@ class PlayerActivity : AppCompatActivity() {
         bar.addView(go, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { rightMargin = dp(8) })
-        val info = txt("中文已缓存 ${speaker.voiceEngine.cacheCount()} 条", 12f, "#FF8A9BB2")
+        val picBtn = Button(this).apply {
+            text = "预缓存配图"
+            textSize = 12f
+            typeface = android.graphics.Typeface.MONOSPACE
+            setTextColor(Color.parseColor("#FF00F0FF"))
+            background = resources.getDrawable(R.drawable.bg_btn, theme)
+            minWidth = 0
+            minHeight = 0
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            stateListAnimator = null
+        }
+        picBtn.setOnClickListener { warmPics(picBtn) }
+        bar.addView(picBtn, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { rightMargin = dp(8) })
+        val info = txt("中文 ${speaker.voiceEngine.cacheCount()} 条 · 配图 ${pix.cacheCount()} 张", 12f, "#FF8A9BB2")
         info.tag = "warmInfo"
         warmInfo = info
         bar.addView(info)
@@ -642,6 +711,46 @@ class PlayerActivity : AppCompatActivity() {
 
     private var warmCancel: Runnable? = null
     private var warming = false
+
+    private var picWarming = false
+
+    /** 把当前词库的图批量抓下来，之后播放全程有图 */
+    private fun warmPics(btn: Button) {
+        if (picWarming) {
+            picWarming = false
+            btn.text = "预缓存配图"
+            return
+        }
+        if (names.isEmpty()) {
+            toast("词库是空的")
+            return
+        }
+        picWarming = true
+        btn.text = "取消"
+        val total = names.size
+        Thread {
+            var i = 0
+            while (picWarming && i < total) {
+                val w = names[i]
+                if (pix.cached(w) == null) {
+                    pix.prefetch(w)
+                    // 给下载留点时间，别把队列塞爆
+                    Thread.sleep(180)
+                }
+                i++
+                if (i % 20 == 0) {
+                    val d = i
+                    runOnUiThread { if (picWarming) btn.text = "取消 $d/$total" }
+                }
+            }
+            runOnUiThread {
+                picWarming = false
+                btn.text = "预缓存配图"
+                warmInfo?.text = "配图已缓存 ${pix.cacheCount()} 张"
+                toast("配图预缓存完成：${pix.cacheCount()} 张")
+            }
+        }.start()
+    }
 
     /** 批量预合成中文释义（第二次进播放器就完全不用等） */
     private fun warmZh(btn: Button?, info: TextView? = null) {

@@ -78,6 +78,30 @@
                 android:padding="7dp"
                 android:src="@drawable/ic_heart" />
 
+            <!-- 配图：和单词一起切换，提前预取所以基本不空窗 -->
+            <FrameLayout
+                android:id="@+id/picBox"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_panel_flat">
+
+                <ImageView
+                    android:id="@+id/ivPic"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="配图"
+                    android:scaleType="centerCrop" />
+
+                <TextView
+                    android:id="@+id/tvPicLoading"
+                    style="@style/Txt.Label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="[ 配图中… ]" />
+            </FrameLayout>
+
             <TextView
                 android:id="@+id/tvNow"
                 android:layout_width="match_parent"

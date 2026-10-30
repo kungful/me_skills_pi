@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "generatedAt": "2026-10-30 09:08:07",
   "count": 16,
@@ -199,3 +200,195 @@
     }
   ]
 }
+=======
+{
+  "generatedAt": "2026-10-30 20:53:11",
+  "count": 15,
+  "totalApkBytes": 84927243,
+  "categories": [
+    {
+      "id": "design",
+      "title": "设计与演示",
+      "apps": [
+        {
+          "slug": "paintbox",
+          "title": "跑图助手",
+          "version": "1.0",
+          "apk": "design/paintbox/paintbox.apk",
+          "source": "design/paintbox/src/",
+          "size": 99187,
+          "sha256": "c0f694a83e7d08d6fdafc41c7bd4a664ab783c154193f4e370ca3c4fa39f6cde",
+          "builtAt": "2026-10-07 23:39:30",
+          "notes": "连本机 ComfyUI / 跑图服务看图与下载"
+        },
+        {
+          "slug": "pianowall",
+          "title": "钢琴墙 3D",
+          "version": "1.0",
+          "apk": "design/pianowall/pianowall.apk",
+          "source": "design/pianowall/src/",
+          "size": 226458,
+          "sha256": "0c6b9efae59af3f7fa43449573c76f7fbff4a086c5e64193aa8efde841f55228",
+          "builtAt": "2026-10-08 12:04:40",
+          "notes": "钢琴键盘图案墙的三维演示 + 全套带尺寸施工图"
+        }
+      ]
+    },
+    {
+      "id": "learning",
+      "title": "学习 / 科普",
+      "apps": [
+        {
+          "slug": "cosmos-codex",
+          "title": "万物原理",
+          "version": "1.0",
+          "apk": "learning/cosmos-codex/cosmos-codex.apk",
+          "source": "learning/cosmos-codex/src/",
+          "size": 255853,
+          "sha256": "db90c277939f2fde2d96445b3fba180f8500f831492e570ea93407df59a9d4b1",
+          "builtAt": "2026-10-06 21:32:25",
+          "notes": "宇宙运行手册：11 学科 85 课 170 题，纯离线 WebView"
+        },
+        {
+          "slug": "wordrush",
+          "title": "单词突围",
+          "version": "1.0",
+          "apk": "learning/wordrush/wordrush.apk",
+          "source": "learning/wordrush/src/",
+          "size": 5735523,
+          "sha256": "5fdf884ed29c759a1153a7162434df9e27d867d7b8ac275fb820d002092bae22",
+          "builtAt": "2026-10-04 21:33:39",
+          "notes": "单词闯关游戏"
+        },
+        {
+          "slug": "life-algo",
+          "title": "生活算法",
+          "version": "1.0.0",
+          "apk": "learning/life-algo/life-algo.apk",
+          "source": "learning/life-algo/src/",
+          "size": 17351322,
+          "sha256": "31663071562abd63953595e08a8e20a10200a1407fe1f1e9ae116ff2fe2d1d03",
+          "builtAt": "2026-10-06 09:00:51",
+          "notes": "离线生活算法：穿搭/营养/睡眠/训练 + 各种计算器"
+        },
+        {
+          "slug": "guantianxia",
+          "title": "观天下",
+          "version": "1.0",
+          "apk": "learning/guantianxia/guantianxia.apk",
+          "source": "learning/guantianxia/src/",
+          "size": 9841452,
+          "sha256": "e9fb2d42748a8c39ecddb6b96d6812c594a033040e2cc83dbf2d29e27c8ac026",
+          "builtAt": "2026-10-17 16:02:03",
+          "notes": "新闻 / 财经 / 书架 聚合阅读"
+        },
+        {
+          "slug": "vocabtype",
+          "title": "词打",
+          "version": "1.5",
+          "apk": "learning/vocabtype/vocabtype.apk",
+          "source": "learning/vocabtype/src/",
+          "size": 41763211,
+          "sha256": "1beb8d25949e00cafacda8bcf22869953900e419b1af17e67053e41f8b919061",
+          "builtAt": "2026-10-27 11:51:49",
+          "notes": "打字记单词：播放器（列表/单组/随机循环、定时关闭、收藏、播放列表、快进快退）+ 后台锁屏播放 + 有道/百度/微软神经语音三种免费发音，中文可批量预合成"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "工具",
+      "apps": [
+        {
+          "slug": "cpe140-ctrl",
+          "title": "CPE140 控制台 (PC)",
+          "version": "1.4.0",
+          "apk": "",
+          "source": "tools/cpe140-ctrl/src/",
+          "size": 0,
+          "sha256": "",
+          "builtAt": "",
+          "notes": "逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI（六标签）；断网取证诊断 diagnose（逐层盘点 + 判定假断网/上行/宽带/DNS）+ 分级软修复 fix（六级阶梯从轻到重，一通就停）+ 断网看门狗（重启前先软修；30 分钟冷却 + 单次断网最多重启 3 次，超限转 6 小时长退避，不会无限重启）；新机器一键部署 provision（验注入通道 + 备份整片 flash + 装软修/看门狗 + 回读核对 + 可选挂 cron）；修回显通道丢失（/tmp/.cpeout 被清而 /www/.cpeout 符号链接还在 -> GET 回 404 网页，旧版会把 HTML 当命令输出；注意本工具 close() 退出时自己也会拆这条通道，手机 App 那头会因此撞上 404）；命令手册 howto；含脱敏报告"
+        },
+        {
+          "slug": "cpe140-ctrl-android",
+          "title": "CPE140 控制台 (安卓)",
+          "version": "1.4.2",
+          "apk": "tools/cpe140-ctrl-android/cpe140-ctrl-android.apk",
+          "source": "tools/cpe140-ctrl-android/src/",
+          "size": 5556584,
+          "sha256": "751cada11104cde07e53d78b5df7810ee1c9e6fb6f50cec6f841db820a921292",
+          "builtAt": "2026-10-18 12:37:22",
+          "notes": "手机版完全控制台：概览/客户端/配置/root 终端/维护（换新机器一键部署 + 一键断网诊断 + 分级软修救网 + 整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；v1.4.2 修一个布局坑（BtnWide 的 0dp+weight 放进竖向卡片会被量成 0 宽 -> 有 4 个按钮一直看不见：「DHCP 客户端列表」「扫描周边 WiFi」「写入」「恢复出厂设置」；新增 BtnLine 样式修正）；v1.4.1 加「一键部署」（验型号/验注入通道/验 uid=0 → 装不加 flash 自分级软修+看门狗 → ls -l 回读核对 → 看连通性，默认落到只记录模式）；v1.4.0 修回显通道丢失（设备重启后 /tmp 被清、或 PC 工具退出时 rm -f /www/.cpeout，断链后 GET /.cpeout 回 404 网页而旧版当成命令输出显示）—— 现在认得出来并自动重铺通道、重读、必要时重跑命令，另加「重铺连接通道」与「看请求日志」两个手动按钮；看门狗重启前先软修、带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI"
+        },
+        {
+          "slug": "pilink",
+          "title": "Pi 通知 (piLink)",
+          "version": "0.7.0",
+          "apk": "tools/pilink/pilink.apk",
+          "source": "tools/pilink/src/",
+          "size": 1944615,
+          "sha256": "4e7563bebccf2a616f8f04256a8d8a3192dd6013fb7a8c07d373428d342f844a",
+          "builtAt": "2026-09-26 10:11:47",
+          "notes": "把 pi / pi-web 的通知与派发链路接到安卓手机"
+        },
+        {
+          "slug": "trig-mech",
+          "title": "三角力学计算器",
+          "version": "1.0",
+          "apk": "tools/trig-mech/trig-mech.apk",
+          "source": "tools/trig-mech/src/",
+          "size": 78997,
+          "sha256": "32d6206497bd23c6c18b940429cd8e6a90e91ac647d87c571259c9d9fd31bdd1",
+          "builtAt": "2026-10-17 12:58:59",
+          "notes": "三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线"
+        },
+        {
+          "slug": "sunnet",
+          "title": "太阳网控制器",
+          "version": "1.0",
+          "apk": "tools/sunnet/sunnet.apk",
+          "source": "tools/sunnet/src/",
+          "size": 796222,
+          "sha256": "0078ef052d7fd0c8efad421e1e3b6c4416016645928b757f761b38c8d5074947",
+          "builtAt": "2026-10-19 00:02:56",
+          "notes": "风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点"
+        },
+        {
+          "slug": "canopy-struct",
+          "title": "棚架受力分析",
+          "version": "1.0",
+          "apk": "tools/canopy-struct/canopy-struct.apk",
+          "source": "tools/canopy-struct/src/",
+          "size": 267663,
+          "sha256": "17840ce9a7ad1b695ed6d9b99406b8694d5ec51bd528b868510f1e9e1bc744a7",
+          "builtAt": "2026-10-19 10:46:43",
+          "notes": "L形墙内角太阳网车棚受力分析：GB50009风荷载 + 平面刚架矩阵位移法 + 柱脚/基础抗拔抗倾覆校核 + three.js三维可视化"
+        },
+        {
+          "slug": "tea-strategist",
+          "title": "茶叶军师",
+          "version": "1.2",
+          "apk": "tools/tea-strategist/tea-strategist.apk",
+          "source": "tools/tea-strategist/src/",
+          "size": 132188,
+          "sha256": "f29cf84b2191f71bfe11f1575e49d134fa6a4d38af6300d2cbc9935db20d82be",
+          "builtAt": "2026-10-18 23:51:47",
+          "notes": "茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用"
+        },
+        {
+          "slug": "demand-radar",
+          "title": "需求雷达",
+          "version": "",
+          "apk": "tools/demand-radar/demand-radar.apk",
+          "source": "tools/demand-radar/src/",
+          "size": 877968,
+          "sha256": "f7af255252b3f454c476f62b3e4a7e9723b2d9675637e1c075a07fbe8f5cbc83",
+          "builtAt": "2026-10-03 10:37:28",
+          "notes": "从公开渠道挖掘市场需求信号，打分聚簇出机会榜"
+        }
+      ]
+    }
+  ]
+}
+>>>>>>> 07702fe (apks: 更新 learning/vocabtype)
