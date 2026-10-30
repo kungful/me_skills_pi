@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-27 11:31:50**　|　共 **15** 个应用　|　APK 合计 **48.4 MB**
+最后同步：**2026-10-30 09:08:07**　|　共 **16** 个应用　|　APK 合计 **48.6 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -44,3 +44,4 @@ apks/<分类>/<应用>/
 | **棚架受力分析** | 1.0 | [`canopy-struct.apk`](tools/canopy-struct/canopy-struct.apk) | [`src/`](tools/canopy-struct/src/) | 261.4 KB | L形墙内角太阳网车棚受力分析：GB50009风荷载 + 平面刚架矩阵位移法 + 柱脚/基础抗拔抗倾覆校核 + three.js三维可视化 |
 | **茶叶军师** | 1.2 | [`tea-strategist.apk`](tools/tea-strategist/tea-strategist.apk) | [`src/`](tools/tea-strategist/src/) | 129.1 KB | 茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用 |
 | **需求雷达** | - | [`demand-radar.apk`](tools/demand-radar/demand-radar.apk) | [`src/`](tools/demand-radar/src/) | 857.4 KB | 从公开渠道挖掘市场需求信号，打分聚簇出机会榜 |
+| **订阅猎手** | 1.0.3 | [`subhunter.apk`](tools/subhunter/subhunter.apk) | [`src/`](tools/subhunter/src/) | 112.9 KB | 公益节点聚合：抓取去重测活，一键复制 Clash/v2ray 订阅，每日自动同步 + 本机订阅服务 |

@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>订阅猎手</title>
+<style>
+  :root{
+    --bg:#0b1017; --bg2:#111a24; --card:#131c27; --card2:#182432;
+    --line:#22303f; --txt:#e8f4f0; --dim:#8fa6a0; --dim2:#657a76;
+    --green:#3ddc97; --blue:#5ac8fa; --amber:#ffc65c; --red:#ff6b6b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif;
+    overscroll-behavior-y:contain}
+  body{padding:0 0 calc(76px + env(safe-area-inset-bottom))}
+  .wrap{max-width:620px;margin:0 auto;padding:0 14px}
+  header{padding:calc(14px + env(safe-area-inset-top)) 0 8px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:10px;flex:0 0 auto;
+    background:radial-gradient(circle at 50% 45%,#12252f 0,#0d1720 70%);
+    border:1px solid #1e3b3c;display:flex;align-items:center;justify-content:center;font-size:17px}
+  h1{font-size:17px;margin:0;letter-spacing:.4px}
+  .sub{font-size:12px;color:var(--dim2);margin-top:1px}
+  .badge{font-size:11px;padding:2px 7px;border-radius:999px;background:#13251f;color:var(--green);
+    border:1px solid #1d4438;margin-left:auto}
+  .status{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .status span{font-size:11.5px;color:var(--dim);background:#101a24;border:1px solid #1a2634;
+    border-radius:8px;padding:3px 8px}
+  .status b{color:var(--txt);font-weight:600}
+
+  .btn{border:0;border-radius:13px;padding:13px 16px;font-size:15px;font-weight:600;
+    color:#04140d;background:linear-gradient(180deg,#4ae5a4,#2fc98a);width:100%;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s}
+  .btn:active{transform:scale(.985)}
+  .btn[disabled]{opacity:.55}
+  .btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line);font-weight:500}
+  .btn.sm{padding:9px 12px;font-size:13.5px;border-radius:10px;width:auto;white-space:nowrap;flex:0 0 auto}
+
+  .card{background:linear-gradient(180deg,var(--card),#0f1822);border:1px solid var(--line);
+    border-radius:16px;padding:14px;margin:12px 0}
+  .card h2{font-size:14px;margin:0 0 4px;display:flex;align-items:center;gap:7px}
+  .card h2 .tag{font-size:10.5px;color:var(--dim2);font-weight:400;margin-left:auto}
+  .card p{margin:0;font-size:12.5px;color:var(--dim)}
+  .row{display:flex;gap:9px;align-items:center}
+  .row.wrap{flex-wrap:wrap}
+  .grow{flex:1 1 auto;min-width:0}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+    color:var(--blue);word-break:break-all}
+
+  .prog{height:6px;border-radius:99px;background:#16222e;overflow:hidden;margin-top:10px}
+  .prog i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--green),var(--blue));transition:width .3s}
+  .prog-txt{font-size:11.5px;color:var(--dim2);margin-top:6px;min-height:16px}
+
+  .tabs{display:flex;gap:6px;background:var(--bg2);padding:4px;border-radius:13px;margin:14px 0 6px;
+    border:1px solid var(--line)}
+  .tabs button{flex:1;border:0;background:transparent;color:var(--dim);padding:9px 0;border-radius:10px;
+    font-size:13.5px;font-weight:600}
+  .tabs button.on{background:var(--card2);color:var(--txt);box-shadow:0 1px 0 #00000040 inset}
+
+  .list{margin:10px 0}
+  .item{display:flex;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid #1a2531}
+  .item:last-child{border-bottom:0}
+  .item .nm{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .mt{font-size:11px;color:var(--dim2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--dim2);flex:0 0 auto}
+  .dot.ok{background:var(--green);box-shadow:0 0 8px #3ddc9780}
+  .dot.bad{background:var(--red)}
+  .lat{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:8px;background:#16222e;color:var(--dim)}
+  .lat.g{color:var(--green)} .lat.y{color:var(--amber)} .lat.r{color:var(--red)}
+  .pill{font-size:10.5px;padding:2px 6px;border-radius:6px;background:#16222e;color:var(--dim);margin-right:5px}
+
+  .sw{position:relative;width:46px;height:27px;border-radius:99px;background:#22303f;flex:0 0 auto;
+    transition:background .15s;border:0}
+  .sw i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#93a8a3;
+    transition:.15s}
+  .sw.on{background:#1d5c46} .sw.on i{left:22px;background:var(--green)}
+
+  input,select{background:#0e1720;border:1px solid var(--line);color:var(--txt);border-radius:10px;
+    padding:9px 11px;font-size:13.5px;width:100%;outline:none}
+  input:focus{border-color:#2b5a4c}
+  select{appearance:none}
+  label.f{display:block;font-size:12px;color:var(--dim2);margin:10px 0 5px}
+
+  nav{position:fixed;left:0;right:0;bottom:0;background:#0d151ed9;backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  nav button{flex:1;background:transparent;border:0;color:var(--dim2);font-size:10.5px;padding:5px 0;
+    display:flex;flex-direction:column;align-items:center;gap:2px}
+  nav button span{font-size:17px;line-height:1}
+  nav button.on{color:var(--green)}
+
+  .note{font-size:11.5px;color:var(--dim2);line-height:1.6}
+  .hr{height:1px;background:#1a2531;margin:12px 0}
+  .pane-title{font-size:12px;color:var(--dim2);margin:2px 0 0 2px}
+  .hidden{display:none!important}
+  .empty{text-align:center;color:var(--dim2);font-size:12.5px;padding:26px 10px}
+  .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+    background:#1b2a38;color:var(--txt);border:1px solid #2b4152;padding:9px 15px;border-radius:99px;
+    font-size:13px;opacity:0;transition:.2s;pointer-events:none;max-width:88vw;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">🎯</div>
+      <div>
+        <h1>订阅猎手</h1>
+        <div class="sub">公益节点 · 一键同步到 Clash / v2ray</div>
+      </div>
+      <div class="badge" id="badge">未同步</div>
+    </div>
+    <div class="status" id="status"></div>
+  </header>
+
+  <!-- 抓取 -->
+  <div class="card">
+    <button class="btn" id="btnRun" onclick="run()">⚡ 一键抓取 &amp; 测活</button>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="prog-txt" id="progTxt">点一下，抓取全部源 → 去重 → 测活 → 生成订阅</div>
+  </div>
+
+  <!-- 订阅 -->
+  <div id="pane-sub">
+    <div class="card">
+      <h2>🧩 v2rayNG / NekoBox <span class="tag">推荐</span></h2>
+      <p>点「复制订阅」→ 客户端里 订阅分组 → 右上角 + → <b>从剪贴板导入订阅</b>。</p>
+      <div class="row" style="margin-top:11px">
+        <button class="btn sm grow" onclick="copyKind('v2ray')">复制订阅</button>
+        <button class="btn ghost sm" onclick="openClient('v2ray')">打开客户端</button>
+      </div>
+      <div class="row" style="margin-top:9px">
+        <div class="mono grow" id="u2" onclick="copyKind('urlV2ray')">http://127.0.0.1:8791/v2ray</div>
+        <button class="btn ghost sm" onclick="copyKind('urlV2ray')">复制地址</button>
+      </div>
+      <div class="note" style="margin-top:9px">也可以只复制节点链接，单条往客户端里贴。</div>
+    </div>
+
+    <div class="card">
+      <h2>🐱 Clash Meta / mihomo</h2>
+      <p>复制地址 → Clash 里 配置 → 新建 → 从 URL 导入 → 粘贴 → 保存并更新。</p>
+      <div class="row" style="margin-top:11px">
+        <div class="mono grow" id="u1" onclick="copyKind('urlClash')">http://127.0.0.1:8791/clash</div>
+        <button class="btn sm" onclick="copyKind('urlClash')">复制地址</button>
+      </div>
+      <div class="row" style="margin-top:9px">
+        <button class="btn ghost sm grow" onclick="copyKind('clash')">复制完整 YAML</button>
+        <button class="btn ghost sm grow" onclick="openClient('clash')">打开 Clash</button>
+      </div>
+      <div class="row" style="margin-top:9px">
+        <button class="btn ghost sm grow" onclick="exportFiles()">导出 yaml 到下载</button>
+        <button class="btn ghost sm grow" onclick="copyKind('uris')">复制节点链接</button>
+      </div>
+      <div class="row" style="margin-top:9px;align-items:center">
+        <div class="grow">
+          <div style="font-size:13px">本机订阅服务</div>
+          <div class="note" id="srvHint">关着时订阅地址会失效</div>
+        </div>
+        <button class="sw" id="swServer" onclick="toggleServer()"><i></i></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📦 上次同步的成果</h2>
+      <div class="row wrap" style="margin-top:8px">
+        <div class="grow">
+          <div class="note" id="lastLine">还没有数据</div>
+        </div>
+        <button class="btn ghost sm" onclick="shareKind('v2ray')">分享订阅</button>
+      </div>
+      <div class="hr"></div>
+      <div class="note">断网 / 被墙时，本地缓存的这份结果依然能复制使用——这就是应急备用的意义。</div>
+    </div>
+  </div>
+
+  <!-- 节点 -->
+  <div id="pane-nodes" class="hidden">
+    <div class="card">
+      <div class="row">
+        <input id="q" placeholder="搜地区 / 协议 / 地址" oninput="renderNodes()">
+        <button class="btn ghost sm" onclick="loadNodes(0)">刷新</button>
+      </div>
+      <div class="list" id="nodeList"></div>
+      <button class="btn ghost" id="btnMore" onclick="moreNodes()">加载更多</button>
+    </div>
+  </div>
+
+  <!-- 源 -->
+  <div id="pane-src" class="hidden">
+    <div class="card">
+      <h2>📡 订阅源 <span class="tag" id="srcCount"></span></h2>
+      <p>默认内置公开公益源；抓取时自动套 jsDelivr / ghproxy 等镜像，某个挂了不影响整体。</p>
+      <div class="list" id="srcList"></div>
+      <div class="hr"></div>
+      <label class="f">添加自己的源</label>
+      <div class="row"><input id="newName" placeholder="名字（可空）"></div>
+      <div class="row" style="margin-top:8px"><input id="newUrl" placeholder="https://... 订阅地址"></div>
+      <button class="btn ghost sm" style="margin-top:9px" onclick="addSource()">添加</button>
+    </div>
+  </div>
+
+  <!-- 设置 -->
+  <div id="pane-set" class="hidden">
+    <div class="card">
+      <h2>⏰ 每日自动抓取</h2>
+      <div class="row" style="align-items:center;margin-top:6px">
+        <div class="grow">
+          <div style="font-size:13.5px">每天自动抓取并测活</div>
+          <div class="note">关机 / 重启后会自动恢复定时</div>
+        </div>
+        <button class="sw" id="swAuto" onclick="toggleAuto()"><i></i></button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="grow"><label class="f" style="margin:0">抓取时间</label></div>
+        <input type="time" id="autoTime" style="width:130px" onchange="setTime()">
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="grow">
+          <div style="font-size:13.5px">完成后发通知</div>
+          <div class="note" id="notifHint">告诉你新增了多少节点</div>
+        </div>
+        <button class="sw" id="swNotif" onclick="toggleNotif()"><i></i></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ 抓取参数</h2>
+      <div class="row" style="align-items:center;margin-top:6px">
+        <div class="grow">
+          <div style="font-size:13.5px">测活（TCP 握手）</div>
+          <div class="note">关掉更快，但会保留死节点</div>
+        </div>
+        <button class="sw" id="swPing" onclick="togglePing()"><i></i></button>
+      </div>
+      <label class="f">最多保留节点数</label>
+      <select id="maxNodes" onchange="setMax()">
+        <option value="60">60（最省流量）</option>
+        <option value="120">120</option>
+        <option value="200">200（默认）</option>
+        <option value="400">400</option>
+        <option value="800">800（全量）</option>
+      </select>
+      <label class="f">本机订阅端口（改了要重启客户端订阅）</label>
+      <input id="port" inputmode="numeric" onchange="setPort()">
+    </div>
+
+    <div class="card">
+      <h2>🧹 维护</h2>
+      <div class="row wrap" style="margin-top:8px">
+        <button class="btn ghost sm grow" onclick="clearAll()">清空本地缓存</button>
+        <button class="btn ghost sm grow" onclick="about()">关于 / 免责</button>
+      </div>
+      <div class="hr"></div>
+      <div class="note" id="aboutBox">公益节点由网上公开仓库维护，随时可能失效；测活只是 TCP 通不通，不代表一定可用。<br>
+        这些节点由第三方提供，可能记录流量，请勿用于登录敏感账号或支付。请遵守当地法律法规，仅作应急备用。</div>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <button class="on" id="nav-sub" onclick="tab('sub')"><span>🔗</span>订阅</button>
+  <button id="nav-nodes" onclick="tab('nodes')"><span>📋</span>节点</button>
+  <button id="nav-src" onclick="tab('src')"><span>📡</span>源</button>
+  <button id="nav-set" onclick="tab('set')"><span>⚙️</span>设置</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var S = null;                 // 最近一次 state
+var NODE_PAGE = 0, NODES = [], NODE_TOTAL = 0;
+var LAST_PROG = '';
+
+function N(){ return window.Native; }
+
+/* ---------------- 基础 ---------------- */
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('on'); }, 1700);
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function call(fn, args){
+  try { return fn.apply(N(), args || []); } catch(e){ toast('原生调用失败: ' + e); return null; }
+}
+function refresh(){
+  var s = call(N().state);
+  if (!s) return;
+  LAST_STATE = s;
+  try { S = JSON.parse(s); } catch(e){ return; }
+  render();
+}
+
+/* ---------------- 渲染 ---------------- */
+function render(){
+  if (!S) return;
+  var n = S.nodeCount || 0;
+  var badge = document.getElementById('badge');
+  badge.textContent = S.fetching ? '同步中…' : (n > 0 ? (n + ' 节点') : '未同步');
+  badge.style.color = n > 0 ? 'var(--green)' : 'var(--dim2)';
+
+  var st = [];
+  st.push('<span>上次同步 <b>' + (S.lastTime || '—') + '</b></span>');
+  if (n > 0) st.push('<span>可用 <b>' + (S.aliveTotal >= 0 ? S.aliveTotal : '—') + '</b></span>');
+  if (n > 0) st.push('<span>Clash <b>' + S.clashCount + '</b></span>');
+  if (n > 0) st.push('<span>v2ray <b>' + S.uriCount + '</b></span>');
+  if (S.costMs > 0) st.push('<span>耗时 <b>' + (S.costMs / 1000).toFixed(1) + 's</b></span>');
+  if (S.autoOn) st.push('<span>每日 <b>' + pad(S.hour) + ':' + pad(S.minute) + '</b> 自动</span>');
+  document.getElementById('status').innerHTML = st.join('');
+
+  document.getElementById('u1').textContent = S.urlClash;
+  document.getElementById('u2').textContent = S.urlV2ray;
+
+  var srv = document.getElementById('swServer');
+  srv.className = 'sw' + (S.serverOn ? ' on' : '');
+  document.getElementById('srvHint').textContent = S.serverOn
+      ? ('运行中 · 客户端里填上面的地址即可')
+      : '关着时订阅地址会失效（Android 15 后台最多续 6 小时，重开 App 自动续上）';
+
+  document.getElementById('lastLine').innerHTML = n > 0
+      ? (S.lastTime + ' · ' + n + ' 个节点 · 原始抓取 ' + S.rawTotal + ' 条')
+      : '还没有数据，先点上面的「一键抓取 &amp; 测活」';
+
+  setSw('swAuto', S.autoOn); setSw('swNotif', S.notifOn); setSw('swPing', S.pingOn);
+  var at = document.getElementById('autoTime');
+  if (document.activeElement !== at) at.value = pad(S.hour) + ':' + pad(S.minute);
+  var mn = document.getElementById('maxNodes');
+  if (document.activeElement !== mn) mn.value = String(S.maxNodes);
+  var pt = document.getElementById('port');
+  if (document.activeElement !== pt) pt.value = String(S.port);
+
+  renderSources();
+  renderNodes(true);
+}
+function setSw(id, on){ var e = document.getElementById(id); if (e) e.className = 'sw' + (on ? ' on' : ''); }
+function pad(v){ return (v < 10 ? '0' : '') + v; }
+
+function renderSources(){
+  if (!S || !S.sources) return;
+  var on = S.sources.filter(function(s){ return s.on; }).length;
+  document.getElementById('srcCount').textContent = on + ' / ' + S.sources.length + ' 启用';
+  var h = '';
+  S.sources.forEach(function(s){
+    var info = s.ok ? (s.count + ' 节点 · ' + (s.ms/1000).toFixed(1) + 's') : ('失败 ' + (s.info || ''));
+    h += '<div class="item">'
+       + '<div class="dot ' + (s.on ? (s.ok ? 'ok' : 'bad') : '') + '"></div>'
+       + '<div class="grow"><div class="nm">' + esc(s.name) + '</div>'
+       + '<div class="mt">' + esc(info) + (s.builtin ? '' : ' · 自定义') + '</div></div>'
+       + '<button class="sw' + (s.on ? ' on' : '') + '" onclick="toggleSrc(\'' + s.id + '\', ' + (!s.on) + ')"><i></i></button>'
+       + (s.builtin ? '' : '<button class="btn ghost sm" onclick="delSrc(\'' + s.id + '\')">删</button>')
+       + '</div>';
+  });
+  document.getElementById('srcList').innerHTML = h || '<div class="empty">没有源</div>';
+}
+
+function renderNodes(force){
+  if (!S) return;
+  var q = (document.getElementById('q').value || '').toLowerCase();
+  var list = NODES.filter(function(n){
+    if (!q) return true;
+    return (n.n + ' ' + n.e + ' ' + n.s + ' ' + n.r).toLowerCase().indexOf(q) >= 0;
+  });
+  var h = '';
+  list.forEach(function(n){
+    var lat = n.l > 0 ? n.l + 'ms' : '—';
+    var cls = n.l > 0 ? (n.l < 300 ? 'g' : (n.l < 900 ? 'y' : 'r')) : 'r';
+    var nm = n.n || n.e;
+    if (n.r && n.r !== '其它' && nm.indexOf(n.r) < 0) nm = n.r + ' · ' + nm;
+    h += '<div class="item" onclick="copyNode(this)" data-u="' + esc(n.u) + '">'
+       + '<div class="grow"><div class="nm">' + esc(nm) + '</div>'
+       + '<div class="mt"><span class="pill">' + esc(n.s) + '</span>' + esc(n.e) + '</div></div>'
+       + '<div class="lat ' + cls + '">' + lat + '</div></div>';
+  });
+  document.getElementById('nodeList').innerHTML = h || '<div class="empty">'
+     + (NODES.length ? '没有匹配的节点' : '还没有节点，先抓取一次') + '</div>';
+  var more = document.getElementById('btnMore');
+  more.classList.toggle('hidden', NODES.length >= NODE_TOTAL);
+  more.textContent = '加载更多（已显示 ' + NODES.length + ' / ' + NODE_TOTAL + '）';
+}
+
+function loadNodes(page){
+  var s = call(N().nodes, [page || 0]);
+  if (!s) return;
+  var o;
+  try { o = JSON.parse(s); } catch(e){ return; }
+  NODE_TOTAL = o.total || 0;
+  NODE_PAGE = o.page || 0;
+  NODES = (page === 0 ? [] : NODES).concat(o.list || []);
+  renderNodes();
+}
+function moreNodes(){ loadNodes(NODE_PAGE + 1); }
+
+/* ---------------- 交互 ---------------- */
+function tab(name){
+  ['sub','nodes','src','set'].forEach(function(k){
+    document.getElementById('pane-' + k).classList.toggle('hidden', k !== name);
+    document.getElementById('nav-' + k).classList.toggle('on', k === name);
+  });
+  if (name === 'nodes' && !NODES.length) loadNodes(0);
+}
+
+var WATCH = null, LAST_PROG_AT = 0;
+
+function restoreRunBtn(){
+  var b = document.getElementById('btnRun');
+  b.disabled = false; b.textContent = '⚡ 一键抓取 & 测活';
+  if (WATCH) { clearInterval(WATCH); WATCH = null; }
+}
+function run(){
+  if (S && S.fetching) { toast('正在抓取，稍等…'); refresh(); return; }
+  var ok = true;
+  try { ok = N().runFetch(); } catch(e){ ok = false; }
+  if (ok === false) {           // 原生说没启动（已经在跑），别把按钮锁死
+    restoreRunBtn();
+    refresh();
+    return;
+  }
+  var b = document.getElementById('btnRun');
+  b.disabled = true; b.textContent = '⏳ 正在抓取…';
+  document.getElementById('progBar').style.width = '3%';
+  LAST_PROG_AT = Date.now();
+  if (WATCH) clearInterval(WATCH);
+  // 回调可能因为切后台丢失：20 秒没动静就去问原生到底还在不在跑
+  WATCH = setInterval(function(){
+    if (Date.now() - LAST_PROG_AT < 20000) return;
+    var st = call(N().state), fetching = false;
+    try { fetching = JSON.parse(st).fetching; } catch(e){}
+    if (!fetching) { restoreRunBtn(); refresh(); toast('抓取已结束'); }
+    else { LAST_PROG_AT = Date.now(); }
+  }, 3000);
+}
+function copyKind(k){
+  var r = call(N().copyKind, [k]);
+  if (r === false) toast('还没有数据，先抓取一次');
+}
+var CLIENTS = {
+  v2ray: [['com.v2ray.ang','v2rayNG'], ['io.nekohasekai.sagernet','NekoBox'], ['moe.nb4a','NekoBox']],
+  clash: [['com.github.metacubex.clash.meta','Clash Meta'], ['com.github.kr328.clash','Clash'], ['com.github.kr328.clash.foss','Clash']]
+};
+function openClient(kind){
+  var list = CLIENTS[kind] || [];
+  for (var i = 0; i < list.length; i++){
+    if (call(N().openApp, [list[i][0]])) { toast('已打开 ' + list[i][1]); return; }
+  }
+  toast('没装客户端，先用下面的地址在浏览器/客户端里添加');
+}
+function shareKind(k){ call(N().shareKind, [k]); }
+function exportFiles(){ toast(call(N().exportFiles) || '导出中…'); }
+function toggleServer(){
+  if (!S) return;
+  toast('切换中…');
+  var s = call(N().serverToggle, [!S.serverOn]);
+  if (s) { S = JSON.parse(s); render(); }
+}
+function toggleSrc(id, on){
+  var s = call(N().toggleSource, [id, on]);
+  if (s) { S = JSON.parse(s); render(); }
+}
+function delSrc(id){
+  var s = call(N().removeSource, [id]);
+  if (s) { S = JSON.parse(s); render(); }
+}
+function addSource(){
+  var n = document.getElementById('newName').value.trim();
+  var u = document.getElementById('newUrl').value.trim();
+  if (!u) { toast('填一下订阅地址'); return; }
+  var r = call(N().addSource, [n, u]);
+  try {
+    var o = JSON.parse(r);
+    if (o.ok) {
+      document.getElementById('newName').value = '';
+      document.getElementById('newUrl').value = '';
+      S = o.state; render(); toast('已添加');
+    } else toast(o.msg || '添加失败');
+  } catch(e){ toast('添加失败'); }
+}
+function copyNode(el){
+  var u = el.getAttribute('data-u');
+  if (u) call(N().copy, [u]);
+}
+function toggleAuto(){
+  if (!S) return;
+  var on = !S.autoOn;
+  var s = call(N().setSetting, ['auto', on ? '1' : '0']);
+  if (s) { S = JSON.parse(s); render(); toast(on ? '已开启每日自动抓取' : '已关闭自动抓取'); }
+}
+function setTime(){
+  var v = document.getElementById('autoTime').value || '04:30';
+  var p = v.split(':');
+  var s = call(N().setSetting, ['hour', String(parseInt(p[0], 10))]);
+  s = call(N().setSetting, ['minute', String(parseInt(p[1], 10))]);
+  if (s) { S = JSON.parse(s); render(); toast('已设为每天 ' + v); }
+}
+function togglePing(){
+  if (!S) return;
+  var s = call(N().setSetting, ['ping', S.pingOn ? '0' : '1']);
+  if (s) { S = JSON.parse(s); render(); }
+}
+function toggleNotif(){
+  if (!S) return;
+  if (!S.notifOn) call(N().requestNotif);
+  var s = call(N().setSetting, ['notif', S.notifOn ? '0' : '1']);
+  if (s) { S = JSON.parse(s); render(); }
+}
+function setMax(){
+  var v = document.getElementById('maxNodes').value;
+  var s = call(N().setSetting, ['maxNodes', v]);
+  if (s) { S = JSON.parse(s); render(); toast('最多保留 ' + v + ' 个节点'); }
+}
+function setPort(){
+  var v = parseInt(document.getElementById('port').value, 10);
+  if (!v || v < 1024 || v > 65000) { toast('端口范围 1024–65000'); render(); return; }
+  var s = call(N().setSetting, ['port', String(v)]);
+  if (s) { S = JSON.parse(s); render(); toast('端口改为 ' + v); }
+  setTimeout(refresh, 700);
+}
+function clearAll(){
+  var s = call(N().clearCache);
+  if (s) { S = JSON.parse(s); NODES = []; render(); toast('已清空'); }
+}
+function about(){
+  var el = document.getElementById('aboutBox');
+  el.innerHTML = '<b>订阅猎手 1.0.3</b><br>'
+    + '抓取公开公益节点源 → 去重 → TCP 测活 → 生成 Clash / v2ray 订阅。<br><br>'
+    + '· 节点来自第三方公开仓库，随时可能失效或变动<br>'
+    + '· 只做 TCP 握手探测，不代表该节点一定能连通外网<br>'
+    + '· 公共节点可能被记录流量，切勿用于登录敏感账号 / 支付<br>'
+    + '· 本 App 不提供节点、不代理流量，仅供个人应急备用<br><br>'
+    + '请遵守当地法律法规。';
+}
+
+/* ---------------- 原生回调 ---------------- */
+window.__progress = function(json){
+  var o;
+  try { o = JSON.parse(json); } catch(e){ return; }
+  LAST_PROG_AT = Date.now();
+  document.getElementById('progBar').style.width = Math.max(3, o.pct) + '%';
+  document.getElementById('progTxt').textContent = o.msg || '';
+  var b = document.getElementById('btnRun');
+  b.textContent = '⏳ ' + (o.pct || 0) + '% · ' + (o.stage || '');
+  LAST_PROG = o.stage;
+};
+window.__fetchDone = function(json){
+  var o;
+  try { o = JSON.parse(json); } catch(e){ return; }
+  restoreRunBtn();
+  document.getElementById('progBar').style.width = o.ok ? '100%' : '0%';
+  document.getElementById('progTxt').textContent = o.msg || '';
+  if (o.state) { S = o.state; render(); loadNodes(0); }
+  else refresh();
+  toast(o.msg || (o.ok ? '完成' : '失败'));
+};
+
+/* 回到前台时强制对齐一次（抓取期间切走会丢回调） */
+window.__onResume = function(){
+  NODES = []; NODE_TOTAL = 0;
+  refresh();
+};
+
+/* ---------------- 启动 ---------------- */
+var LAST_STATE = '';
+refresh();
+setInterval(function(){
+  try {
+    var s = call(N().state);
+    if (s && s !== LAST_STATE) { LAST_STATE = s; refresh(); }
+  } catch(e){}
+}, 5000);
+</script>
+</body>
+</html>

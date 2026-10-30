@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-27 11:31:50",
-  "count": 15,
-  "totalApkBytes": 50798971,
+  "generatedAt": "2026-10-30 09:08:07",
+  "count": 16,
+  "totalApkBytes": 50914531,
   "categories": [
     {
       "id": "design",
@@ -183,6 +183,17 @@
           "sha256": "f7af255252b3f454c476f62b3e4a7e9723b2d9675637e1c075a07fbe8f5cbc83",
           "builtAt": "2026-10-03 10:37:28",
           "notes": "从公开渠道挖掘市场需求信号，打分聚簇出机会榜"
+        },
+        {
+          "slug": "subhunter",
+          "title": "订阅猎手",
+          "version": "1.0.3",
+          "apk": "tools/subhunter/subhunter.apk",
+          "source": "tools/subhunter/src/",
+          "size": 115560,
+          "sha256": "160c39c149ad861f5786d0ee1fb13302848e7a486e6703c85adbed44836d70ba",
+          "builtAt": "2026-10-29 11:56:04",
+          "notes": "公益节点聚合：抓取去重测活，一键复制 Clash/v2ray 订阅，每日自动同步 + 本机订阅服务"
         }
       ]
     }
