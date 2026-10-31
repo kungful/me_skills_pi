@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-31 09:58:33**
+最后同步：**2026-10-31 15:58:29**
 
-共 **41** 个 skill。
+共 **42** 个 skill。
 
 ## 安装
 
@@ -24,6 +24,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`bw16-flash`](skills/bw16-flash/) | Ai-Thinker BW16 / RTL8720DN (Realtek AmebaD) 设备的识别、编译、烧录与救砖。含环境一键搭建、串口自动识别、源码编译、擦除+写入+校验全流程，以及「半写砖头」救援、SoftAP 不广播、抓包误报等已知坑的修法。当用户说「烧录/刷 BW16」「RTL8720DN 刷机」「抓... | pi |
 | [`courseware-factory`](skills/courseware-factory/) | 生产小红书售卖的少儿美术课件（PPTX + PDF 双交付），含 WebUI 审图台 + 多课件工作台。**作用域仅限「少儿美术课件生产」，不是通用找图/做图工具。** 用于：做新课件（“做课件/新课题/出一套 XX 岁课件/范画/教学课件”）；改已有课件的图片/版式/文案/品牌名；导出 PDF/PPTX/单张图... | pi |
 | [`design-and-review-circuit`](skills/design-and-review-circuit/) | Design, audit, or correct an electronic circuit from a product brief, native schematic, netlist, block diagram, or circuit description. Use for architecture ... | pi |
+| [`douyin-ops`](skills/douyin-ops/) | 运营抖音账号的一整套能力：解析/无水印下载抖音作品、爆款拆解（数据+前3秒钩子+口播结构+热评需求）、热榜选题、视频转文案(ASR)、扫码登录、自动发布视频/图文（含定时与预览）、读我的作品数据与账号数据、评论互动、发布队列。当用户说"发抖音/发布视频/发一条抖音/运营抖音号/抖音选题/拆解这条爆款/下载抖音无水... | pi |
 | [`easyeda-agent`](skills/easyeda-agent/) | 通过本地 easyeda CLI、daemon 和连接器操作嘉立创EDA专业版（EasyEDA Pro）：用可迁移样例和参数化数据构建或修复原理图、布局布线 PCB，并回读连接、几何、DRC 与保存结果。适用于已有工程操作及数据驱动电路设计。 | agents |
 | [`ecom-detail-factory`](skills/ecom-detail-factory/) | 生产电商商品详情页（长图 + 分屏 + 主图 + PPTX + PDF + ZIP），含 WebUI 精修台。**作用域仅限「电商详情页生产」，不是通用做图/排版工具。** 用于：做商品详情页（“做个详情页/详情页长图/宝贝详情/主图+详情图”）；改已有详情页的文案/版式/配色/顺序；出白底主图、场景图、卖点配图... | pi |
 | [`flameox`](skills/flameox/) | 用 Flameox 采集有界、可复现的运行时证据——CPU/内存/GPU/推理栈的性能剖析，或把一条命令的输出抓成结构化 artifact 供后续分析比对。当用户说"profile 一下 / 性能剖析 / 火焰图 / 找性能瓶颈 / 跑个 benchmark 采数据 / 追踪 trace / 抓一次运行证据 / ... | pi |
@@ -61,4 +62,4 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 
 ## APK 备份
 
-Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 15 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
+Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 16 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。

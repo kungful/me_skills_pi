@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-31 09:58:33",
-  "count": 41,
+  "generatedAt": "2026-10-31 15:58:29",
+  "count": 42,
   "skills": [
     {
       "name": "apk-autoinstall",
@@ -35,6 +35,11 @@
     {
       "name": "design-and-review-circuit",
       "description": "Design, audit, or correct an electronic circuit from a product brief, native schematic, netlist, block diagram, or circuit description. Use for architecture and component-function review, power and logic-domain checks, reset and boot sequencing, bus ownership, ratings, timing, protection, safe states, component suitability, circuit bugs, or layout-facing electrical constraints.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "douyin-ops",
+      "description": "运营抖音账号的一整套能力：解析/无水印下载抖音作品、爆款拆解（数据+前3秒钩子+口播结构+热评需求）、热榜选题、视频转文案(ASR)、扫码登录、自动发布视频/图文（含定时与预览）、读我的作品数据与账号数据、评论互动、发布队列。当用户说\"发抖音/发布视频/发一条抖音/运营抖音号/抖音选题/拆解这条爆款/下载抖音无水印/抖音文案提取/看我的抖音数据/回抖音评论/定时发抖音\"时使用。注意：这是抖音（中国区），不是 TikTok，也不是小红书（那个用 xiaohongshu MCP）。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
