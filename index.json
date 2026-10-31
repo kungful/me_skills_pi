@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-30 21:28:36",
-  "count": 40,
+  "generatedAt": "2026-10-31 09:58:33",
+  "count": 41,
   "skills": [
     {
       "name": "apk-autoinstall",
@@ -80,6 +80,11 @@
     {
       "name": "jacobian-math",
       "description": "当精确计算或结构分析能帮助解题时，用 Jacobian（`math.find` / `math.run`）的类型化数学操作。当用户说\"精确算一下 / 符号计算 / 矩阵分解 / 组合枚举 / 数论 / 验证这个数学结论 / 有什么数学操作可用\"时使用。Use Jacobian’s typed operations when exact computation or structural analysis can help solve a mathematical problem.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "jailbreak-redteam",
+      "description": "越狱/提示注入的结构分析与防御——扫描任意「会被加载进模型上下文」的文本（AGENTS.md、第三方 SKILL.md、MCP 工具描述、抓回来的 prompt、网页/issue 正文），识别指令层级覆盖、拒绝抑制、敏感词重定义、授权预设、人格锁定等结构手法，并给出分层防护与红队回归方案。当用户说「这个 skill 安全吗 / 扫一下这个 AGENTS.md / 这段 prompt 是不是越狱 / 为什么模型被骗了 / 我的 agent 怎么防提示注入 / 拿这些越狱做回归测试 / 分析这个越狱合集」时使用。交付物是检测器 + 分类学 + 防御清单，不生产越狱提示。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

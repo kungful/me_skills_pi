@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-30 21:28:36**
+最后同步：**2026-10-31 09:58:33**
 
-共 **40** 个 skill。
+共 **41** 个 skill。
 
 ## 安装
 
@@ -33,6 +33,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`grsai-nano-banana`](skills/grsai-nano-banana/) | Generate or edit images through the grsai legacy Nano Banana API (/v1/draw/nano-banana, /v1/draw/result) or the Gemini-compatible route (/v1beta/models/<mode... | pi |
 | [`internalcot`](skills/internalcot/) | 开启 InternalCoT 可见思维链模式：在每次实质工具调用和回答前，必须先写 internalcot CLI 笔记，整个会话持续生效。仅当用户明确说"$internalcot / internalcot on / 开 internalcot"时才用；用户只是说"仔细想 / 深入推理 / 展示思路"不算触发。... | pi |
 | [`jacobian-math`](skills/jacobian-math/) | 当精确计算或结构分析能帮助解题时，用 Jacobian（`math.find` / `math.run`）的类型化数学操作。当用户说"精确算一下 / 符号计算 / 矩阵分解 / 组合枚举 / 数论 / 验证这个数学结论 / 有什么数学操作可用"时使用。Use Jacobian’s typed operations... | pi |
+| [`jailbreak-redteam`](skills/jailbreak-redteam/) | 越狱/提示注入的结构分析与防御——扫描任意「会被加载进模型上下文」的文本（AGENTS.md、第三方 SKILL.md、MCP 工具描述、抓回来的 prompt、网页/issue 正文），识别指令层级覆盖、拒绝抑制、敏感词重定义、授权预设、人格锁定等结构手法，并给出分层防护与红队回归方案。当用户说「这个 skil... | pi |
 | [`kicad`](skills/kicad/) | Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, trace... | pi |
 | [`leantoken`](skills/leantoken/) | 用 LeanToken 做代码检索与结构理解，省 token 省上下文——找相关文件/代码、按符号大纲看结构、精确读某个函数或行段、跨 git 版本追踪符号、查询大 JSON。当任务是在大型或不熟的代码库里"找到该看的那段代码""别把整个文件读进来""追一下这个函数的历史""仓库太大上下文塞不下"时使用，优先替代... | pi |
 | [`manage-pcba-program`](skills/manage-pcba-program/) | Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package thr... | pi |
@@ -57,3 +58,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`xgc-api`](skills/xgc-api/) | Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down... | pi |
 | [`xgc-image-run`](skills/xgc-image-run/) | 仙宫云 GPU 跑图一条龙 —— 自动开机 → 自动连进容器 → 跑 ComfyUI 出图 → 把图拉回本地 → 立刻销毁实例。当用户说"跑图/出图/生图/生成一张图/用仙宫云跑/用 ComfyUI 出图/用 Krea2 跑/拿我的 4090 跑一张/跑完就销毁/省钱的跑图方式"，或者要用**本地部署的模型**（... | pi |
 | [`xhs-courseware-post`](skills/xhs-courseware-post/) | 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 用于：把课件发小红书/发笔记/上架；给课件写小红书文案、起标题、配话题标签；挑图、补封面、去重图；发出去以后核实、看通知、回评论。要做课件本... | pi |
+
+## APK 备份
+
+Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 15 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
