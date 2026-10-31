@@ -1,0 +1,1540 @@
+From 843e94ea7334ff8f610ee4b0507b9f7cbe9f2227 Mon Sep 17 00:00:00 2001
+From: kungful <blenderkrita@gmail.com>
+Date: Sat, 31 Oct 2026 23:05:28 +0800
+Subject: [PATCH] =?UTF-8?q?feat:=20=E8=84=91=E5=9B=BE=EF=BC=88=E8=8A=82?=
+ =?UTF-8?q?=E7=82=B9=E9=80=BB=E8=BE=91=E5=9B=BE=EF=BC=89=E7=BC=96=E8=BE=91?=
+ =?UTF-8?q?=E5=99=A8?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- lib/mindmap.ts: 节点图模型/连线校验/BFS 自动布局/缩进大纲序列化
+- components/MindMapPanel.tsx: 全屏浮层编辑器（拖拽/连线/缩放/整理/预览/插入）
+- components/ChatInput.tsx: 输入框底部加「脑图」按钮 + 插入处理，不改输入框本身
+- i18n: en / zh-CN / zh-TW 三份文案
+- tests: lib/mindmap.test.mjs, components/MindMapPanel.test.mjs
+---
+ components/ChatInput.tsx         |  70 +++
+ components/MindMapPanel.test.mjs |  36 ++
+ components/MindMapPanel.tsx      | 829 +++++++++++++++++++++++++++++++
+ lib/i18n/messages/en.ts          |  33 ++
+ lib/i18n/messages/zh-CN.ts       |  33 ++
+ lib/i18n/messages/zh-TW.ts       |  33 ++
+ lib/mindmap.test.mjs             | 121 +++++
+ lib/mindmap.ts                   | 259 ++++++++++
+ 8 files changed, 1414 insertions(+)
+ create mode 100644 components/MindMapPanel.test.mjs
+ create mode 100644 components/MindMapPanel.tsx
+ create mode 100644 lib/mindmap.test.mjs
+ create mode 100644 lib/mindmap.ts
+
+diff --git a/components/ChatInput.tsx b/components/ChatInput.tsx
+index 14215dd..a555675 100644
+--- a/components/ChatInput.tsx
++++ b/components/ChatInput.tsx
+@@ -35,6 +35,7 @@ import { useFontPreferences } from "@/hooks/useFontPreferences";
+ import type { ToolPreset } from "@/lib/tool-presets";
+ import { SelectorRow } from "./SelectorRow";
+ import { ModelSelector, type ModelSelectorOption } from "./ModelSelector";
++import { MindMapPanel } from "./MindMapPanel";
+ 
+ export { filterModelOptions } from "./ModelSelector";
+ 
+@@ -699,6 +700,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
+   const enterSendMode = useEnterSendMode();
+   const [value, setValue] = useState(() => (draftKey ? getDraft(draftKey)?.value ?? "" : ""));
+   const [toolDropdownOpen, setToolDropdownOpen] = useState(false);
++  const [mindMapOpen, setMindMapOpen] = useState(false);
+   const [thinkingDropdownOpen, setThinkingDropdownOpen] = useState(false);
+   const [controlsMenuOpen, setControlsMenuOpen] = useState(false);
+   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>(() => (
+@@ -1105,6 +1107,24 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
+     onSend(msg, attachedImages.length ? attachedImages : undefined);
+   }, [value, attachedImages, isStreaming, runBuiltinCommand, onSend, clearInput, onAudioUnlock]);
+ 
++  // The mind map only ever hands its serialized outline to the composer: the
++  // text lands in the textarea, so the normal send path (and drafts) still
++  // apply. Nothing is sent implicitly.
++  const handleMindMapInsert = useCallback((text: string) => {
++    setValue((current) => {
++      const trimmed = current.replace(/\s+$/u, "");
++      return trimmed ? `${trimmed}\n\n${text}` : text;
++    });
++    setMindMapOpen(false);
++    requestAnimationFrame(() => {
++      const ta = textareaRef.current;
++      if (!ta) return;
++      ta.focus();
++      ta.setSelectionRange(ta.value.length, ta.value.length);
++      autoGrowTextarea(ta);
++    });
++  }, []);
++
+   const slashQuery = !compact && value.startsWith("/") && !/\s/.test(value.slice(1))
+     ? value.slice(1).toLowerCase()
+     : null;
+@@ -2563,6 +2583,48 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
+                 backdropFilter: "blur(10px)",
+               } : null),
+             }}>
++            {!compact && (
++              <div>
++                <button
++                  type="button"
++                  onClick={() => setMindMapOpen(true)}
++                  title={t("chat.mindmapOpen")}
++                  aria-label={t("chat.mindmapOpen")}
++                  aria-haspopup="dialog"
++                  style={{
++                    display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
++                    padding: isMobile ? "0 6px" : "8px 12px",
++                    width: isMobile ? "auto" : undefined,
++                    height: 32,
++                    background: mindMapOpen ? "var(--bg-hover)" : "none",
++                    border: "none",
++                    borderRadius: 9,
++                    color: "var(--text-muted)",
++                    cursor: "pointer",
++                    fontSize: 12,
++                    transition: "background 0.12s, color 0.12s",
++                  }}
++                  onMouseEnter={(e) => {
++                    e.currentTarget.style.background = "var(--bg-hover)";
++                    e.currentTarget.style.color = "var(--text)";
++                  }}
++                  onMouseLeave={(e) => {
++                    e.currentTarget.style.background = mindMapOpen ? "var(--bg-hover)" : "none";
++                    e.currentTarget.style.color = "var(--text-muted)";
++                  }}
++                >
++                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
++                    <rect x="2" y="9" width="6" height="6" rx="1.5" />
++                    <rect x="16" y="2" width="6" height="6" rx="1.5" />
++                    <rect x="16" y="16" width="6" height="6" rx="1.5" />
++                    <path d="M8 12h4a2 2 0 0 0 2-2V7a2 2 0 0 1 2-2" />
++                    <path d="M8 12h4a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2" />
++                  </svg>
++                  {(!isMobile || controlsMenuOpen) && <span style={{ whiteSpace: "nowrap" }}>{t("chat.mindmap")}</span>}
++                </button>
++              </div>
++            )}
++
+             {onThinkingLevelChange && (
+               <div ref={thinkingDropdownRef} style={{ position: "relative" }}>
+                 <button
+@@ -2903,6 +2965,14 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, Props>(function ChatIn
+ 
+         </div>}
+       </div>
++
++      {mindMapOpen && (
++        <MindMapPanel
++          storageKey={`pi-web:mindmap:${draftKey ?? "global"}`}
++          onInsert={handleMindMapInsert}
++          onClose={() => setMindMapOpen(false)}
++        />
++      )}
+     </fieldset>
+   );
+ }));
+diff --git a/components/MindMapPanel.test.mjs b/components/MindMapPanel.test.mjs
+new file mode 100644
+index 0000000..158d432
+--- /dev/null
++++ b/components/MindMapPanel.test.mjs
+@@ -0,0 +1,36 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import { createJiti } from "jiti";
++
++const jiti = createJiti(import.meta.url, {
++  jsx: { runtime: "automatic" },
++  tsconfigPaths: true,
++});
++const React = await jiti.import("react");
++const { renderToStaticMarkup } = await jiti.import("react-dom/server");
++const { MindMapPanel } = await jiti.import("./MindMapPanel.tsx");
++const { ChatInput } = await jiti.import("./ChatInput.tsx");
++const { I18nProvider } = await jiti.import("@/hooks/useI18n");
++
++const render = (element) => renderToStaticMarkup(React.createElement(I18nProvider, null, element));
++
++test("the panel opens as its own dialog and never renders on its own", () => {
++  const html = render(React.createElement(MindMapPanel, {
++    storageKey: "pi-web:mindmap:test",
++    onInsert() {},
++    onClose() {},
++  }));
++
++  assert.match(html, /role="dialog"/);
++  assert.match(html, /aria-label="Logic mind map"/);
++  // Empty state, no serialized text: the insert button is disabled.
++  assert.match(html, /No nodes yet/);
++  assert.match(html, /disabled=""[^>]*>Insert into composer/);
++});
++
++test("the composer keeps a mind-map toggle next to the other composer controls", () => {
++  const html = render(React.createElement(ChatInput, { onSend() {}, onAbort() {}, isStreaming: false }));
++
++  assert.match(html, /title="Open the logic mind map"/);
++  assert.match(html, />Mind map</);
++});
+diff --git a/components/MindMapPanel.tsx b/components/MindMapPanel.tsx
+new file mode 100644
+index 0000000..c7dd5c4
+--- /dev/null
++++ b/components/MindMapPanel.tsx
+@@ -0,0 +1,829 @@
++"use client";
++
++/**
++ * Mind-map overlay for the chat composer.
++ *
++ * A ComfyUI-style node canvas: drag nodes, drag from a node's right port onto
++ * another node to connect them, then insert the serialized outline into the
++ * textarea. The panel is fully self-contained — it owns its own state, keeps
++ * the graph in localStorage and only touches the composer through `onInsert`.
++ */
++
++import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
++import { useI18n } from "@/hooks/useI18n";
++import {
++  MINDMAP_KINDS,
++  MINDMAP_NODE_HEIGHT,
++  MINDMAP_NODE_WIDTH,
++  autoLayoutMindMap,
++  bumpNodeId,
++  connectMindMapNodes,
++  createMindMapNode,
++  dropNodePositions,
++  emptyMindMap,
++  nextNodeId,
++  serializeMindMap,
++  type MindMapGraph,
++  type MindMapLabels,
++  type MindMapNode,
++  type MindMapNodeKind,
++} from "@/lib/mindmap";
++
++const KIND_COLORS: Record<MindMapNodeKind, string> = {
++  goal: "#f59e0b",
++  condition: "#38bdf8",
++  step: "#22c55e",
++  idea: "#a855f7",
++  risk: "#ef4444",
++  result: "#14b8a6",
++};
++
++const MIN_SCALE = 0.35;
++const MAX_SCALE = 2;
++
++interface Props {
++  /** localStorage key so each session/draft keeps its own graph. */
++  storageKey: string;
++  onInsert: (text: string) => void;
++  onClose: () => void;
++}
++
++interface Viewport {
++  x: number;
++  y: number;
++  scale: number;
++}
++
++function loadGraph(storageKey: string): MindMapGraph {
++  if (typeof window === "undefined") return emptyMindMap();
++  try {
++    const raw = window.localStorage.getItem(storageKey);
++    if (!raw) return emptyMindMap();
++    const parsed = JSON.parse(raw) as Partial<MindMapGraph> | null;
++    if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) return emptyMindMap();
++    const nodes = parsed.nodes
++      .filter((node): node is MindMapNode => Boolean(node) && typeof node.id === "string")
++      .map((node) => ({
++        id: node.id,
++        kind: MINDMAP_KINDS.includes(node.kind) ? node.kind : "idea",
++        title: typeof node.title === "string" ? node.title : "",
++        detail: typeof node.detail === "string" ? node.detail : "",
++        x: Number.isFinite(node.x) ? node.x : 48,
++        y: Number.isFinite(node.y) ? node.y : 48,
++      }));
++    const ids = new Set(nodes.map((node) => node.id));
++    const edges = parsed.edges
++      .filter((edge) => Boolean(edge) && typeof edge.id === "string" && ids.has(edge.from) && ids.has(edge.to))
++      .map((edge) => ({ id: edge.id, from: edge.from, to: edge.to, label: typeof edge.label === "string" ? edge.label : "" }));
++    return { nodes, edges };
++  } catch {
++    return emptyMindMap();
++  }
++}
++
++export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
++  const { t } = useI18n();
++  const [graph, setGraph] = useState<MindMapGraph>(() => loadGraph(storageKey));
++  const [view, setView] = useState<Viewport>({ x: 40, y: 40, scale: 1 });
++  const [selected, setSelected] = useState<{ type: "node" | "edge"; id: string } | null>(null);
++  const [linking, setLinking] = useState<{ from: string; x: number; y: number } | null>(null);
++  const [showPreview, setShowPreview] = useState(false);
++  const [copied, setCopied] = useState(false);
++  const [resetArmed, setResetArmed] = useState(false);
++  const canvasRef = useRef<HTMLDivElement>(null);
++  const rootRef = useRef<HTMLDivElement>(null);
++  const viewRef = useRef(view);
++  const pushTimerRef = useRef<number | null>(null);
++  // Ids come from a counter, not from re-reading `graph`: two clicks in the same
++  // tick would otherwise both see the old graph and mint the same id.
++  const nextIdRef = useRef(nextNodeId(graph));
++  viewRef.current = view;
++
++  const labels = useMemo<MindMapLabels>(() => ({
++    header: t("chat.mindmap.header"),
++    hint: t("chat.mindmap.hint"),
++    cross: t("chat.mindmap.cross"),
++    detail: t("chat.mindmap.detail"),
++    kinds: {
++      goal: t("chat.mindmap.kind.goal"),
++      condition: t("chat.mindmap.kind.condition"),
++      step: t("chat.mindmap.kind.step"),
++      idea: t("chat.mindmap.kind.idea"),
++      risk: t("chat.mindmap.kind.risk"),
++      result: t("chat.mindmap.kind.result"),
++    },
++  }), [t]);
++
++  const serialized = useMemo(() => serializeMindMap(graph, labels), [graph, labels]);
++
++  // Focus the dialog so the first Tab lands inside it instead of the composer.
++  useEffect(() => {
++    rootRef.current?.focus();
++  }, []);
++
++  // Re-key the panel when the composer switches draft/session.
++  const storageKeyRef = useRef(storageKey);
++  useEffect(() => {
++    if (storageKeyRef.current === storageKey) return;
++    storageKeyRef.current = storageKey;
++    const loaded = loadGraph(storageKey);
++    nextIdRef.current = nextNodeId(loaded);
++    setGraph(loaded);
++    setSelected(null);
++  }, [storageKey]);
++
++  // Persist, debounced: dragging a node fires a state update per pointer move.
++  useEffect(() => {
++    if (pushTimerRef.current !== null) window.clearTimeout(pushTimerRef.current);
++    pushTimerRef.current = window.setTimeout(() => {
++      pushTimerRef.current = null;
++      try {
++        if (graph.nodes.length === 0 && graph.edges.length === 0) window.localStorage.removeItem(storageKey);
++        else window.localStorage.setItem(storageKey, JSON.stringify(graph));
++      } catch {
++        // Storage full or blocked: the graph still works for this open panel.
++      }
++    }, 250);
++    return () => {
++      if (pushTimerRef.current !== null) {
++        window.clearTimeout(pushTimerRef.current);
++        pushTimerRef.current = null;
++      }
++    };
++  }, [graph, storageKey]);
++
++  const toCanvas = useCallback((clientX: number, clientY: number) => {
++    const rect = canvasRef.current?.getBoundingClientRect();
++    const current = viewRef.current;
++    if (!rect) return { x: 0, y: 0 };
++    return {
++      x: (clientX - rect.left - current.x) / current.scale,
++      y: (clientY - rect.top - current.y) / current.scale,
++    };
++  }, []);
++
++  // Wheel zoom needs a non-passive listener; React's root wheel handler is passive.
++  useEffect(() => {
++    const el = canvasRef.current;
++    if (!el) return;
++    const onWheel = (event: WheelEvent) => {
++      event.preventDefault();
++      const rect = el.getBoundingClientRect();
++      const px = event.clientX - rect.left;
++      const py = event.clientY - rect.top;
++      setView((current) => {
++        const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
++        const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, current.scale * factor));
++        const ratio = scale / current.scale;
++        return {
++          scale,
++          x: px - (px - current.x) * ratio,
++          y: py - (py - current.y) * ratio,
++        };
++      });
++    };
++    el.addEventListener("wheel", onWheel, { passive: false });
++    return () => el.removeEventListener("wheel", onWheel);
++  }, []);
++
++  const addNode = useCallback((position?: { x: number; y: number }) => {
++    const id = nextIdRef.current;
++    nextIdRef.current = bumpNodeId(id);
++    const rect = canvasRef.current?.getBoundingClientRect();
++    const current0 = viewRef.current;
++    const center = rect
++      ? {
++          x: (rect.width / 2 - current0.x) / current0.scale - MINDMAP_NODE_WIDTH / 2,
++          y: (rect.height / 2 - current0.y) / current0.scale - MINDMAP_NODE_HEIGHT / 2,
++        }
++      : { x: 80, y: 80 };
++    const offset = (graph.nodes.length % 3) * 28;
++    const spot = position ?? { x: center.x + offset, y: center.y + offset };
++    const kind: MindMapNodeKind = graph.nodes.length === 0 ? "goal" : "step";
++    const created = createMindMapNode(kind, spot.x, spot.y, id);
++    setGraph((current) => ({ ...current, nodes: [...current.nodes, created] }));
++    setSelected({ type: "node", id });
++  }, [graph]);
++
++  const startNodeDrag = useCallback((event: React.PointerEvent, node: MindMapNode) => {
++    if (event.button !== 0) return;
++    event.preventDefault();
++    event.stopPropagation();
++    setSelected({ type: "node", id: node.id });
++    const startX = event.clientX;
++    const startY = event.clientY;
++    const originX = node.x;
++    const originY = node.y;
++    const move = (moveEvent: PointerEvent) => {
++      const scale = viewRef.current.scale;
++      const nextX = Math.round(originX + (moveEvent.clientX - startX) / scale);
++      const nextY = Math.round(originY + (moveEvent.clientY - startY) / scale);
++      setGraph((current) => ({
++        ...current,
++        nodes: current.nodes.map((item) => (item.id === node.id ? { ...item, x: nextX, y: nextY } : item)),
++      }));
++    };
++    const up = () => {
++      window.removeEventListener("pointermove", move);
++      window.removeEventListener("pointerup", up);
++    };
++    window.addEventListener("pointermove", move);
++    window.addEventListener("pointerup", up);
++  }, []);
++
++  const startLink = useCallback((event: React.PointerEvent, node: MindMapNode) => {
++    if (event.button !== 0) return;
++    event.preventDefault();
++    event.stopPropagation();
++    const from = node.id;
++    const update = (clientX: number, clientY: number) => {
++      const point = toCanvas(clientX, clientY);
++      setLinking({ from, x: point.x, y: point.y });
++    };
++    update(event.clientX, event.clientY);
++    const move = (moveEvent: PointerEvent) => update(moveEvent.clientX, moveEvent.clientY);
++    const up = (upEvent: PointerEvent) => {
++      window.removeEventListener("pointermove", move);
++      window.removeEventListener("pointerup", up);
++      setLinking(null);
++      const target = document.elementFromPoint(upEvent.clientX, upEvent.clientY)?.closest("[data-mindmap-node]");
++      const targetId = target?.getAttribute("data-mindmap-node") ?? null;
++      if (!targetId || targetId === from) return;
++      setGraph((current) => connectMindMapNodes(current, from, targetId, `e${from}-${targetId}`));
++      setSelected({ type: "edge", id: `e${from}-${targetId}` });
++    };
++    window.addEventListener("pointermove", move);
++    window.addEventListener("pointerup", up);
++  }, [toCanvas]);
++
++  const startPan = useCallback((event: React.PointerEvent) => {
++    if (event.button !== 0 && event.button !== 1) return;
++    setSelected(null);
++    const startX = event.clientX;
++    const startY = event.clientY;
++    const originX = viewRef.current.x;
++    const originY = viewRef.current.y;
++    const move = (moveEvent: PointerEvent) => {
++      setView((current) => ({
++        ...current,
++        x: originX + (moveEvent.clientX - startX),
++        y: originY + (moveEvent.clientY - startY),
++      }));
++    };
++    const up = () => {
++      window.removeEventListener("pointermove", move);
++      window.removeEventListener("pointerup", up);
++    };
++    window.addEventListener("pointermove", move);
++    window.addEventListener("pointerup", up);
++  }, []);
++
++  const deleteSelection = useCallback(() => {
++    if (!selected) return;
++    if (selected.type === "node") setGraph((current) => dropNodePositions(current, selected.id));
++    else setGraph((current) => ({ nodes: current.nodes, edges: current.edges.filter((edge) => edge.id !== selected.id) }));
++    setSelected(null);
++  }, [selected]);
++
++  // Escape and Delete belong to the panel while it is open. A capture listener
++  // keeps working after a canvas click leaves focus on <body>, and swallowing
++  // the keys it handles stops the composer's shortcuts from firing behind it.
++  useEffect(() => {
++    const onKeyDown = (event: KeyboardEvent) => {
++      if (event.key === "Escape") {
++        event.preventDefault();
++        event.stopPropagation();
++        onClose();
++        return;
++      }
++      if (event.key !== "Delete" && event.key !== "Backspace") return;
++      const target = event.target as HTMLElement | null;
++      const tag = target?.tagName;
++      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
++      if (!selected) return;
++      event.preventDefault();
++      event.stopPropagation();
++      deleteSelection();
++    };
++    window.addEventListener("keydown", onKeyDown, true);
++    return () => window.removeEventListener("keydown", onKeyDown, true);
++  }, [deleteSelection, onClose, selected]);
++
++  const cycleKind = useCallback((nodeId: string) => {
++    setGraph((current) => ({
++      ...current,
++      nodes: current.nodes.map((node) => {
++        if (node.id !== nodeId) return node;
++        const index = MINDMAP_KINDS.indexOf(node.kind);
++        const kind = MINDMAP_KINDS[(index + 1) % MINDMAP_KINDS.length];
++        return { ...node, kind };
++      }),
++    }));
++  }, []);
++
++  const updateNode = useCallback((nodeId: string, patch: Partial<MindMapNode>) => {
++    setGraph((current) => ({
++      ...current,
++      nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, ...patch } : node)),
++    }));
++  }, []);
++
++  const handleCopy = useCallback(async () => {
++    if (!serialized) return;
++    try {
++      await navigator.clipboard.writeText(serialized);
++      setCopied(true);
++      window.setTimeout(() => setCopied(false), 1600);
++    } catch {
++      setCopied(false);
++    }
++  }, [serialized]);
++
++  const handleInsert = useCallback(() => {
++    if (!serialized) return;
++    onInsert(serialized);
++    onClose();
++  }, [serialized, onInsert, onClose]);
++
++  const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
++
++  const buttonStyle: React.CSSProperties = {
++    display: "flex",
++    alignItems: "center",
++    gap: 6,
++    height: 30,
++    padding: "0 11px",
++    background: "var(--bg-panel)",
++    border: "1px solid var(--border)",
++    borderRadius: 8,
++    color: "var(--text)",
++    fontSize: 12,
++    cursor: "pointer",
++    whiteSpace: "nowrap",
++  };
++
++  return (
++    <div
++      role="dialog"
++      aria-modal="true"
++      aria-label={t("chat.mindmapTitle")}
++      ref={rootRef}
++      tabIndex={-1}
++      style={{
++        position: "fixed",
++        inset: 0,
++        zIndex: 240,
++        background: "rgba(0,0,0,0.42)",
++        backdropFilter: "blur(2px)",
++        outline: "none",
++        display: "flex",
++        alignItems: "center",
++        justifyContent: "center",
++        padding: 16,
++        boxSizing: "border-box",
++      }}
++      onMouseDown={(event) => {
++        if (event.target === event.currentTarget) onClose();
++      }}
++    >
++      <div
++        style={{
++          width: "min(1180px, 100%)",
++          height: "min(820px, 100%)",
++          display: "flex",
++          flexDirection: "column",
++          background: "var(--bg)",
++          border: "1px solid var(--border)",
++          borderRadius: 14,
++          boxShadow: "0 24px 60px rgba(0,0,0,0.32)",
++          overflow: "hidden",
++        }}
++      >
++        <header style={{
++          display: "flex",
++          alignItems: "center",
++          gap: 10,
++          padding: "12px 14px",
++          borderBottom: "1px solid var(--border)",
++          flexShrink: 0,
++        }}>
++          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
++            <strong style={{ fontSize: 14 }}>{t("chat.mindmapTitle")}</strong>
++            <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
++              {t("chat.mindmapSubtitle")}
++            </span>
++          </div>
++          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
++            <span style={{ fontSize: 11, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
++              {t("chat.mindmapNodes", { count: graph.nodes.length })} · {t("chat.mindmapEdges", { count: graph.edges.length })}
++            </span>
++            <button
++              type="button"
++              onClick={onClose}
++              title={t("chat.mindmapClose")}
++              aria-label={t("chat.mindmapClose")}
++              style={{ ...buttonStyle, width: 30, padding: 0, justifyContent: "center" }}
++            >
++              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
++                <line x1="18" y1="6" x2="6" y2="18" />
++                <line x1="6" y1="6" x2="18" y2="18" />
++              </svg>
++            </button>
++          </div>
++        </header>
++
++        <div style={{
++          display: "flex",
++          alignItems: "center",
++          gap: 8,
++          padding: "9px 14px",
++          borderBottom: "1px solid var(--border)",
++          flexWrap: "wrap",
++          flexShrink: 0,
++        }}>
++          <button type="button" style={buttonStyle} onClick={() => addNode()}>
++            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
++              <line x1="12" y1="5" x2="12" y2="19" />
++              <line x1="5" y1="12" x2="19" y2="12" />
++            </svg>
++            {t("chat.mindmapAddNode")}
++          </button>
++          <button type="button" style={buttonStyle} onClick={() => setGraph((current) => autoLayoutMindMap(current))}>
++            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
++              <line x1="4" y1="6" x2="14" y2="6" />
++              <line x1="4" y1="12" x2="18" y2="12" />
++              <line x1="4" y1="18" x2="10" y2="18" />
++            </svg>
++            {t("chat.mindmapAutoLayout")}
++          </button>
++          <button
++            type="button"
++            style={{
++              ...buttonStyle,
++              color: resetArmed ? "#ef4444" : "var(--text-muted)",
++              borderColor: resetArmed ? "rgba(239,68,68,0.45)" : "var(--border)",
++            }}
++            onClick={() => {
++              if (!resetArmed) {
++                setResetArmed(true);
++                window.setTimeout(() => setResetArmed(false), 2500);
++                return;
++              }
++              setResetArmed(false);
++              setGraph(emptyMindMap());
++              setSelected(null);
++            }}
++          >
++            {resetArmed ? t("chat.mindmapClearConfirm") : t("chat.mindmapClear")}
++          </button>
++          <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: 4 }}>
++            {t("chat.mindmapEmpty")}
++          </span>
++          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
++            <button type="button" style={buttonStyle} onClick={() => void handleCopy()} disabled={!serialized}>
++              {copied ? t("chat.mindmapCopied") : t("chat.mindmapCopy")}
++            </button>
++            <button
++              type="button"
++              onClick={handleInsert}
++              disabled={!serialized}
++              style={{
++                ...buttonStyle,
++                background: serialized ? "var(--accent)" : "var(--bg-panel)",
++                borderColor: serialized ? "var(--accent)" : "var(--border)",
++                color: serialized ? "#fff" : "var(--text-dim)",
++                fontWeight: 600,
++              }}
++            >
++              {t("chat.mindmapInsert")}
++            </button>
++          </div>
++        </div>
++
++        <div style={{ flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
++          <div
++            ref={canvasRef}
++            onPointerDown={startPan}
++            onDoubleClick={(event) => {
++              const point = toCanvas(event.clientX, event.clientY);
++              addNode({ x: point.x - MINDMAP_NODE_WIDTH / 2, y: point.y - MINDMAP_NODE_HEIGHT / 2 });
++            }}
++            style={{
++              position: "relative",
++              flex: "1 1 auto",
++              minHeight: 0,
++              overflow: "hidden",
++              cursor: "grab",
++              backgroundColor: "var(--bg-panel)",
++              backgroundImage: "radial-gradient(circle, color-mix(in srgb, var(--border) 85%, transparent) 1px, transparent 1px)",
++              backgroundSize: `${22 * view.scale}px ${22 * view.scale}px`,
++              backgroundPosition: `${view.x}px ${view.y}px`,
++            }}
++          >
++            <div style={{
++              position: "absolute",
++              inset: 0,
++              transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
++              transformOrigin: "0 0",
++              pointerEvents: "none",
++            }}>
++              <svg width={1} height={1} style={{ position: "absolute", left: 0, top: 0, overflow: "visible", pointerEvents: "none" }}>
++                {graph.edges.map((edge) => {
++                  const from = nodeById.get(edge.from);
++                  const to = nodeById.get(edge.to);
++                  if (!from || !to) return null;
++                  const x1 = from.x + MINDMAP_NODE_WIDTH;
++                  const y1 = from.y + MINDMAP_NODE_HEIGHT / 2;
++                  const x2 = to.x;
++                  const y2 = to.y + MINDMAP_NODE_HEIGHT / 2;
++                  const bend = Math.max(40, Math.abs(x2 - x1) * 0.45);
++                  const path = `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`;
++                  const active = selected?.type === "edge" && selected.id === edge.id;
++                  return (
++                    <g key={edge.id}>
++                      <path
++                        d={path}
++                        fill="none"
++                        stroke={active ? "var(--accent)" : "var(--text-dim)"}
++                        strokeWidth={active ? 2.4 : 1.6}
++                        strokeOpacity={active ? 1 : 0.7}
++                      />
++                      <path
++                        d={path}
++                        fill="none"
++                        stroke="transparent"
++                        strokeWidth={14}
++                        style={{ pointerEvents: "stroke", cursor: "pointer" }}
++                        onPointerDown={(event) => {
++                          event.stopPropagation();
++                          setSelected({ type: "edge", id: edge.id });
++                        }}
++                      />
++                      <circle cx={x2} cy={y2} r={3} fill={active ? "var(--accent)" : "var(--text-dim)"} fillOpacity={active ? 1 : 0.8} />
++                    </g>
++                  );
++                })}
++                {linking && (() => {
++                  const from = nodeById.get(linking.from);
++                  if (!from) return null;
++                  const x1 = from.x + MINDMAP_NODE_WIDTH;
++                  const y1 = from.y + MINDMAP_NODE_HEIGHT / 2;
++                  const bend = Math.max(40, Math.abs(linking.x - x1) * 0.45);
++                  return (
++                    <path
++                      d={`M ${x1} ${y1} C ${x1 + bend} ${y1}, ${linking.x - bend} ${linking.y}, ${linking.x} ${linking.y}`}
++                      fill="none"
++                      stroke="var(--accent)"
++                      strokeWidth={2}
++                      strokeDasharray="6 4"
++                    />
++                  );
++                })()}
++              </svg>
++
++              {graph.nodes.map((node) => {
++                const color = KIND_COLORS[node.kind];
++                const active = selected?.type === "node" && selected.id === node.id;
++                return (
++                  <div
++                    key={node.id}
++                    data-mindmap-node={node.id}
++                    onPointerDown={(event) => {
++                      // Selecting is the node's job; panning belongs to the empty
++                      // canvas, so a click on the card never deselects.
++                      event.stopPropagation();
++                      setSelected({ type: "node", id: node.id });
++                    }}
++                    style={{
++                      position: "absolute",
++                      left: node.x,
++                      top: node.y,
++                      width: MINDMAP_NODE_WIDTH,
++                      height: MINDMAP_NODE_HEIGHT,
++                      display: "flex",
++                      flexDirection: "column",
++                      gap: 5,
++                      padding: "7px 9px 8px",
++                      borderRadius: 10,
++                      background: "var(--bg)",
++                      border: `1px solid ${active ? color : "var(--border)"}`,
++                      borderTop: `3px solid ${color}`,
++                      boxShadow: active
++                        ? `0 0 0 2px color-mix(in srgb, ${color} 32%, transparent), 0 8px 20px rgba(0,0,0,0.22)`
++                        : "0 6px 16px rgba(0,0,0,0.16)",
++                      pointerEvents: "auto",
++                      boxSizing: "border-box",
++                    }}
++                  >
++                    <div
++                      onPointerDown={(event) => startNodeDrag(event, node)}
++                      style={{
++                        display: "flex",
++                        alignItems: "center",
++                        gap: 6,
++                        cursor: "grab",
++                        flexShrink: 0,
++                      }}
++                    >
++                      <button
++                        type="button"
++                        title={t("chat.mindmapCycleKind")}
++                        onPointerDown={(event) => event.stopPropagation()}
++                        onClick={() => cycleKind(node.id)}
++                        style={{
++                          padding: "1px 6px",
++                          fontSize: 10,
++                          fontWeight: 600,
++                          lineHeight: 1.5,
++                          borderRadius: 5,
++                          border: `1px solid color-mix(in srgb, ${color} 55%, transparent)`,
++                          background: `color-mix(in srgb, ${color} 16%, transparent)`,
++                          color,
++                          cursor: "pointer",
++                        }}
++                      >
++                        {labels.kinds[node.kind]}
++                      </button>
++                      <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
++                        {node.id}
++                      </span>
++                      <button
++                        type="button"
++                        title={t("chat.mindmapDeleteNode")}
++                        onPointerDown={(event) => event.stopPropagation()}
++                        onClick={() => setGraph((current) => dropNodePositions(current, node.id))}
++                        style={{
++                          width: 16,
++                          height: 16,
++                          padding: 0,
++                          display: "flex",
++                          alignItems: "center",
++                          justifyContent: "center",
++                          border: "none",
++                          background: "none",
++                          color: "var(--text-dim)",
++                          cursor: "pointer",
++                        }}
++                      >
++                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
++                          <line x1="18" y1="6" x2="6" y2="18" />
++                          <line x1="6" y1="6" x2="18" y2="18" />
++                        </svg>
++                      </button>
++                    </div>
++                    <input
++                      value={node.title}
++                      onChange={(event) => updateNode(node.id, { title: event.target.value })}
++                      onPointerDown={(event) => event.stopPropagation()}
++                      onFocus={() => setSelected({ type: "node", id: node.id })}
++                      placeholder={t("chat.mindmapNodeTitle")}
++                      style={{
++                        width: "100%",
++                        border: "none",
++                        outline: "none",
++                        background: "transparent",
++                        color: "var(--text)",
++                        fontSize: 12.5,
++                        fontWeight: 600,
++                        padding: 0,
++                        boxSizing: "border-box",
++                      }}
++                    />
++                    <textarea
++                      value={node.detail}
++                      onChange={(event) => updateNode(node.id, { detail: event.target.value })}
++                      onPointerDown={(event) => event.stopPropagation()}
++                      onFocus={() => setSelected({ type: "node", id: node.id })}
++                      placeholder={t("chat.mindmapNodeDetail")}
++                      rows={2}
++                      style={{
++                        flex: "1 1 auto",
++                        width: "100%",
++                        minHeight: 0,
++                        resize: "none",
++                        border: "none",
++                        outline: "none",
++                        background: "transparent",
++                        color: "var(--text-muted)",
++                        fontSize: 11,
++                        lineHeight: 1.4,
++                        padding: 0,
++                        fontFamily: "inherit",
++                        boxSizing: "border-box",
++                      }}
++                    />
++                    <div
++                      onPointerDown={(event) => startLink(event, node)}
++                      title={t("chat.mindmapPort")}
++                      style={{
++                        position: "absolute",
++                        right: -7,
++                        top: MINDMAP_NODE_HEIGHT / 2 - 7,
++                        width: 14,
++                        height: 14,
++                        borderRadius: "50%",
++                        background: "var(--bg)",
++                        border: `2px solid ${color}`,
++                        cursor: "crosshair",
++                        pointerEvents: "auto",
++                      }}
++                    />
++                    <div style={{
++                      position: "absolute",
++                      left: -5,
++                      top: MINDMAP_NODE_HEIGHT / 2 - 5,
++                      width: 10,
++                      height: 10,
++                      borderRadius: "50%",
++                      background: color,
++                      opacity: 0.75,
++                      pointerEvents: "none",
++                    }} />
++                  </div>
++                );
++              })}
++            </div>
++
++            {graph.nodes.length === 0 && (
++              <div style={{
++                position: "absolute",
++                inset: 0,
++                display: "flex",
++                alignItems: "center",
++                justifyContent: "center",
++                pointerEvents: "none",
++                color: "var(--text-dim)",
++                fontSize: 12.5,
++              }}>
++                {t("chat.mindmapEmptyGraph")}
++              </div>
++            )}
++
++            <div style={{
++              position: "absolute",
++              left: 10,
++              bottom: 10,
++              display: "flex",
++              alignItems: "center",
++              gap: 6,
++              fontSize: 11,
++              color: "var(--text-dim)",
++            }}>
++              <button
++                type="button"
++                onClick={() => setView({ x: 40, y: 40, scale: 1 })}
++                style={{ ...buttonStyle, height: 24, fontSize: 11, padding: "0 8px" }}
++              >
++                {Math.round(view.scale * 100)}%
++              </button>
++            </div>
++          </div>
++
++          <div style={{ borderTop: "1px solid var(--border)", flexShrink: 0 }}>
++            <button
++              type="button"
++              onClick={() => setShowPreview((v) => !v)}
++              style={{
++                display: "flex",
++                alignItems: "center",
++                gap: 6,
++                width: "100%",
++                padding: "8px 14px",
++                background: "none",
++                border: "none",
++                color: "var(--text-muted)",
++                fontSize: 11.5,
++                cursor: "pointer",
++                textAlign: "left",
++              }}
++            >
++              <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"
++                style={{ transform: showPreview ? "rotate(90deg)" : "none", transition: "transform 0.12s" }}>
++                <polyline points="3 1 7 5 3 9" />
++              </svg>
++              {showPreview ? t("chat.mindmapPreviewHide") : t("chat.mindmapPreview")}
++            </button>
++            {showPreview && (
++              <pre style={{
++                margin: 0,
++                maxHeight: 200,
++                overflow: "auto",
++                padding: "0 14px 12px",
++                fontSize: 11.5,
++                lineHeight: 1.55,
++                color: "var(--text-muted)",
++                fontFamily: "var(--font-mono)",
++                whiteSpace: "pre-wrap",
++                wordBreak: "break-word",
++              }}>
++                {serialized || t("chat.mindmapEmptyGraph")}
++              </pre>
++            )}
++          </div>
++        </div>
++      </div>
++    </div>
++  );
++}
++
++export default MindMapPanel;
+diff --git a/lib/i18n/messages/en.ts b/lib/i18n/messages/en.ts
+index 9a647f9..6ff858f 100644
+--- a/lib/i18n/messages/en.ts
++++ b/lib/i18n/messages/en.ts
+@@ -836,6 +836,39 @@ export const enLocale: LocalePlugin = {
+     "chat.stop": "Stop",
+     "chat.disableSound": "Disable completion sound",
+     "chat.enableSound": "Enable completion sound",
++    "chat.mindmap": "Mind map",
++    "chat.mindmapOpen": "Open the logic mind map",
++    "chat.mindmapTitle": "Logic mind map",
++    "chat.mindmapSubtitle": "Drag nodes, pull a wire from a node's right port onto another node, then insert the outline into the composer",
++    "chat.mindmapClose": "Close mind map",
++    "chat.mindmapAddNode": "Add node",
++    "chat.mindmapAutoLayout": "Tidy layout",
++    "chat.mindmapClear": "Clear",
++    "chat.mindmapClearConfirm": "Confirm clear",
++    "chat.mindmapCopy": "Copy text",
++    "chat.mindmapCopied": "Copied",
++    "chat.mindmapInsert": "Insert into composer",
++    "chat.mindmapPreview": "Preview the text that will be sent",
++    "chat.mindmapPreviewHide": "Hide preview",
++    "chat.mindmapEmpty": "Double-click empty space to add a node; drag from the right port onto another node to connect",
++    "chat.mindmapEmptyGraph": "No nodes yet — press “Add node” or double-click the canvas",
++    "chat.mindmapNodeTitle": "Title",
++    "chat.mindmapNodeDetail": "Note (optional)",
++    "chat.mindmapDeleteNode": "Delete node",
++    "chat.mindmapCycleKind": "Change node kind",
++    "chat.mindmapPort": "Drag this port onto another node to connect",
++    "chat.mindmapNodes": "{count} nodes",
++    "chat.mindmapEdges": "{count} links",
++    "chat.mindmap.kind.goal": "Goal",
++    "chat.mindmap.kind.condition": "Condition",
++    "chat.mindmap.kind.step": "Step",
++    "chat.mindmap.kind.idea": "Idea",
++    "chat.mindmap.kind.risk": "Risk",
++    "chat.mindmap.kind.result": "Result",
++    "chat.mindmap.header": "[Logic mind map written by the user]",
++    "chat.mindmap.hint": "The outline below comes from a node graph: ● marks a starting point, indentation means the parent points to the child, and “Note” lines are per-node detail. Read the hierarchy as the user's reasoning and do not repeat it back verbatim.",
++    "chat.mindmap.cross": "Additional links (not shown as nesting)",
++    "chat.mindmap.detail": "Note",
+     "chat.thinkingUseDefault": "Use pi default",
+     "chat.thinkingOff": "Reasoning off",
+     "chat.thinkingMinimal": "Minimal reasoning",
+diff --git a/lib/i18n/messages/zh-CN.ts b/lib/i18n/messages/zh-CN.ts
+index 6785463..b966ad2 100644
+--- a/lib/i18n/messages/zh-CN.ts
++++ b/lib/i18n/messages/zh-CN.ts
+@@ -836,6 +836,39 @@ export const zhCNLocale: LocalePlugin = {
+     "chat.stop": "停止",
+     "chat.disableSound": "关闭完成提示音",
+     "chat.enableSound": "开启完成提示音",
++    "chat.mindmap": "脑图",
++    "chat.mindmapOpen": "打开脑图逻辑图",
++    "chat.mindmapTitle": "脑图逻辑图",
++    "chat.mindmapSubtitle": "拖动节点搭结构，从节点右侧圆点拉线连到下一个节点，然后把大纲插入输入框",
++    "chat.mindmapClose": "关闭脑图",
++    "chat.mindmapAddNode": "新建节点",
++    "chat.mindmapAutoLayout": "自动整理",
++    "chat.mindmapClear": "清空",
++    "chat.mindmapClearConfirm": "确认清空",
++    "chat.mindmapCopy": "复制文本",
++    "chat.mindmapCopied": "已复制",
++    "chat.mindmapInsert": "插入输入框",
++    "chat.mindmapPreview": "预览将要发送的文本",
++    "chat.mindmapPreviewHide": "收起预览",
++    "chat.mindmapEmpty": "双击空白处新建节点；从右侧圆点拖到另一个节点即连线",
++    "chat.mindmapEmptyGraph": "还没有节点，点「新建节点」或双击空白处开始",
++    "chat.mindmapNodeTitle": "标题",
++    "chat.mindmapNodeDetail": "备注（可选）",
++    "chat.mindmapDeleteNode": "删除节点",
++    "chat.mindmapCycleKind": "切换节点类型",
++    "chat.mindmapPort": "按住这个圆点拖到另一个节点即可连线",
++    "chat.mindmapNodes": "{count} 个节点",
++    "chat.mindmapEdges": "{count} 条连线",
++    "chat.mindmap.kind.goal": "目标",
++    "chat.mindmap.kind.condition": "条件",
++    "chat.mindmap.kind.step": "步骤",
++    "chat.mindmap.kind.idea": "想法",
++    "chat.mindmap.kind.risk": "风险",
++    "chat.mindmap.kind.result": "结论",
++    "chat.mindmap.header": "【用户用脑图表达的逻辑结构】",
++    "chat.mindmap.hint": "下面是从节点图导出的思路：● 表示起点，缩进表示上一级指向下一级，「备注」是节点的补充说明。请按这层层级关系理解意图，不必逐字复述。",
++    "chat.mindmap.cross": "额外关联（未表现成层级）",
++    "chat.mindmap.detail": "备注",
+     "chat.thinkingUseDefault": "使用 pi 默认设置",
+     "chat.thinkingOff": "关闭推理",
+     "chat.thinkingMinimal": "最低限度推理",
+diff --git a/lib/i18n/messages/zh-TW.ts b/lib/i18n/messages/zh-TW.ts
+index 0ca67a6..738d5c1 100644
+--- a/lib/i18n/messages/zh-TW.ts
++++ b/lib/i18n/messages/zh-TW.ts
+@@ -836,6 +836,39 @@ export const zhTWLocale: LocalePlugin = {
+     "chat.stop": "停止",
+     "chat.disableSound": "關閉完成提示音",
+     "chat.enableSound": "開啟完成提示音",
++    "chat.mindmap": "腦圖",
++    "chat.mindmapOpen": "開啟腦圖邏輯圖",
++    "chat.mindmapTitle": "腦圖邏輯圖",
++    "chat.mindmapSubtitle": "拖動節點搭結構，從節點右側圓點拉線連到下一個節點，再把大綱插入輸入框",
++    "chat.mindmapClose": "關閉腦圖",
++    "chat.mindmapAddNode": "新建節點",
++    "chat.mindmapAutoLayout": "自動整理",
++    "chat.mindmapClear": "清空",
++    "chat.mindmapClearConfirm": "確認清空",
++    "chat.mindmapCopy": "複製文字",
++    "chat.mindmapCopied": "已複製",
++    "chat.mindmapInsert": "插入輸入框",
++    "chat.mindmapPreview": "預覽將要送出的文字",
++    "chat.mindmapPreviewHide": "收起預覽",
++    "chat.mindmapEmpty": "雙擊空白處新建節點；從右側圓點拖到另一個節點即連線",
++    "chat.mindmapEmptyGraph": "還沒有節點，點「新建節點」或雙擊空白處開始",
++    "chat.mindmapNodeTitle": "標題",
++    "chat.mindmapNodeDetail": "備註（可選）",
++    "chat.mindmapDeleteNode": "刪除節點",
++    "chat.mindmapCycleKind": "切換節點類型",
++    "chat.mindmapPort": "按住這個圓點拖到另一個節點即可連線",
++    "chat.mindmapNodes": "{count} 個節點",
++    "chat.mindmapEdges": "{count} 條連線",
++    "chat.mindmap.kind.goal": "目標",
++    "chat.mindmap.kind.condition": "條件",
++    "chat.mindmap.kind.step": "步驟",
++    "chat.mindmap.kind.idea": "想法",
++    "chat.mindmap.kind.risk": "風險",
++    "chat.mindmap.kind.result": "結論",
++    "chat.mindmap.header": "【使用者用腦圖表達的邏輯結構】",
++    "chat.mindmap.hint": "下面是從節點圖匯出的思路：● 表示起點，縮排表示上一級指向下一級，「備註」是節點的補充說明。請按這層層級關係理解意圖，不必逐字複述。",
++    "chat.mindmap.cross": "額外關聯（未表現成層級）",
++    "chat.mindmap.detail": "備註",
+     "chat.thinkingUseDefault": "使用 pi 預設設定",
+     "chat.thinkingOff": "關閉推理",
+     "chat.thinkingMinimal": "最低程度推理",
+diff --git a/lib/mindmap.test.mjs b/lib/mindmap.test.mjs
+new file mode 100644
+index 0000000..f9da1d4
+--- /dev/null
++++ b/lib/mindmap.test.mjs
+@@ -0,0 +1,121 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import { createJiti } from "jiti";
++
++const {
++  MINDMAP_NODE_WIDTH,
++  autoLayoutMindMap,
++  connectMindMapNodes,
++  countMindMapComponents,
++  createMindMapNode,
++  dropNodePositions,
++  emptyMindMap,
++  nextNodeId,
++  serializeMindMap,
++} = await createJiti(import.meta.url).import("./mindmap.ts");
++
++const labels = {
++  header: "[map]",
++  hint: "hint",
++  cross: "cross",
++  detail: "note",
++  kinds: { goal: "goal", condition: "condition", step: "step", idea: "idea", risk: "risk", result: "result" },
++};
++
++const node = (id, kind, title, x = 0, y = 0, detail = "") => ({ ...createMindMapNode(kind, x, y, id, title), detail });
++
++test("an empty graph serializes to nothing so the composer is left untouched", () => {
++  assert.equal(serializeMindMap(emptyMindMap(), labels), "");
++});
++
++test("nesting follows edge direction and detail lines land under their node", () => {
++  const graph = {
++    nodes: [node("n1", "goal", "ship the shop", 0, 0), node("n2", "step", "小红书先起量", 300, 0, "每周 3 条\n- 图集为主")],
++    edges: [{ id: "e1", from: "n1", to: "n2", label: "" }],
++  };
++  const text = serializeMindMap(graph, labels);
++  const [header, hint, outline] = text.split("\n\n");
++  assert.equal(header, "[map]");
++  assert.equal(hint, "hint");
++  assert.deepEqual(outline.split("\n"), [
++    "● [goal] ship the shop",
++    "  • [step] 小红书先起量",
++    "    note: 每周 3 条",
++    "    note: - 图集为主",
++  ]);
++});
++
++test("cycles and back-edges are reported once instead of recursing forever", () => {
++  const graph = {
++    nodes: [node("n1", "goal", "A", 0, 0), node("n2", "step", "B", 300, 0), node("n3", "result", "C", 600, 0)],
++    edges: [
++      { id: "e1", from: "n1", to: "n2", label: "" },
++      { id: "e2", from: "n2", to: "n3", label: "" },
++      { id: "e3", from: "n3", to: "n1", label: "反馈" },
++    ],
++  };
++  const text = serializeMindMap(graph, labels);
++  assert.ok(text.includes("● [goal] A"));
++  assert.ok(text.includes("[result] C → 反馈: [goal] A"));
++  assert.equal(countMindMapComponents(graph), 1);
++});
++
++test("a pure cycle still produces a tree instead of an empty outline", () => {
++  const graph = {
++    nodes: [node("n1", "idea", "A", 0, 0), node("n2", "idea", "B", 200, 0)],
++    edges: [
++      { id: "e1", from: "n1", to: "n2", label: "" },
++      { id: "e2", from: "n2", to: "n1", label: "" },
++    ],
++  };
++  const text = serializeMindMap(graph, labels);
++  assert.ok(text.includes("● [idea] A"));
++  assert.ok(text.includes("• [idea] B"));
++});
++
++test("detached nodes are kept as their own trees", () => {
++  const graph = {
++    nodes: [node("n1", "goal", "A", 0, 0), node("n2", "step", "B", 300, 0), node("n9", "risk", "orphan", 0, 400)],
++    edges: [{ id: "e1", from: "n1", to: "n2", label: "" }],
++  };
++  const text = serializeMindMap(graph, labels);
++  assert.equal(text.split("● ").length - 1, 2);
++  assert.ok(text.includes("● [risk] orphan"));
++  assert.equal(countMindMapComponents(graph), 2);
++});
++
++test("connecting rejects self loops and duplicates", () => {
++  const base = { nodes: [node("n1", "goal", "A"), node("n2", "step", "B")], edges: [] };
++  const once = connectMindMapNodes(base, "n1", "n2", "e1");
++  assert.equal(once.edges.length, 1);
++  assert.equal(connectMindMapNodes(once, "n1", "n2", "e2").edges.length, 1);
++  assert.equal(connectMindMapNodes(once, "n1", "n1", "e3").edges.length, 1);
++  assert.equal(connectMindMapNodes(once, "n1", "missing", "e4").edges.length, 1);
++});
++
++test("deleting a node drops its edges and ids keep increasing", () => {
++  const graph = {
++    nodes: [node("n1", "goal", "A"), node("n2", "step", "B")],
++    edges: [{ id: "e1", from: "n1", to: "n2", label: "" }],
++  };
++  const trimmed = dropNodePositions(graph, "n1");
++  assert.equal(trimmed.nodes.length, 1);
++  assert.equal(trimmed.edges.length, 0);
++  assert.equal(nextNodeId(graph), "n3");
++});
++
++test("auto layout places children one column right of their parent", () => {
++  const graph = {
++    nodes: [node("n1", "goal", "A", 500, 500), node("n2", "step", "B", 10, 10), node("n3", "step", "C", 20, 400)],
++    edges: [
++      { id: "e1", from: "n1", to: "n2", label: "" },
++      { id: "e1b", from: "n1", to: "n3", label: "" },
++    ],
++  };
++  const laid = autoLayoutMindMap(graph);
++  const byId = new Map(laid.nodes.map((item) => [item.id, item]));
++  assert.equal(byId.get("n1").x, 48);
++  assert.equal(byId.get("n2").x, 48 + MINDMAP_NODE_WIDTH + 76);
++  assert.equal(byId.get("n3").x, 48 + MINDMAP_NODE_WIDTH + 76);
++  assert.ok(byId.get("n3").y > byId.get("n2").y);
++});
+diff --git a/lib/mindmap.ts b/lib/mindmap.ts
+new file mode 100644
+index 0000000..8b3b149
+--- /dev/null
++++ b/lib/mindmap.ts
+@@ -0,0 +1,259 @@
++/**
++ * Mind map (logic graph) model for the chat composer.
++ *
++ * The graph is a plain data structure: nodes carry a kind, a one-line title and
++ * an optional detail; edges carry direction and an optional relation label.
++ * `serializeMindMap` turns it into compact, indented text that a model reads as
++ * a reasoning outline, so the graph never needs its own message type.
++ */
++
++export const MINDMAP_KINDS = ["goal", "condition", "step", "idea", "risk", "result"] as const;
++
++export type MindMapNodeKind = (typeof MINDMAP_KINDS)[number];
++
++export interface MindMapNode {
++  id: string;
++  kind: MindMapNodeKind;
++  title: string;
++  detail: string;
++  x: number;
++  y: number;
++}
++
++export interface MindMapEdge {
++  id: string;
++  from: string;
++  to: string;
++  label: string;
++}
++
++export interface MindMapGraph {
++  nodes: MindMapNode[];
++  edges: MindMapEdge[];
++}
++
++export interface MindMapLabels {
++  /** Heading line placed above the outline. */
++  header: string;
++  /** One-line instruction telling the model how to read the outline. */
++  hint: string;
++  /** Heading for relations that the outline could not express as nesting. */
++  cross: string;
++  /** Prefix for a node's free-form detail line. */
++  detail: string;
++  /** Human label per node kind. */
++  kinds: Record<MindMapNodeKind, string>;
++}
++
++export const MINDMAP_NODE_WIDTH = 236;
++export const MINDMAP_NODE_HEIGHT = 122;
++
++export function emptyMindMap(): MindMapGraph {
++  return { nodes: [], edges: [] };
++}
++
++export function createMindMapNode(
++  kind: MindMapNodeKind,
++  x: number,
++  y: number,
++  id: string,
++  title = "",
++): MindMapNode {
++  return { id, kind, title, detail: "", x: Math.round(x), y: Math.round(y) };
++}
++
++export function nextNodeId(graph: MindMapGraph): string {
++  let max = 0;
++  for (const node of graph.nodes) {
++    const match = /^n(\d+)$/.exec(node.id);
++    if (match) max = Math.max(max, Number(match[1]));
++  }
++  return `n${max + 1}`;
++}
++
++/**
++ * 生成下一个节点 id，供连续新建时不必回读图状态。
++ * @param id 刚用掉的 id
++ * @returns 递增后的 id
++ */
++export function bumpNodeId(id: string): string {
++  const match = /^n(\d+)$/.exec(id);
++  return match ? `n${Number(match[1]) + 1}` : "n1";
++}
++
++export function dropNodePositions(graph: MindMapGraph, removedId: string): MindMapGraph {
++  return {
++    nodes: graph.nodes.filter((node) => node.id !== removedId),
++    edges: graph.edges.filter((edge) => edge.from !== removedId && edge.to !== removedId),
++  };
++}
++
++/** Rejects self-loops and duplicate edges; returns the graph unchanged when invalid. */
++export function connectMindMapNodes(graph: MindMapGraph, from: string, to: string, edgeId: string): MindMapGraph {
++  if (from === to) return graph;
++  if (!graph.nodes.some((node) => node.id === from)) return graph;
++  if (!graph.nodes.some((node) => node.id === to)) return graph;
++  if (graph.edges.some((edge) => edge.from === from && edge.to === to)) return graph;
++  return { nodes: graph.nodes, edges: [...graph.edges, { id: edgeId, from, to, label: "" }] };
++}
++
++/**
++ * Layered layout: depth from the roots becomes the column, sibling order the
++ * row. Cycles and detached nodes are placed at depth 0 so nothing is lost.
++ */
++export function autoLayoutMindMap(graph: MindMapGraph): MindMapGraph {
++  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
++  const incoming = new Map<string, number>();
++  const outgoing = new Map<string, string[]>();
++  for (const node of graph.nodes) {
++    incoming.set(node.id, 0);
++    outgoing.set(node.id, []);
++  }
++  for (const edge of graph.edges) {
++    if (!byId.has(edge.from) || !byId.has(edge.to)) continue;
++    incoming.set(edge.to, (incoming.get(edge.to) ?? 0) + 1);
++    outgoing.get(edge.from)!.push(edge.to);
++  }
++
++  const depth = new Map<string, number>();
++  const roots = graph.nodes.filter((node) => (incoming.get(node.id) ?? 0) === 0);
++  const queue: string[] = [];
++  for (const root of roots) {
++    depth.set(root.id, 0);
++    queue.push(root.id);
++  }
++  while (queue.length > 0) {
++    const id = queue.shift()!;
++    const current = depth.get(id) ?? 0;
++    for (const child of outgoing.get(id) ?? []) {
++      const seen = depth.get(child);
++      if (seen !== undefined) continue;
++      depth.set(child, current + 1);
++      queue.push(child);
++    }
++  }
++
++  const columns = new Map<number, MindMapNode[]>();
++  for (const node of graph.nodes) {
++    const column = depth.get(node.id) ?? 0;
++    const bucket = columns.get(column);
++    if (bucket) bucket.push(node);
++    else columns.set(column, [node]);
++  }
++
++  const positions = new Map<string, { x: number; y: number }>();
++  for (const [column, bucket] of columns) {
++    const sorted = [...bucket].sort((a, b) => a.y - b.y || a.x - b.x);
++    sorted.forEach((node, row) => {
++      positions.set(node.id, {
++        x: 48 + column * (MINDMAP_NODE_WIDTH + 76),
++        y: 48 + row * (MINDMAP_NODE_HEIGHT + 32),
++      });
++    });
++  }
++
++  return {
++    nodes: graph.nodes.map((node) => {
++      const position = positions.get(node.id);
++      return position ? { ...node, x: position.x, y: position.y } : node;
++    }),
++    edges: graph.edges,
++  };
++}
++
++function nodeLine(node: MindMapNode, labels: MindMapLabels): string {
++  const kind = labels.kinds[node.kind] ?? node.kind;
++  const title = node.title.trim() || "—";
++  return `[${kind}] ${title}`;
++}
++
++/**
++ * Renders the graph as an indented outline (nesting = edge direction) plus a
++ * trailing list for back-edges and cycles. With an empty graph this returns
++ * an empty string, so callers can skip inserting anything.
++ */
++export function serializeMindMap(graph: MindMapGraph, labels: MindMapLabels): string {
++  if (graph.nodes.length === 0) return "";
++  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
++  const outgoing = new Map<string, MindMapEdge[]>();
++  const incoming = new Map<string, number>();
++  for (const node of graph.nodes) {
++    outgoing.set(node.id, []);
++    incoming.set(node.id, 0);
++  }
++  for (const edge of graph.edges) {
++    if (!byId.has(edge.from) || !byId.has(edge.to)) continue;
++    outgoing.get(edge.from)!.push(edge);
++    incoming.set(edge.to, (incoming.get(edge.to) ?? 0) + 1);
++  }
++  for (const edges of outgoing.values()) {
++    edges.sort((a, b) => {
++      const left = byId.get(a.to)!;
++      const right = byId.get(b.to)!;
++      return left.y - right.y || left.x - right.x;
++    });
++  }
++
++  const lines: string[] = [];
++  const crossLines: string[] = [];
++  const visited = new Set<string>();
++
++  const walk = (node: MindMapNode, depth: number) => {
++    visited.add(node.id);
++    const pad = "  ".repeat(depth);
++    lines.push(`${pad}${depth === 0 ? "●" : "•"} ${nodeLine(node, labels)}`);
++    const detail = node.detail.trim();
++    if (detail) {
++      for (const detailLine of detail.split(/\r?\n/)) {
++        const text = detailLine.trim();
++        if (text) lines.push(`${pad}  ${labels.detail}: ${text}`);
++      }
++    }
++    for (const edge of outgoing.get(node.id) ?? []) {
++      const target = byId.get(edge.to)!;
++      if (visited.has(target.id)) {
++        const relation = edge.label.trim() ? `${edge.label.trim()}: ` : "";
++        crossLines.push(`${nodeLine(node, labels)} → ${relation}${nodeLine(target, labels)}`);
++        continue;
++      }
++      walk(target, depth + 1);
++    }
++  };
++
++  const roots = graph.nodes
++    .filter((node) => (incoming.get(node.id) ?? 0) === 0)
++    .sort((a, b) => a.y - b.y || a.x - b.x);
++  for (const root of roots) walk(root, 0);
++  // Cycles leave no root: every remaining component starts a new tree.
++  for (const node of [...graph.nodes].sort((a, b) => a.y - b.y || a.x - b.x)) {
++    if (!visited.has(node.id)) walk(node, 0);
++  }
++
++  const blocks = [labels.header, labels.hint, lines.join("\n")];
++  if (crossLines.length > 0) blocks.push(`${labels.cross}\n${crossLines.map((line) => `- ${line}`).join("\n")}`);
++  return blocks.filter((block) => block.trim()).join("\n\n");
++}
++
++/** Count of edges the serializer had to demote to a cross-link, used by tests. */
++export function countMindMapCycleEdges(graph: MindMapGraph): number {
++  return Math.max(0, graph.edges.length - (graph.nodes.length - countMindMapComponents(graph)));
++}
++
++export function countMindMapComponents(graph: MindMapGraph): number {
++  const parent = new Map<string, string>();
++  const find = (id: string): string => {
++    let current = id;
++    while (parent.get(current) !== current) current = parent.get(current)!;
++    return current;
++  };
++  for (const node of graph.nodes) parent.set(node.id, node.id);
++  for (const edge of graph.edges) {
++    if (!parent.has(edge.from) || !parent.has(edge.to)) continue;
++    const a = find(edge.from);
++    const b = find(edge.to);
++    if (a !== b) parent.set(a, b);
++  }
++  const roots = new Set<string>();
++  for (const node of graph.nodes) roots.add(find(node.id));
++  return roots.size;
++}
