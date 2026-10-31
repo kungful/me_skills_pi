@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-30 22:01:50",
-  "count": 15,
-  "totalApkBytes": 84927243,
+  "generatedAt": "2026-10-31 11:35:59",
+  "count": 16,
+  "totalApkBytes": 85042803,
   "categories": [
     {
       "id": "design",
@@ -172,6 +172,17 @@
           "sha256": "f29cf84b2191f71bfe11f1575e49d134fa6a4d38af6300d2cbc9935db20d82be",
           "builtAt": "2026-10-18 23:51:47",
           "notes": "茶叶工厂的商业情报+决策台：行情/7×24全球快讯(含军事地缘)/财经要闻/新浪国际/百度热搜/汇率 六源聚合，自动打 8 类标签；本地规则引擎算「出口vs内销」权重与渠道优先级；客户台账(状态/报价/跟进提醒/导出CSV)；军师晨报(AlarmManager 定时在原生层生成 + 通知栏推送，连带到期客户提醒)；把梳子卖给和尚 12 招生成器；内置冰糖谱：海关出口数据/品类均价/市场分层/全渠道ROI地图。大模型走用户自填 API Key(DeepSeek/通义/智谱/Kimi/硅基流动/OpenAI)，情报一键翻译。纯 SDK 打包，离线可用"
+        },
+        {
+          "slug": "subhunter",
+          "title": "订阅猎手",
+          "version": "1.0.3",
+          "apk": "tools/subhunter/subhunter.apk",
+          "source": "tools/subhunter/src/",
+          "size": 115560,
+          "sha256": "160c39c149ad861f5786d0ee1fb13302848e7a486e6703c85adbed44836d70ba",
+          "builtAt": "2026-10-31 11:35:00",
+          "notes": "公益节点聚合：抓取去重测活 → 本机 Clash/v2ray 订阅，每日自动同步（Android；Windows 版见 SubHunter-Win）"
         },
         {
           "slug": "demand-radar",
