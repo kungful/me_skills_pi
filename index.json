@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-31 19:44:34",
-  "count": 42,
+  "generatedAt": "2026-11-01 08:23:44",
+  "count": 43,
   "skills": [
     {
       "name": "apk-autoinstall",
@@ -130,6 +130,11 @@
     {
       "name": "plan-electronic-product",
       "description": "Turn an electronic product idea, behavior description, reverse-engineering note, or incomplete circuit concept into a decision-ready engineering brief and architecture. Use before schematic design or audit when functions, operating states, power, interfaces, mechanics, production quantity, cost, or measurable requirements are missing or ambiguous.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "qq-desktop-control",
+      "description": "从外部控制 Windows 版 QQ NT——只用鼠标键盘和屏幕像素（SendInput / 截图），不注入进程、不读内存、不碰任何私有协议。用于自动进会话、发消息、读聊天区内容、做低频的收发自动化。当用户说\"外部控制QQ/自动发QQ消息/让AI操作QQ/读QQ群消息/QQ自动化/定时发QQ/用鼠标键盘控制QQ/QQ机器人（非官方）\"时使用。★若目标是稳定跑群机器人，先说清它与官方 QQ 开放平台 / 协议端的取舍，见文末对比表。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

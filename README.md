@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-10-31 19:44:34**
+最后同步：**2026-11-01 08:23:44**
 
-共 **42** 个 skill。
+共 **43** 个 skill。
 
 ## 安装
 
@@ -43,6 +43,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`pcb-layout-review`](skills/pcb-layout-review/) | Audit, finish, or port PCB placement and routing using circuit intent, mechanical constraints, sourcing evidence, native DRC/connectivity, rendered views, an... | pi |
 | [`pi-web-ui-deploy`](skills/pi-web-ui-deploy/) | Deploy and stabilize pi-web-ui (pi 编码代理的 Web UI) inside an XGC / x-gpu container — global npm install, screen + /scripts/start.d autostart, dynamic Host allo... | pi |
 | [`plan-electronic-product`](skills/plan-electronic-product/) | Turn an electronic product idea, behavior description, reverse-engineering note, or incomplete circuit concept into a decision-ready engineering brief and ar... | pi |
+| [`qq-desktop-control`](skills/qq-desktop-control/) | 从外部控制 Windows 版 QQ NT——只用鼠标键盘和屏幕像素（SendInput / 截图），不注入进程、不读内存、不碰任何私有协议。用于自动进会话、发消息、读聊天区内容、做低频的收发自动化。当用户说"外部控制QQ/自动发QQ消息/让AI操作QQ/读QQ群消息/QQ自动化/定时发QQ/用鼠标键盘控制QQ/... | pi |
 | [`qualify-pcba-sourcing`](skills/qualify-pcba-sourcing/) | Verify a PCBA BOM and proposed components before circuit or placement freeze, including exact manufacturer part numbers, pin semantics, packages, footprints,... | pi |
 | [`release-pcba-fabrication`](skills/release-pcba-fabrication/) | Build and verify a vendor-neutral PCB/PCBA manufacturing release from one frozen design revision. Use when generating or auditing Gerber, drill, IPC-2581/ODB... | pi |
 | [`reverse-engineer-anything`](skills/reverse-engineer-anything/) | Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence t... | pi |
