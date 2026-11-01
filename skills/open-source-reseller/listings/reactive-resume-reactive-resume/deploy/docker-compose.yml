@@ -1,18 +1,33 @@
-# 由 sourcing.py 生成，务必按项目真实情况改镜像/端口/卷
+# 真实可用版本：照官方 docs/self-hosting/docker.mdx 落地
+# 上游镜像: amruthpillai/reactive-resume（GitHub: ghcr.io/reactive-resume/reactive-resume）
 services:
-  app:
-    build: .            # 或 image: <上游官方镜像>
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  reactive-resume:
+    image: amruthpillai/reactive-resume:latest
     restart: unless-stopped
     ports:
-      - "8080:8080"
-    environment:
-      - TZ=Asia/Shanghai
-    env_file:
-      - .env
+      - "3000:3000"
+    env_file: .env
     volumes:
-      - ./data:/app/data
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      - reactive_resume_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  reactive_resume_data:

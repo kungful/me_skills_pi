@@ -57,6 +57,16 @@ description: 把有用的开源项目审计、封装成可卖的商品，再分�
 
 ## 2. 选品：什么项目值得封装
 
+**信号源实测（2026-11-01）**：X / 推特**抓不到**——`x.com` 直接跳登录墙，nitter.net 已下线、
+xcancel 返 451、r.jina.ai 对 x.com 返 401，搜索引擎的 `site:x.com` 只给垃圾结果。
+要用推特信号只能让用户提供自己的 `auth_token` cookie，否则就用 GitHub 侧信号替代：
+
+| 源 | 状态 | 用法 |
+|---|---|---|
+| `github.com/trending?since=weekly`（HTML） | ✅ 免登录可抓 | 看这一周什么在涨，比搜索更早 |
+| GitHub Search API | ✅ 60 次/小时（未认证） | `sourcing.py search`，一轮选品够用 |
+| `news.ycombinator.com` | ❌ 419 | 需要 UA/代理，别依赖 |
+
 `python sourcing.py search --q "topic:self-hosted" --min-stars 800 -v` 会给 0–100 分，排序逻辑：
 
 | 维度 | 加分 | 说明 |
@@ -191,7 +201,17 @@ QQ 群 → `qq-order-broker`（`send --arm` 才真发）；闲鱼/B站 → 人�
 
 ---
 
-## 9. 实测状态（2026-11-01）
+## 9. 实测状态（2026-11-01 第二轮）
+
+| 能力 | 状态 | 说明 |
+|---|---|---|
+| 推特 / X 选题 | ❌ | 登录墙 + 镜像站全挂，见第 2 节；换 GitHub trending 代替 |
+| GitHub trending（HTML） | ✅ | 无需 token，`webbrowse.py fetch` 直接读 |
+| 大仓库 audit 不再崩 | ✅ 已修 | `gh()` 原来 `json.load(r)` 遇 chunked 截断抛 IncompleteRead（reactive-resume 必崩）→ 改一次读全 + 3 次重试 + 自动降 per_page |
+| monorepo UI 识别 | ✅ 已修 | 顶层只有 `apps/`、`packages/` 时误判“无界面”→ 新增往下探一层 |
+| 真实部署验证 | ⚠ 环境阻断 | reactive-resume 已按官方 `docs/self-hosting/docker.mdx` 写好真 compose（postgres:18 + 3000）；`docker compose config` 通过，容器起不来是因为本机 Docker Desktop **没装 WSL 发行版**（`wsl -l -v` 报无发行版 → 引擎 500） |
+| 发布到国内 | ✅ 链路实测通（素材仍需按项目改） | 小红书：`xiaohongshu-mcp` 必须 `-headless=false` 起；掉登录用 `xiaohongshu-login.exe` 弹窗扫码（别用二维码接口），实测 10:50 启动→10:51 登录成功。发布走 **HTTP 直连** `POST /api/v1/publish`（MCP 客户端 60s 会超时），实测 17 字标题+1080x1440 封面，约 1 分钟发成，再到 `/api/v1/user/me` 看 `feeds[0].noteCard.displayTitle` 核实。抖音：`douyin_publish_images` 必须传 `files`（不是 images），`dryRun=true` 九步全绿停在预览页。 |
+| 账号画像 | ⚠ 坑 | 本机小红书号是「绘课工坊」（少儿美术）、抖音号是「苏维埃」——都不是卖开源封装该用的号。同一素材发上去会把画像搞乱，先建垂类号再铺 |
 
 | 能力 | 状态 | 说明 |
 |---|---|---|
@@ -210,7 +230,9 @@ QQ 群 → `qq-order-broker`（`send --arm` 才真发）；闲鱼/B站 → 人�
 ## 10. 坑
 
 1. **GitHub 上 `NOASSERTION` 不等于宽松。** 国产/大厂项目喜欢"Apache + 附加条款"，`audit` 的限制条款扫描就是为这个写的——不要跳过它。
-2. **官方镜像 ≠ 一定能跑。** 很多项目 compose 里写了 `build: .` 却缺构建上下文；交付前必须干净环境跑一遍。
+2. **官方镜像 ≠ 一定能跑，`pack` 生成的 compose 一定是假模板。** 默认模板写的是 `build: .` + 8080，
+   真项目往往是「官方镜像 + postgres + 3000」。动手前先读上游 `docs/self-hosting/*.mdx` 或根目录
+   `compose.yml`，把真参数抄过去——`listings/reactive-resume-reactive-resume/deploy/` 就是照官方文档改好的样板。
 3. **"一键部署"这个词会被举报。** 如果你的脚本只覆盖了 Ubuntu 22.04，就写清"Ubuntu 22.04 验证，其它系统需手动"，别写"支持所有系统"。
 4. **闲鱼虚拟商品最怕"秒回 + 模板"。** 第一条回复必须问环境/用途，且慢 1–3 分钟再发。
 5. **抖音搬运判重不看片头看画面。** 别人的演示录屏哪怕改片头也会被判搬运；自己录，画面里带上自己的界面/终端。

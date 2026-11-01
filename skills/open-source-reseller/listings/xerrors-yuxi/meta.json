@@ -1,0 +1,29 @@
+{
+  "slug": "xerrors-yuxi",
+  "repo": "xerrors/Yuxi",
+  "name": "企业知识库智能体（私有化部署版）",
+  "created": "2026-11-01 10:49:45",
+  "stars": 7563,
+  "license": "MIT",
+  "license_kind": "PERMISSIVE",
+  "monetize": "可以卖成品",
+  "license_advice": "自助包 / 代部署 / 定制封装 / 托管，四条线都能做。附上 LICENSE 与原作者署名。（MIT：可商用、可闭源，保留版权声明与 LICENSE 即可）",
+  "difficulty": "低（半天到 1 天）",
+  "stack": [
+    "compose"
+  ],
+  "has_ui": true,
+  "has_i18n": false,
+  "risk": [
+    "商标：商品名不能直接用『Yuxi』，要做成『基于 Yuxi 的 XX 部署服务』"
+  ],
+  "channels": {
+    "xiaohongshu": "draft",
+    "douyin": "draft",
+    "bilibili": "draft",
+    "xianyu": "draft",
+    "qq_group": "draft",
+    "twitter": "draft"
+  },
+  "status": "draft"
+}

@@ -1,0 +1,18 @@
+# 由 sourcing.py 生成，务必按项目真实情况改镜像/端口/卷
+services:
+  app:
+    build: .            # 或 image: <上游官方镜像>
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Asia/Shanghai
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
