@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-01 08:58:29",
-  "count": 43,
+  "generatedAt": "2026-11-01 09:28:32",
+  "count": 45,
   "skills": [
     {
       "name": "apk-autoinstall",
@@ -113,6 +113,11 @@
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {
+      "name": "open-source-reseller",
+      "description": "把有用的开源项目审计、封装成可卖的商品，再分发到闲鱼/小红书/抖音/B站/QQ群/X 的一条龙方法。当用户说\"找开源项目封装去卖/选品/这项目能不能商用/能不能拿去卖/License 怎么查/给闲鱼上架写文案/多平台分发/做部署包/卖部署服务/怕被平台封号\"时使用。★两条硬线：①License 不合格（无 LICENSE / AGPL / 附加限制条款）的项目不打包上架；②不提供指纹伪装、多开群控、刷量养号等规避平台风控的手段——防封只做\"让行为本身不触线\"。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
       "name": "operate-jlcpcb-order",
       "description": "Operate and review a JLCPCB PCB/PCBA quote, optional physical-stencil request, or order using a frozen Gerber/drill, BOM, CPL, sourcing lock, constraints, and release manifest. Use for browser upload, board or stencil options, cost anomalies, coupons, component matching, substitutions, imported placement calibration, top/bottom preview inspection, cart preparation, or order records without silently accepting placement errors or payment.",
       "source": "C:/Users/hua/.pi/agent/skills"
@@ -135,6 +140,11 @@
     {
       "name": "qq-desktop-control",
       "description": "从外部控制 Windows 版 QQ NT——只用鼠标键盘和屏幕像素（SendInput / 截图），不注入进程、不读内存、不碰任何私有协议。用于自动进会话、发消息、读聊天区内容、做低频的收发自动化。当用户说\"外部控制QQ/自动发QQ消息/让AI操作QQ/读QQ群消息/QQ自动化/定时发QQ/用鼠标键盘控制QQ/QQ机器人（非官方）\"时使用。★若目标是稳定跑群机器人，先说清它与官方 QQ 开放平台 / 协议端的取舍，见文末对比表。",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "qq-order-broker",
+      "description": "在 QQ 群 / 频道里自动找单（有偿需求）、判定能不能接、生成对接话术、跟踪状态并产出交付包——用本机 Pi 的真实能力去交付。当用户说\"去 QQ 群里找活/自动接单/帮我盯单接私活/在群里找有偿需求/自动回复客户谈单/把接到的单做掉交付\"时使用。★默认半自动：读屏找单与话术自动，对外发送必须 --arm 且逐条人工过目；红线单（代写论文/破解/外挂/刷量/开盒等）一律只发拒绝。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-11-01 08:58:29**
+最后同步：**2026-11-01 09:28:32**
 
-共 **43** 个 skill。
+共 **45** 个 skill。
 
 ## 安装
 
@@ -39,11 +39,13 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`leantoken`](skills/leantoken/) | 用 LeanToken 做代码检索与结构理解，省 token 省上下文——找相关文件/代码、按符号大纲看结构、精确读某个函数或行段、跨 git 版本追踪符号、查询大 JSON。当任务是在大型或不熟的代码库里"找到该看的那段代码""别把整个文件读进来""追一下这个函数的历史""仓库太大上下文塞不下"时使用，优先替代... | pi |
 | [`manage-pcba-program`](skills/manage-pcba-program/) | Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package thr... | pi |
 | [`morluto-reversing-index`](skills/morluto-reversing-index/) | morluto（REA 作者）整个逆向工具与知识库生态的导航索引——要装/要连什么、有哪些配套技能、以及 80+ 个逆向与安全资源清单在哪个仓库。当用户说"morluto 还有别的逆向工具吗 / REA 生态 / 装 REA / 有哪些逆向 MCP / 找个逆向知识库 / 这套逆向工具配套都有啥"时使用，或当 `... | pi |
+| [`open-source-reseller`](skills/open-source-reseller/) | 把有用的开源项目审计、封装成可卖的商品，再分发到闲鱼/小红书/抖音/B站/QQ群/X 的一条龙方法。当用户说"找开源项目封装去卖/选品/这项目能不能商用/能不能拿去卖/License 怎么查/给闲鱼上架写文案/多平台分发/做部署包/卖部署服务/怕被平台封号"时使用。★两条硬线：①License 不合格（无 LIC... | pi |
 | [`operate-jlcpcb-order`](skills/operate-jlcpcb-order/) | Operate and review a JLCPCB PCB/PCBA quote, optional physical-stencil request, or order using a frozen Gerber/drill, BOM, CPL, sourcing lock, constraints, an... | pi |
 | [`pcb-layout-review`](skills/pcb-layout-review/) | Audit, finish, or port PCB placement and routing using circuit intent, mechanical constraints, sourcing evidence, native DRC/connectivity, rendered views, an... | pi |
 | [`pi-web-ui-deploy`](skills/pi-web-ui-deploy/) | Deploy and stabilize pi-web-ui (pi 编码代理的 Web UI) inside an XGC / x-gpu container — global npm install, screen + /scripts/start.d autostart, dynamic Host allo... | pi |
 | [`plan-electronic-product`](skills/plan-electronic-product/) | Turn an electronic product idea, behavior description, reverse-engineering note, or incomplete circuit concept into a decision-ready engineering brief and ar... | pi |
 | [`qq-desktop-control`](skills/qq-desktop-control/) | 从外部控制 Windows 版 QQ NT——只用鼠标键盘和屏幕像素（SendInput / 截图），不注入进程、不读内存、不碰任何私有协议。用于自动进会话、发消息、读聊天区内容、做低频的收发自动化。当用户说"外部控制QQ/自动发QQ消息/让AI操作QQ/读QQ群消息/QQ自动化/定时发QQ/用鼠标键盘控制QQ/... | pi |
+| [`qq-order-broker`](skills/qq-order-broker/) | 在 QQ 群 / 频道里自动找单（有偿需求）、判定能不能接、生成对接话术、跟踪状态并产出交付包——用本机 Pi 的真实能力去交付。当用户说"去 QQ 群里找活/自动接单/帮我盯单接私活/在群里找有偿需求/自动回复客户谈单/把接到的单做掉交付"时使用。★默认半自动：读屏找单与话术自动，对外发送必须 --arm 且逐... | pi |
 | [`qualify-pcba-sourcing`](skills/qualify-pcba-sourcing/) | Verify a PCBA BOM and proposed components before circuit or placement freeze, including exact manufacturer part numbers, pin semantics, packages, footprints,... | pi |
 | [`release-pcba-fabrication`](skills/release-pcba-fabrication/) | Build and verify a vendor-neutral PCB/PCBA manufacturing release from one frozen design revision. Use when generating or auditing Gerber, drill, IPC-2581/ODB... | pi |
 | [`reverse-engineer-anything`](skills/reverse-engineer-anything/) | Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence t... | pi |

@@ -1,0 +1,93 @@
+{
+  "_comment": "话术模板。用 orderbot.py draft <id> --stage ask 渲染；{slot} 会被替换。原则：短、具体、只说自己真能做的、不群发不刷屏。",
+  "ask": {
+    "use": "首次私聊接触（不要在群里 @ 人刷屏）",
+    "body": "你好，看到你在「{source}」里提到{title}。\n这块我能做：{tags}。\n先确认两件事：1) {q1}；2) {q2}\n你说清楚这两点，我给你一个明确报价和交付时间，你满意再开工。",
+    "slots": [
+      "source",
+      "title",
+      "tags",
+      "q1",
+      "q2"
+    ]
+  },
+  "qualify": {
+    "use": "需求问诊（报价之前必须走完，最多问两轮）",
+    "body": "为了不来回猜，我按这几点对齐一下：\n1) 要做的东西：{what}\n2) 素材/输入：{input}\n3) 什么时候要：{deadline}\n4) 预算区间：{budget}\n5) 验收标准（什么算做完）：{accept}\n6) 交付格式：{format}\n你把这 6 条填一下，或者直接用语音/截图说明也行。",
+    "slots": [
+      "what",
+      "input",
+      "deadline",
+      "budget",
+      "accept",
+      "format"
+    ]
+  },
+  "quote": {
+    "use": "报价（一次给全，不留活口）",
+    "body": "{title}这单我报 {price}{range_note}。\n包含：\n1) {deliver1}\n2) {deliver2}\n3) 交付后 {revise} 次修改\n时间：{eta} 内给第一版。\n付款：先付 {deposit}，验收通过付尾款 {balance}。需求中途新增的另算，我不临时加价，也不白干。\n行的话回一句「可以」，我马上开工。",
+    "slots": [
+      "title",
+      "price",
+      "range_note",
+      "deliver1",
+      "deliver2",
+      "revise",
+      "eta",
+      "deposit",
+      "balance"
+    ]
+  },
+  "accept": {
+    "use": "确认开工（复述验收标准，这一步是防止后面扯皮的关键）",
+    "body": "收到，按这个开工：\n· 交付：{deliver1} / {deliver2}\n· 验收：{accept}\n· 时间：{eta}\n· 款：定金 {deposit}\n我现在动，{sync} 给你同步一次进度，卡住我会提前说，不会到最后一天才告诉你做不完。",
+    "slots": [
+      "deliver1",
+      "deliver2",
+      "accept",
+      "eta",
+      "deposit",
+      "sync"
+    ]
+  },
+  "progress": {
+    "use": "进度同步（主动发，不要等客户问）",
+    "body": "进度：{progress}。预计 {eta} 给你第一版，目前没有卡点。",
+    "slots": [
+      "progress",
+      "eta"
+    ]
+  },
+  "deliver": {
+    "use": "交付（附文件 + 引导验收 + 提尾款）",
+    "body": "做完了，文件在这：{files}\n① 你先按验收点过一遍；\n{checklist}\n有问题直接说，我改到你验收通过为止。\n没问题的话尾款 {balance} 走一下，我把源码/使用说明一起发你。",
+    "slots": [
+      "files",
+      "checklist",
+      "balance"
+    ]
+  },
+  "chase": {
+    "use": "催尾款（礼貌一次，不纠缠）",
+    "body": "朋友，{title} 的尾款 {balance} 还没结，方便的时候转一下，我这边好归档。交付物已经在上面，若哪块还有问题我先给你改。",
+    "slots": [
+      "title",
+      "balance"
+    ]
+  },
+  "decline": {
+    "use": "拒单（不解释细节、不评价、不给替代方案背书）",
+    "body": "这个我做不了，别耽误你时间，你另找人吧，祝顺利。",
+    "slots": []
+  },
+  "decline_banned": {
+    "use": "命中红线时的回复（一句话，不留讨论空间）",
+    "body": "这个不在我能接的范围，抱歉。",
+    "slots": []
+  },
+  "close": {
+    "use": "收尾（留复购，不做营销话术）",
+    "body": "这单结了。后面还有类似的活，直接告诉我「要什么 + 什么时候要」，我就能报价。需要我把这次的脚本/流程写成你自己的使用说明也可以加钱做。",
+    "slots": []
+  }
+}
