@@ -16,6 +16,7 @@ pi-web-custom/
   patches/0001-mindmap-editor.patch           # 脑图编辑器（节点/连线/序列化/浮层）
   patches/0002-mindmap-text-image-linkmenu.patch  # 反向导入 + 图片节点 + 拖线弹类型
   patches/0003-mindmap-prompt-draft.patch        # 「提示生成」：一句话拆成草稿图
+  patches/0004-build-staging-distdir.patch       # 构建先落 .next-build 再替换（不打断正在服务的构建）
   src/                                        # 源码快照（可直接 npm install && npm run dev）
 ```
 
