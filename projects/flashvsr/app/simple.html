@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<title>FlashVSR+ 视频超分（精简版）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+ :root{color-scheme:dark;--bg:#0e1116;--card:#161b23;--line:#242c38;--fg:#e8ecf2;--dim:#8b95a5;--blue:#2a6ff5;--green:#2fbf71;--red:#e5484d}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 system-ui,-apple-system,"Microsoft YaHei",sans-serif}
+ .wrap{max-width:860px;margin:0 auto;padding:18px 14px 60px}
+ h1{font-size:19px;margin:6px 0 4px}
+ .dim{color:var(--dim);font-size:13px}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+ .card h2{font-size:14px;margin:0 0 10px;color:var(--dim);font-weight:600;letter-spacing:.02em}
+ .tabs{display:flex;gap:8px;margin-bottom:12px}
+ .tab{padding:7px 14px;border-radius:9px;background:#1d2531;color:var(--dim);cursor:pointer;font-size:13px}
+ .tab.on{background:var(--blue);color:#fff}
+ .pane{display:none}.pane.on{display:block}
+ #drop{border:2px dashed var(--line);border-radius:12px;padding:26px 14px;text-align:center;cursor:pointer;transition:.15s}
+ #drop.hot{border-color:var(--blue);background:#182031}
+ .btn{background:var(--blue);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:14px;cursor:pointer}
+ .btn.ghost{background:#1d2531;color:var(--fg)}
+ .btn:disabled{background:#2b333f;color:#67707e;cursor:default}
+ input[type=text],select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#11161d;color:var(--fg);font-size:14px}
+ .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+ .row>*{flex:1 1 160px}
+ .bar{height:10px;background:#1c222d;border-radius:99px;overflow:hidden}
+ .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#5ad1ff);transition:width .25s}
+ .meta{display:flex;justify-content:space-between;color:var(--dim);font-size:12.5px;margin-top:6px}
+ pre{background:#0b0f14;border:1px solid var(--line);border-radius:10px;padding:10px;max-height:260px;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-all;margin:8px 0 0}
+ .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;background:#1d2531;color:var(--dim)}
+ .ok{background:rgba(47,191,113,.15);color:var(--green)}
+ .bad{background:rgba(229,72,77,.15);color:var(--red)}
+ .run{background:rgba(42,111,245,.15);color:#7fb0ff}
+ video{width:100%;border-radius:12px;margin-top:10px;background:#000}
+ a.dl{display:inline-block;margin-top:10px;color:#7fb0ff}
+ ul{list-style:none;padding:0;margin:8px 0 0;max-height:180px;overflow:auto}
+ li{display:flex;justify-content:space-between;padding:8px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;font-size:13px;cursor:pointer}
+ li.on{border-color:var(--blue)}
+ li span:last-child{color:var(--dim)}
+ .hint{color:var(--dim);font-size:12.5px;margin-top:8px}
+ .libhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+ .libsub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;min-width:0}
+ .libsub .pill{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .srcprev{margin-top:12px}
+ .srcprev .tile{max-width:300px}
+ a.dlbtn.del{right:34px;background:#3a1c1f;color:#ff8f95}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:10px}
+ .tile{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#11161d;cursor:pointer;position:relative}
+ .tile:hover{border-color:var(--blue)}
+ .tile img.th{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#0b0f14}
+ .tile .tn{padding:6px 8px 2px;font-size:12px;line-height:1.35;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .tile .tm{padding:0 8px 8px;color:var(--dim);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tile .badge{position:absolute;top:6px;left:6px;background:#000a;color:#fff;font-size:11px;padding:1px 7px;border-radius:99px}
+ .tile a.dlbtn{position:absolute;top:5px;right:5px;background:#000a;color:#fff;border-radius:8px;padding:2px 8px;font-size:13px;text-decoration:none}
+ .modal{position:fixed;inset:0;background:#000d;display:none;z-index:50;padding:14px;overflow:auto}
+ .modal.on{display:block}
+ .mbox{max-width:900px;margin:20px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+ .mbox video,.mbox img{width:100%;max-height:72vh;border-radius:10px;background:#000;display:block}
+ .empty{color:var(--dim);font-size:13px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:11px}
+</style></head><body><div class="wrap">
+<h1>FlashVSR+ 视频超分 <span class="pill">精简版</span></h1>
+<div class="dim">不依赖 Gradio 的长连接/SSE：所有请求都是短 JSON，断了自动重试。任务在服务端后台跑，关掉页面也不影响。</div>
+
+<div class="card">
+  <h2>1. 视频来源</h2>
+  <div class="tabs">
+    <div class="tab on" data-p="up">分片上传</div>
+    <div class="tab" data-p="srv">服务器上的文件</div>
+    <div class="tab" data-p="url">链接（服务器下载）</div>
+  </div>
+  <div class="pane on" id="p-up">
+    <div id="drop">拖视频到这里，或点击选择<br><span class="dim">2 MB 一片，断了能续</span>
+      <input id="file" type="file" accept="video/*" hidden></div>
+    <div class="bar" style="margin-top:12px"><i id="upbar"></i></div>
+    <div class="meta"><span id="upstate">待上传</span><span id="upspeed"></span></div>
+  </div>
+  <div class="pane" id="p-srv">
+    <div class="row"><select id="srvsel"></select><button class="btn ghost" id="refresh">刷新</button></div>
+    <div class="hint">只列视频文件（图片不能超分，已经不再混进来了）。也可以用 scp/sftp 传到
+    <code>/root/uploads</code> 再点刷新。</div>
+  </div>
+  <div class="pane" id="p-url">
+    <div class="row"><input type="text" id="url" placeholder="https://... 直链 / B站 / YouTube">
+      <button class="btn ghost" id="dl">服务器下载</button></div>
+    <div class="hint">机房下载 15 MB/s，比浏览器上传快一个数量级；下完自动出现在「服务器上的文件」里。</div>
+  </div>
+  <div class="srcprev" id="srcpreview"></div>
+</div>
+
+<div class="card">
+  <h2>2. 参数</h2>
+  <div class="row">
+    <select id="preset">
+      <option value="auto">保持原比例（自动 2 倍，推荐）</option>
+      <option value="896x512">快速预览 896×512</option>
+      <option value="2048x1152">1080p 级 2048×1152</option>
+      <option value="2560x1408" selected>2K 级 2560×1408（推荐上限）</option>
+      <option value="3840x2176">4K 级 3840×2176（极限）</option>
+    </select>
+    <select id="mode"><option value="turbo" selected>turbo（快）</option><option value="base">base</option></select>
+    <select id="mem">
+      <option value="auto" selected>显存策略：自动</option>
+      <option value="save">省显存（慢一倍）</option>
+      <option value="fast">高性能（关 offload）</option>
+    </select>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <select id="tcomp"><option value="4" selected>时间压缩 4</option><option value="2">2</option><option value="1">1（最慢最稳）</option></select>
+    <select id="maxf"><option value="0" selected>整条视频</option><option value="24">只跑前 24 帧</option><option value="48">前 48 帧</option><option value="96">前 96 帧</option></select>
+    <button class="btn" id="go">开始放大</button>
+    <button class="btn ghost" id="stop">取消</button>
+  </div>
+  <div class="hint">宽高必须是 128 的倍数（所以没有 1920×1080 这种尺寸）。4K 会自动开省显存模式。</div>
+</div>
+
+<div class="card">
+  <h2>3. 进度与结果</h2>
+  <div class="row" style="justify-content:space-between"><span id="st" class="pill">空闲</span><span class="dim" id="el"></span></div>
+  <div class="bar" style="margin-top:10px"><i id="pbar"></i></div>
+  <div id="result"></div>
+  <pre id="log">（还没有日志）</pre>
+</div>
+<div class="card" id="files">
+  <h2>4. 文件库（缩略图 / 预览 / 下载）</h2>
+  <div class="libhead">
+    <div class="tab on" data-lib="out">放大结果</div>
+    <div class="tab" data-lib="up">上传的原片</div>
+    <button class="btn ghost" id="librefresh" style="margin-left:auto;flex:0 0 auto">刷新</button>
+  </div>
+  <div class="libsub">
+    <span class="dim" id="libinfo"></span>
+    <span class="pill" id="resume" style="display:none;cursor:pointer"></span>
+  </div>
+  <div class="grid" id="libgrid"></div>
+  <div class="hint">缩略图按需加载（单张 10~40 KB，网络抖了自动重试）；点一下直接预览 —— 视频支持边下边播、
+  可拖进度，右上角 ⬇ 下载。页面关了 / 连接断了都不影响：文件一直在服务端，回来刷新就能接着看。</div>
+</div>
+</div>
+
+<div class="modal" id="modal"><div class="mbox">
+  <div class="row" style="margin-bottom:10px;justify-content:space-between">
+    <b id="mtitle" style="flex:2 1 240px"></b>
+    <a class="btn ghost" id="mdl" href="#" style="flex:0 0 auto;text-decoration:none;text-align:center">⬇ 下载</a>
+    <button class="btn ghost" id="mdel" style="flex:0 0 auto;background:#3a1c1f;color:#ff8f95">删除</button>
+    <button class="btn ghost" id="mclose" style="flex:0 0 auto">关闭</button>
+  </div>
+  <div id="mbody"></div>
+  <div class="meta"><span id="mmeta"></span><span id="mnote"></span></div>
+</div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmt = n => n > 1e9 ? (n/1e9).toFixed(2)+' GB' : n > 1e6 ? (n/1e6).toFixed(1)+' MB' : (n/1e3).toFixed(0)+' KB';
+
+/* 所有请求都带重试：这个机房的代理会随机掐 TLS 连接 */
+async function api(path, opt = {}, tries = 6) {
+  let err;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(path, opt);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const t = await r.text();
+      return t ? JSON.parse(t) : {};
+    } catch (e) {
+      err = e;
+      await sleep(600 * (i + 1));
+    }
+  }
+  throw err;
+}
+
+/* ---- tabs ---- */
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(x => x.classList.remove('on'));
+  t.classList.add('on');
+  $('#p-' + t.dataset.p).classList.add('on');
+});
+
+/* ---- 选择的分片上传 ---- */
+let picked = null;   // 服务器上的绝对路径
+const CHUNK = 2 * 1024 * 1024;
+
+let upFiles = [];            // /root/uploads 里的视频（带缩略图/时长，给预览用）
+
+async function refreshList() {
+  try {
+    const j = await api('/api/files?which=up', {}, 4);
+    // 只收视频：图片/音频以前也会混进下拉框，选中后当成「一帧视频」跑出废片
+    upFiles = (j.files || []).filter(f => f.kind === 'video');
+    const sel = $('#srvsel');
+    sel.innerHTML = upFiles.length
+      ? upFiles.map(f => `<option value="${f.name}">${f.name}（${fmt(f.size)}` +
+          (f.dur ? ` · ${f.dur.toFixed(1)}s` : '') + '）</option>').join('')
+      : '<option value="">（/root/uploads 里还没有视频）</option>';
+    const names = upFiles.map(f => f.name);
+    if (!upFiles.length) picked = null;
+    else if (!picked || names.indexOf(picked.split('/').pop()) < 0) picked = '/root/uploads/' + names[0];
+    if (picked) sel.value = picked.split('/').pop();
+    sel.onchange = () => { picked = sel.value ? '/root/uploads/' + sel.value : null; showSrcPreview(); };
+    showSrcPreview();
+  } catch (e) {}
+}
+
+/* 将要处理的文件预览（上传完 / 下拉选中都看得到，点一下可播） */
+function showSrcPreview() {
+  const box = $('#srcpreview');
+  if (!box) return;
+  const name = picked ? picked.split('/').pop() : '';
+  const f = upFiles.find(x => x.name === name);
+  if (!f) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="dim" style="margin-bottom:6px">将要处理的文件（点缩略图可预览、可删）</div>';
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.innerHTML =
+    (f.thumb ? '<img class="th" loading="lazy" src="' + f.thumb + '" alt="">' : '') +
+    '<span class="badge">▶ 视频</span>' +
+    '<a class="dlbtn del" title="删除">✕</a>' +
+    '<a class="dlbtn" href="' + f.dl + '" title="下载">⬇</a>' +
+    '<div class="tn" title="' + f.name + '">' + f.name + '</div>' +
+    '<div class="tm">' + [f.w ? f.w + '×' + f.h : '', f.dur ? f.dur.toFixed(1) + 's' : '',
+      fmt(f.size)].filter(Boolean).join(' · ') + '</div>';
+  el.querySelectorAll('a').forEach(a => a.onclick = ev => {
+    ev.stopPropagation();
+    if (a.classList.contains('del')) doDelete(f);
+  });
+  el.onclick = () => openFile(f);
+  box.appendChild(el);
+}
+
+$('#refresh').onclick = refreshList;
+
+async function uploadFile(file) {
+  const name = file.name;
+  let off = 0;
+  const t0 = Date.now();
+  try {
+    const st = await api('/up/status?name=' + encodeURIComponent(name));
+    if (st.size > 0 && st.size <= file.size) off = st.size;
+  } catch (e) {}
+  const startOff = off;
+  while (off < file.size) {
+    const end = Math.min(off + CHUNK, file.size);
+    let ok = false;
+    for (let i = 0; i < 8 && !ok; i++) {
+      try {
+        const r = await fetch('/up/chunk?name=' + encodeURIComponent(name) + '&off=' + off,
+                              { method: 'PUT', body: file.slice(off, end) });
+        if (r.ok) { const j = await r.json(); off = j.size; ok = true; }
+      } catch (e) { $('#upstate').textContent = '网络抖动，重试 ' + (i + 1); }
+      if (!ok) await sleep(700 * (i + 1));
+    }
+    if (!ok) { $('#upstate').textContent = '中断，刷新页面可续传（已传 ' + fmt(off) + '）'; return; }
+    const pct = off / file.size * 100;
+    $('#upbar').style.width = pct.toFixed(1) + '%';
+    $('#upstate').textContent = fmt(off) + ' / ' + fmt(file.size) + '（' + pct.toFixed(1) + '%）';
+    $('#upspeed').textContent = ((off - startOff) / 1e6 / ((Date.now() - t0) / 1000)).toFixed(2) + ' MB/s';
+  }
+  $('#upstate').textContent = '✅ 上传完成：' + name;
+  picked = '/root/uploads/' + name;
+  await refreshList();
+  $('#srvsel').value = name;
+}
+
+const drop = $('#drop'), fileIn = $('#file');
+drop.onclick = () => fileIn.click();
+fileIn.onchange = () => fileIn.files[0] && uploadFile(fileIn.files[0]);
+['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('hot'); }));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('hot'); }));
+drop.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) uploadFile(f); });
+
+/* ---- 服务器下载 ---- */
+$('#dl').onclick = async () => {
+  const u = $('#url').value.trim();
+  if (!u) return alert('先填链接');
+  $('#dl').disabled = true;
+  try {
+    const j = await api('/api/download', { method:'POST', headers:{'Content-Type':'application/json'},
+                                           body: JSON.stringify({url: u, maxh: 2160}) });
+    $('#st').textContent = j.ok ? '下载中…' : '失败'; $('#st').className = 'pill run';
+  } finally { $('#dl').disabled = false; }
+};
+
+/* ---- 开始 / 取消 ---- */
+$('#go').onclick = async () => {
+  if (!picked) return alert('先上传或用「服务器上的文件」选一个视频');
+  $('#go').disabled = true;
+  try {
+    const j = await api('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ src: picked, preset: $('#preset').value, mode: $('#mode').value,
+                             mem: $('#mem').value, tcomp: +$('#tcomp').value, max_frames: +$('#maxf').value }) });
+    if (!j.ok) alert(j.msg);
+  } catch (e) { alert('提交失败：' + e); }
+  finally { $('#go').disabled = false; }
+};
+$('#stop').onclick = async () => {
+  try { await api('/api/cancel', { method:'POST' }); } catch (e) {}
+};
+
+/* ---- 文件库（缩略图 / 预览 / 下载）---- */
+let libWhich = 'out';
+const libTabs = document.querySelectorAll('[data-lib]');
+libTabs.forEach(t => t.onclick = () => {
+  libTabs.forEach(x => x.classList.remove('on'));
+  t.classList.add('on');
+  libWhich = t.dataset.lib;
+  loadLib();
+});
+
+function savePos(name, t) { try { localStorage.setItem('fv_pos:' + name, String(t)); } catch (e) {} }
+function getPos(name) { try { return parseFloat(localStorage.getItem('fv_pos:' + name) || '0') || 0; } catch (e) { return 0; } }
+
+let curFile = null;          // 预览弹窗里正在看的那个文件（删除按钮用）
+
+function doDelete(f) {
+  if (!f) return;
+  if (!confirm('确定删除服务端的「' + f.name + '」？\n删了不可恢复。')) return;
+  fetch('/api/delete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ which: f.which || 'out', name: f.name })
+  }).then(r => r.json()).then(j => {
+    if (!j.ok) { alert(j.msg || '删除失败'); return; }
+    if (curFile && curFile.name === f.name) { curFile = null; $('#mclose').click(); }
+    loadLib(); refreshList();
+  }).catch(() => alert('删除请求失败（网络抖动），再点一次'));
+}
+
+function openFile(f) {
+  const b = $('#mbody');
+  const which = f.which || libWhich;
+  curFile = f;
+  $('#mtitle').textContent = f.name;
+  $('#mdl').href = f.dl;
+  $('#mmeta').textContent = [f.kind === 'video' ? '视频' : '图片',
+    f.w ? f.w + '×' + f.h : '', f.dur ? f.dur.toFixed(2) + 's' : '',
+    f.frames ? f.frames + ' 帧' : '', fmt(f.size)].filter(Boolean).join(' · ');
+  $('#mnote').textContent = '拖进度条能边下边播（支持 Range）';
+  b.innerHTML = f.kind === 'image'
+    ? '<img src="' + f.url + '" alt="">'
+    : '<video src="' + f.url + '" controls autoplay playsinline preload="metadata"></video>';
+  $('#modal').classList.add('on');
+  try { localStorage.setItem('fv_last', JSON.stringify({ which: which, name: f.name })); } catch (e) {}
+  showResume();
+
+  const v = b.querySelector('video');
+  if (!v) return;
+  const p0 = getPos(f.name);
+  v.addEventListener('loadedmetadata', () => {
+    if (p0 > 1 && p0 < (v.duration || 1e9) - 2) {
+      v.currentTime = p0;
+      $('#mnote').textContent = '已接着上次的 ' + p0.toFixed(0) + ' 秒继续（支持 Range，可拖进度）';
+    }
+  });
+  let last = -99;
+  v.addEventListener('timeupdate', () => {
+    if (Math.abs(v.currentTime - last) > 3) { last = v.currentTime; savePos(f.name, v.currentTime); }
+  });
+  v.addEventListener('error', () => {
+    $('#mnote').textContent = '播放失败（网络抖动）—— 关掉重开，或直接点右上角下载';
+  });
+}
+
+function showResume() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem('fv_last') || 'null'); } catch (e) {}
+  const el = $('#resume');
+  if (!s || !s.name) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.textContent = '↻ 继续上次：' + s.name.slice(0, 30);
+  el.onclick = async () => {
+    try {
+      const j = await api('/api/files?which=' + s.which, {}, 4);
+      const f = (j.files || []).find(x => x.name === s.name);
+      if (f) openFile(f); else alert('那个文件已经不在服务端了');
+    } catch (e) { alert('取文件列表失败，网络抖了，再点一次'); }
+  };
+}
+$('#mclose').onclick = () => { $('#modal').classList.remove('on'); $('#mbody').innerHTML = ''; };
+$('#mdel').onclick = () => doDelete(curFile);
+$('#modal').onclick = ev => { if (ev.target.id === 'modal') $('#mclose').click(); };
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#mclose').click(); });
+$('#librefresh').onclick = () => loadLib();
+
+async function loadLib() {
+  const g = $('#libgrid');
+  let j;
+  try { j = await api('/api/files?which=' + libWhich, {}, 4); }
+  catch (e) { g.innerHTML = '<div class="empty">列目录失败，点右上角「刷新」重试</div>'; return; }
+  const files = (j.files || []).filter(f => f.kind !== 'other');
+  $('#libinfo').textContent = files.length ? (files.length + ' 个文件 · ' + j.dir) : ('（' + j.dir + ' 里还没有文件）');
+  g.innerHTML = '';
+  if (!files.length) {
+    g.innerHTML = '<div class="empty">' + (libWhich === 'out'
+      ? '还没有放大结果 —— 跑完一单就会出现在这里'
+      : '还没有上传的原片') + '</div>';
+    return;
+  }
+  files.forEach(f => {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    const meta = [];
+    if (f.kind === 'video' && f.w) meta.push(f.w + '×' + f.h);
+    if (f.dur) meta.push(f.dur.toFixed(1) + 's');
+    meta.push(fmt(f.size));
+    el.innerHTML =
+      (f.thumb ? '<img class="th" loading="lazy" src="' + f.thumb + '" alt="">' : '') +
+      '<span class="badge">' + (f.kind === 'video' ? '▶ 视频' : '🖼 图片') + '</span>' +
+      '<a class="dlbtn" href="' + f.dl + '" title="下载">⬇</a>' +
+      '<div class="tn" title="' + f.name + '">' + f.name + '</div>' +
+      '<div class="tm">' + meta.join(' · ') + '</div>';
+    const img = el.querySelector('img');
+    if (img) {
+      let n = 0;
+      img.onerror = () => {
+        if (n++ < 3) setTimeout(() => { img.src = f.thumb + '&r=' + n; }, 400 * n);
+        else img.style.opacity = .25;
+      };
+    }
+    el.querySelector('.dlbtn').onclick = ev => ev.stopPropagation();
+    el.onclick = () => openFile(f);
+    g.appendChild(el);
+  });
+  // 深蓝链接 ?open=文件名 直接弹预览（分享给客户看结果用）
+  const want = new URLSearchParams(location.search).get('open');
+  if (want && !window._autoOpened) {
+    window._autoOpened = true;
+    const f = files.find(x => x.name === want) || files.find(x => x.name.indexOf(want) >= 0);
+    if (f) openFile(f);
+  }
+}
+
+/* ---- 轮询 ---- */
+let lastStatus = '';
+async function tick() {
+  let j;
+  try { j = await api('/api/status', {}, 3); } catch (e) { setTimeout(tick, 3000); return; }
+  const map = { running: ['运行中', 'run'], done: ['完成', 'ok'], failed: ['失败', 'bad'], cancelled: ['已取消', ''] };
+  const [txt, cls] = map[j.status] || ['空闲', ''];
+  const key = j.status + '|' + Math.round(j.elapsed || 0) + '|' + (j.log || '').length;
+  $('#st').textContent = txt + (j.label ? ' · ' + j.label : '');
+  $('#st').className = 'pill ' + cls;
+  $('#el').textContent = j.elapsed ? ('已用 ' + j.elapsed.toFixed(0) + 's' + (j.pct >= 0 ? ' · ' + j.pct + '%' : '')) : '';
+  $('#pbar').style.width = j.status === 'done' ? '100%' : (j.pct >= 0 ? j.pct + '%' : (j.status === 'running' ? '12%' : '0%'));
+  if (j.log) { const p = $('#log'); const atBottom = p.scrollTop + p.clientHeight >= p.scrollHeight - 30;
+               p.textContent = j.log; if (atBottom) p.scrollTop = p.scrollHeight; }
+  if (j.status === 'done' && j.out && j.out !== lastStatus) {
+    lastStatus = j.out;
+    const name = j.out.split('/').pop();
+    $('#result').innerHTML =
+      `<video src="/api/file?which=out&name=${encodeURIComponent(name)}" controls preload="metadata"></video>
+       <a class="dl" href="/api/file?which=out&name=${encodeURIComponent(name)}&dl=1" download="${name}">⬇ 下载 ${name}</a>
+       <div class="meta"><span>${name}</span><span>${j.info || ''}</span></div>`;
+    refreshList();
+    loadLib();
+  }
+  setTimeout(tick, j.status === 'running' ? 2000 : 4000);
+}
+refreshList();
+loadLib();
+showResume();
+tick();
+</script></body></html>
