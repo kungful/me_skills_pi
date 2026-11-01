@@ -1,0 +1,2 @@
+{"ts": "2026-11-01T08:26:21", "action": "goto", "dry_run": true, "target": "四大地", "verified": null}
+{"ts": "2026-11-01T08:26:21", "action": "goto_verify", "dry_run": true, "target": "四大地", "header": null, "ok": false}
