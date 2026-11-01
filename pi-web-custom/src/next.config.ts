@@ -17,6 +17,10 @@ try {
 const gfmAutolinkEmailLoader = join(configDir, "lib/gfm-autolink-email-loader.cjs");
 
 const nextConfig: NextConfig = {
+  // A rebuild must not disturb the build a running server is serving from, so
+  // the launcher builds into a staging dir (`PI_WEB_DIST_DIR`) and swaps it in
+  // afterwards. Runtime never sets the variable and keeps using `.next`.
+  distDir: process.env.PI_WEB_DIST_DIR?.trim() || ".next",
   outputFileTracingRoot: configDir,
   experimental: {
     // proxy.ts matches /api/:path*, and Next buffers the request body whenever

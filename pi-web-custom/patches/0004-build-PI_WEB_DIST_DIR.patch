@@ -1,0 +1,62 @@
+From ae584860b43283eb93acb6afc74395a9eb4e1cf9 Mon Sep 17 00:00:00 2001
+From: kungful <blenderkrita@gmail.com>
+Date: Sun, 1 Nov 2026 09:30:53 +0800
+Subject: [PATCH 4/4] =?UTF-8?q?build:=20=E6=94=AF=E6=8C=81=20PI=5FWEB=5FDI?=
+ =?UTF-8?q?ST=5FDIR=EF=BC=8C=E6=9E=84=E5=BB=BA=E5=85=88=E8=90=BD=E6=9A=82?=
+ =?UTF-8?q?=E5=AD=98=E7=9B=AE=E5=BD=95=E5=86=8D=E6=9B=BF=E6=8D=A2?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+重建时不再删除正在服务的 .next：启动器构建到 .next-build，停服后两次 rename 换入，
+避免构建窗口期内端口被全局 pi-web 抢走（桌面图标误点会导致脑图功能消失）。
+.next-build/.next-old 已加入 .gitignore。
+---
+ .gitignore     | 2 ++
+ next.config.ts | 4 ++++
+ tsconfig.json  | 4 +++-
+ 3 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/.gitignore b/.gitignore
+index 00064ef..06310a5 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -16,6 +16,8 @@
+ 
+ # next.js
+ /.next/
++/.next-build/
++/.next-old/
+ /out/
+ 
+ # production
+diff --git a/next.config.ts b/next.config.ts
+index 566fcb0..caf7505 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -17,6 +17,10 @@ try {
+ const gfmAutolinkEmailLoader = join(configDir, "lib/gfm-autolink-email-loader.cjs");
+ 
+ const nextConfig: NextConfig = {
++  // A rebuild must not disturb the build a running server is serving from, so
++  // the launcher builds into a staging dir (`PI_WEB_DIST_DIR`) and swaps it in
++  // afterwards. Runtime never sets the variable and keeps using `.next`.
++  distDir: process.env.PI_WEB_DIST_DIR?.trim() || ".next",
+   outputFileTracingRoot: configDir,
+   experimental: {
+     // proxy.ts matches /api/:path*, and Next buffers the request body whenever
+diff --git a/tsconfig.json b/tsconfig.json
+index d9eba3f..0e8204e 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -33,7 +33,9 @@
+     "**/*.ts",
+     "**/*.tsx",
+     ".next/types/**/*.ts",
+-    ".next/dev/types/**/*.ts"
++    ".next/dev/types/**/*.ts",
++    ".next-build/types/**/*.ts",
++    ".next-build/dev/types/**/*.ts"
+   ],
+   "exclude": [
+     "node_modules",
