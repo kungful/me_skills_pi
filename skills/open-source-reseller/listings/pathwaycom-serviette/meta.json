@@ -1,0 +1,22 @@
+{
+  "slug": "pathwaycom-serviette",
+  "repo": "pathwaycom/serviette",
+  "name": "企业知识库问答系统（部署版）",
+  "created": "2026-11-01 10:28:16",
+  "stars": 58742,
+  "license": "MIT",
+  "license_kind": "PERMISSIVE",
+  "monetize": "可以卖成品",
+  "license_advice": "自助包 / 代部署 / 定制封装 / 托管，四条线都能做。附上 LICENSE 与原作者署名。（MIT：可商用、可闭源，保留版权声明与 LICENSE 即可）",
+  "difficulty": "中（1–3 天）",
+  "stack": [
+    "python"
+  ],
+  "has_ui": false,
+  "has_i18n": false,
+  "risk": [
+    "商标：商品名不能直接用『serviette』，要做成『基于 serviette 的 XX 部署服务』"
+  ],
+  "channels": {},
+  "status": "draft"
+}

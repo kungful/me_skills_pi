@@ -18,6 +18,7 @@ sourcing.py —— 开源项目选品 / License 审计 / 封装骨架 / 多平�
 """
 import argparse
 import hashlib
+import http.client
 import json
 import math
 import os
@@ -83,16 +84,35 @@ def gh(path, params=None, ttl=21600, raw=False):
     })
     if TOKEN:
         req.add_header("Authorization", "Bearer " + TOKEN)
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            data = json.load(r) if not raw else {"_text": r.read().decode("utf-8", "replace")}
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "replace")[:300]
-        if e.code == 403 and "rate limit" in body.lower():
-            raise SystemExit("GitHub API 限流。设 GITHUB_TOKEN 环境变量（60/h → 5000/h）后重试。")
-        if e.code == 404:
-            return {"_404": True}
-        raise SystemExit("GitHub API %s: %s" % (e.code, body))
+    data = None
+    last = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                body = r.read()  # 一次读全，避免 chunked 流被截断（IncompleteRead）
+            data = {"_text": body.decode("utf-8", "replace")} if raw else json.loads(body.decode("utf-8"))
+            break
+        except urllib.error.HTTPError as e:
+            err = e.read().decode("utf-8", "replace")[:300]
+            if e.code == 403 and "rate limit" in err.lower():
+                raise SystemExit("GitHub API 限流。设 GITHUB_TOKEN 环境变量（60/h → 5000/h）后重试。")
+            if e.code == 404:
+                return {"_404": True}
+            if e.code >= 500 and attempt < 2:
+                last = err
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            raise SystemExit("GitHub API %s: %s" % (e.code, err))
+        except (http.client.IncompleteRead, urllib.error.URLError, TimeoutError, OSError, ValueError) as e:
+            # 网络半途断开 / 响应截断 / 非 JSON：重试，必要时缩小分页
+            last = repr(e)
+            if attempt >= 1 and params and params.get("per_page", 0) > 30:
+                params = dict(params, per_page=30)
+                url = API + path + "?" + urllib.parse.urlencode(params)
+                req = urllib.request.Request(url, headers=req.headers)
+            time.sleep(1.5 * (attempt + 1))
+    if data is None:
+        raise SystemExit("GitHub API 多次失败（网络截断）：%s" % last)
     with open(cp, "w", encoding="utf-8") as f:
         json.dump(data, f)
     return data
@@ -294,6 +314,21 @@ def repo_files(repo):
     return [(x["name"], x["type"]) for x in data if isinstance(x, dict)]
 
 
+def deep_ui_probe(repo, top):
+    """monorepo（apps/web、packages/ui）在顶层看不出来，往下探一层再判断有没有界面。"""
+    candidates = [n for n, t in top if t == "dir" and n.lower() in
+                  ("apps", "packages", "src", "client", "web", "frontend", "ui")]
+    for d in candidates[:3]:
+        sub = gh("/repos/%s/contents/%s" % (repo, d), ttl=21600)
+        if isinstance(sub, dict):
+            continue
+        names = [x["name"] for x in sub if isinstance(x, dict)]
+        if any(n.lower() in UI_MARK for n in names) or any(
+                n.lower().endswith((".tsx", ".vue", ".svelte")) for n in names):
+            return True
+    return False
+
+
 def cmd_audit(a):
     repo = a.repo.strip("/")
     r = gh("/repos/" + repo)
@@ -316,6 +351,8 @@ def cmd_audit(a):
     stack = sorted({v for n, v in STACK_MARK.items() if n in names})
     has_ui = any(n.lower() in UI_MARK for n in names) or any(
         n.lower().endswith((".tsx", ".vue", ".svelte")) for n in names)
+    if not has_ui:
+        has_ui = deep_ui_probe(repo, files)
     has_docs = any(n.lower().startswith(("docs", "readme", "部署", "文档")) for n in names)
     has_i18n = any("i18n" in n.lower() or "locale" in n.lower() for n in names)
 
