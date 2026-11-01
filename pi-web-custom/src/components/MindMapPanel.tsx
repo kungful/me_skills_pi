@@ -19,6 +19,7 @@ import {
   bumpNodeId,
   connectMindMapNodes,
   createMindMapNode,
+  deserializeMindMap,
   dropNodePositions,
   emptyMindMap,
   nextNodeId,
@@ -36,10 +37,15 @@ const KIND_COLORS: Record<MindMapNodeKind, string> = {
   idea: "#a855f7",
   risk: "#ef4444",
   result: "#14b8a6",
+  image: "#e879f9",
 };
 
 const MIN_SCALE = 0.35;
 const MAX_SCALE = 2;
+/** Longest edge kept when a photo is shrunk before landing in localStorage. */
+const MAX_IMAGE_EDGE = 720;
+/** Above this the data URL is re-encoded as JPEG so storage does not overflow. */
+const MAX_IMAGE_CHARS = 900_000;
 
 interface Props {
   /** localStorage key so each session/draft keeps its own graph. */
@@ -63,14 +69,19 @@ function loadGraph(storageKey: string): MindMapGraph {
     if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) return emptyMindMap();
     const nodes = parsed.nodes
       .filter((node): node is MindMapNode => Boolean(node) && typeof node.id === "string")
-      .map((node) => ({
-        id: node.id,
-        kind: MINDMAP_KINDS.includes(node.kind) ? node.kind : "idea",
-        title: typeof node.title === "string" ? node.title : "",
-        detail: typeof node.detail === "string" ? node.detail : "",
-        x: Number.isFinite(node.x) ? node.x : 48,
-        y: Number.isFinite(node.y) ? node.y : 48,
-      }));
+      .map((node) => {
+        const restored: MindMapNode = {
+          id: node.id,
+          kind: MINDMAP_KINDS.includes(node.kind) ? node.kind : "idea",
+          title: typeof node.title === "string" ? node.title : "",
+          detail: typeof node.detail === "string" ? node.detail : "",
+          x: Number.isFinite(node.x) ? node.x : 48,
+          y: Number.isFinite(node.y) ? node.y : 48,
+        };
+        if (typeof node.image === "string" && node.image) restored.image = node.image;
+        if (typeof node.imageName === "string" && node.imageName) restored.imageName = node.imageName;
+        return restored;
+      });
     const ids = new Set(nodes.map((node) => node.id));
     const edges = parsed.edges
       .filter((edge) => Boolean(edge) && typeof edge.id === "string" && ids.has(edge.from) && ids.has(edge.to))
@@ -90,6 +101,17 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
   const [showPreview, setShowPreview] = useState(false);
   const [copied, setCopied] = useState(false);
   const [resetArmed, setResetArmed] = useState(false);
+  const [linkMenu, setLinkMenu] = useState<{
+    from: string;
+    canvas: { x: number; y: number };
+    screen: { x: number; y: number };
+  } | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Set when the file picker was opened from inside an existing image node.
+  const imageNodeRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef(view);
@@ -104,6 +126,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
     hint: t("chat.mindmap.hint"),
     cross: t("chat.mindmap.cross"),
     detail: t("chat.mindmap.detail"),
+    image: t("chat.mindmap.label.image"),
     kinds: {
       goal: t("chat.mindmap.kind.goal"),
       condition: t("chat.mindmap.kind.condition"),
@@ -111,6 +134,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
       idea: t("chat.mindmap.kind.idea"),
       risk: t("chat.mindmap.kind.risk"),
       result: t("chat.mindmap.kind.result"),
+      image: t("chat.mindmap.kind.image"),
     },
   }), [t]);
 
@@ -186,24 +210,57 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const addNode = useCallback((position?: { x: number; y: number }) => {
-    const id = nextIdRef.current;
-    nextIdRef.current = bumpNodeId(id);
+  /** Canvas-space centre of the viewport, used when nothing better is known. */
+  const viewCenter = useCallback(() => {
     const rect = canvasRef.current?.getBoundingClientRect();
     const current0 = viewRef.current;
-    const center = rect
-      ? {
-          x: (rect.width / 2 - current0.x) / current0.scale - MINDMAP_NODE_WIDTH / 2,
-          y: (rect.height / 2 - current0.y) / current0.scale - MINDMAP_NODE_HEIGHT / 2,
-        }
-      : { x: 80, y: 80 };
+    if (!rect) return { x: 80, y: 80 };
+    return {
+      x: (rect.width / 2 - current0.x) / current0.scale - MINDMAP_NODE_WIDTH / 2,
+      y: (rect.height / 2 - current0.y) / current0.scale - MINDMAP_NODE_HEIGHT / 2,
+    };
+  }, []);
+
+  /** Slides a spot down-right until it does not land on an existing node card. */
+  const freeSpot = useCallback(
+    (base: { x: number; y: number }) => {
+      const taken = (candidate: { x: number; y: number }) =>
+        graph.nodes.some(
+          (node) =>
+            Math.abs(node.x - candidate.x) < MINDMAP_NODE_WIDTH * 0.7 &&
+            Math.abs(node.y - candidate.y) < MINDMAP_NODE_HEIGHT * 0.7,
+        );
+      let spot = base;
+      for (let attempt = 0; attempt < 40 && taken(spot); attempt += 1) {
+        spot = { x: spot.x + 30, y: spot.y + 30 };
+      }
+      return spot;
+    },
+    [graph.nodes],
+  );
+
+  /** Creates a node and, when `fromId` is given, the edge that points at it. */
+  const createNode = useCallback(
+    (kind: MindMapNodeKind, spot: { x: number; y: number }, fromId?: string, extra?: Partial<MindMapNode>) => {
+      const id = nextIdRef.current;
+      nextIdRef.current = bumpNodeId(id);
+      const created: MindMapNode = { ...createMindMapNode(kind, spot.x, spot.y, id), ...extra };
+      setGraph((current) => {
+        const withNode: MindMapGraph = { ...current, nodes: [...current.nodes, created] };
+        return fromId ? connectMindMapNodes(withNode, fromId, id, `e${fromId}-${id}`) : withNode;
+      });
+      setSelected({ type: "node", id });
+      return id;
+    },
+    [],
+  );
+
+  const addNode = useCallback((position?: { x: number; y: number }, kind?: MindMapNodeKind) => {
     const offset = (graph.nodes.length % 3) * 28;
-    const spot = position ?? { x: center.x + offset, y: center.y + offset };
-    const kind: MindMapNodeKind = graph.nodes.length === 0 ? "goal" : "step";
-    const created = createMindMapNode(kind, spot.x, spot.y, id);
-    setGraph((current) => ({ ...current, nodes: [...current.nodes, created] }));
-    setSelected({ type: "node", id });
-  }, [graph]);
+    const center = viewCenter();
+    const spot = position ?? freeSpot({ x: center.x + offset, y: center.y + offset });
+    createNode(kind ?? (graph.nodes.length === 0 ? "goal" : "step"), spot);
+  }, [createNode, freeSpot, graph.nodes.length, viewCenter]);
 
   const startNodeDrag = useCallback((event: React.PointerEvent, node: MindMapNode) => {
     if (event.button !== 0) return;
@@ -248,9 +305,21 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
       setLinking(null);
       const target = document.elementFromPoint(upEvent.clientX, upEvent.clientY)?.closest("[data-mindmap-node]");
       const targetId = target?.getAttribute("data-mindmap-node") ?? null;
-      if (!targetId || targetId === from) return;
-      setGraph((current) => connectMindMapNodes(current, from, targetId, `e${from}-${targetId}`));
-      setSelected({ type: "edge", id: `e${from}-${targetId}` });
+      if (targetId && targetId !== from) {
+        setGraph((current) => connectMindMapNodes(current, from, targetId, `e${from}-${targetId}`));
+        setSelected({ type: "edge", id: `e${from}-${targetId}` });
+        return;
+      }
+      // Released over empty canvas: offer the node kinds right there (ComfyUI
+      // style) instead of demanding a second "new node" click.
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const point = toCanvas(upEvent.clientX, upEvent.clientY);
+      setLinkMenu({
+        from,
+        canvas: { x: point.x, y: point.y },
+        screen: { x: upEvent.clientX - rect.left, y: upEvent.clientY - rect.top },
+      });
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -293,6 +362,15 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
+        // Innermost layer first: kind menu, then the import sheet, then the panel.
+        if (linkMenu) {
+          setLinkMenu(null);
+          return;
+        }
+        if (importOpen) {
+          setImportOpen(false);
+          return;
+        }
         onClose();
         return;
       }
@@ -307,7 +385,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [deleteSelection, onClose, selected]);
+  }, [deleteSelection, importOpen, linkMenu, onClose, selected]);
 
   const cycleKind = useCallback((nodeId: string) => {
     setGraph((current) => ({
@@ -327,6 +405,109 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
       nodes: current.nodes.map((node) => (node.id === nodeId ? { ...node, ...patch } : node)),
     }));
   }, []);
+
+  /** Reads a picked file into a data URL, re-encoding oversized photos. */
+  const readImage = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("read failed"));
+      reader.onload = () => {
+        const url = String(reader.result ?? "");
+        if (!url) {
+          reject(new Error("empty"));
+          return;
+        }
+        if (url.length <= MAX_IMAGE_CHARS) {
+          resolve(url);
+          return;
+        }
+        const image = new window.Image();
+        image.onerror = () => resolve(url);
+        image.onload = () => {
+          const ratio = Math.min(1, MAX_IMAGE_EDGE / Math.max(image.width, image.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(image.width * ratio));
+          canvas.height = Math.max(1, Math.round(image.height * ratio));
+          const context = canvas.getContext("2d");
+          if (!context) {
+            resolve(url);
+            return;
+          }
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        image.src = url;
+      };
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  /** Turns dropped/picked files into nodes: images preview, anything else lists. */
+  const placeFiles = useCallback(
+    async (files: File[], spot?: { x: number; y: number }) => {
+      if (files.length === 0) return;
+      const images = files.filter((file) => file.type.startsWith("image/"));
+      const others = files.filter((file) => !file.type.startsWith("image/"));
+      const base = spot ?? freeSpot(viewCenter());
+      let index = 0;
+      for (const file of images) {
+        try {
+          const dataUrl = await readImage(file);
+          createNode("image", { x: base.x + index * 26, y: base.y + index * 26 }, undefined, {
+            title: "",
+            image: dataUrl,
+            imageName: file.name,
+          });
+        } catch {
+          setNotice(t("chat.mindmapImageFailed", { name: file.name }));
+        }
+        index += 1;
+      }
+      for (const file of others) {
+        createNode("idea", { x: base.x + index * 26, y: base.y + index * 26 }, undefined, {
+          title: file.name,
+          detail: `${Math.max(1, Math.round(file.size / 1024))} KB`,
+        });
+        index += 1;
+      }
+    },
+    [createNode, freeSpot, readImage, t, viewCenter],
+  );
+
+  const attachImage = useCallback(
+    async (nodeId: string, file: File) => {
+      try {
+        const dataUrl = await readImage(file);
+        updateNode(nodeId, { kind: "image", image: dataUrl, imageName: file.name });
+      } catch {
+        setNotice(t("chat.mindmapImageFailed", { name: file.name }));
+      }
+    },
+    [readImage, t, updateNode],
+  );
+
+  const parsedImport = useMemo(() => deserializeMindMap(importText, labels), [importText, labels]);
+
+  const applyImport = useCallback(() => {
+    if (parsedImport.graph.nodes.length === 0) {
+      setNotice(t("chat.mindmapImportEmpty"));
+      return;
+    }
+    const imported = parsedImport.graph;
+    nextIdRef.current = nextNodeId(imported);
+    setGraph(imported);
+    setSelected(null);
+    setView({ x: 40, y: 40, scale: 1 });
+    setImportOpen(false);
+    setNotice(t("chat.mindmapImportDone", { nodes: imported.nodes.length, edges: imported.edges.length }));
+  }, [parsedImport, t]);
+
+  // Notices are transient: they only explain a failed pick or a finished import.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 2800);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const handleCopy = useCallback(async () => {
     if (!serialized) return;
@@ -388,6 +569,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
     >
       <div
         style={{
+          position: "relative",
           width: "min(1180px, 100%)",
           height: "min(820px, 100%)",
           display: "flex",
@@ -448,6 +630,38 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
             </svg>
             {t("chat.mindmapAddNode")}
           </button>
+          <button
+            type="button"
+            style={buttonStyle}
+            title={t("chat.mindmapImageHint")}
+            onClick={() => {
+              imageNodeRef.current = null;
+              fileInputRef.current?.click();
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <circle cx="8.5" cy="9.5" r="1.6" />
+              <path d="M21 16l-5-5-9 9" />
+            </svg>
+            {t("chat.mindmapAddImage")}
+          </button>
+          <button
+            type="button"
+            style={buttonStyle}
+            title={t("chat.mindmapImportHint")}
+            onClick={() => {
+              setImportText(serialized);
+              setImportOpen(true);
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 15V4" />
+              <polyline points="7 9 12 4 17 9" />
+              <path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" />
+            </svg>
+            {t("chat.mindmapImport")}
+          </button>
           <button type="button" style={buttonStyle} onClick={() => setGraph((current) => autoLayoutMindMap(current))}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="6" x2="14" y2="6" />
@@ -504,6 +718,18 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
           <div
             ref={canvasRef}
             onPointerDown={startPan}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const files = Array.from(event.dataTransfer?.files ?? []);
+              if (files.length === 0) return;
+              const point = toCanvas(event.clientX, event.clientY);
+              void placeFiles(files, {
+                x: point.x - MINDMAP_NODE_WIDTH / 2,
+                y: point.y - MINDMAP_NODE_HEIGHT / 2,
+              });
+            }}
             onDoubleClick={(event) => {
               const point = toCanvas(event.clientX, event.clientY);
               addNode({ x: point.x - MINDMAP_NODE_WIDTH / 2, y: point.y - MINDMAP_NODE_HEIGHT / 2 });
@@ -671,47 +897,123 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
                         </svg>
                       </button>
                     </div>
-                    <input
-                      value={node.title}
-                      onChange={(event) => updateNode(node.id, { title: event.target.value })}
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onFocus={() => setSelected({ type: "node", id: node.id })}
-                      placeholder={t("chat.mindmapNodeTitle")}
-                      style={{
-                        width: "100%",
-                        border: "none",
-                        outline: "none",
-                        background: "transparent",
-                        color: "var(--text)",
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        padding: 0,
-                        boxSizing: "border-box",
-                      }}
-                    />
-                    <textarea
-                      value={node.detail}
-                      onChange={(event) => updateNode(node.id, { detail: event.target.value })}
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onFocus={() => setSelected({ type: "node", id: node.id })}
-                      placeholder={t("chat.mindmapNodeDetail")}
-                      rows={2}
-                      style={{
-                        flex: "1 1 auto",
-                        width: "100%",
-                        minHeight: 0,
-                        resize: "none",
-                        border: "none",
-                        outline: "none",
-                        background: "transparent",
-                        color: "var(--text-muted)",
-                        fontSize: 11,
-                        lineHeight: 1.4,
-                        padding: 0,
-                        fontFamily: "inherit",
-                        boxSizing: "border-box",
-                      }}
-                    />
+                    {node.kind === "image" ? (
+                      <>
+                        <div
+                          style={{
+                            position: "relative",
+                            flex: "1 1 auto",
+                            minHeight: 0,
+                            borderRadius: 6,
+                            overflow: "hidden",
+                            background: "color-mix(in srgb, var(--border) 26%, transparent)",
+                          }}
+                        >
+                          {node.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={node.image}
+                              alt={node.title || node.imageName || ""}
+                              title={t("chat.mindmapImageReplace")}
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={() => {
+                                imageNodeRef.current = node.id;
+                                fileInputRef.current?.click();
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                                display: "block",
+                                cursor: "pointer",
+                              }}
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={() => {
+                                imageNodeRef.current = node.id;
+                                fileInputRef.current?.click();
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                border: "none",
+                                background: "none",
+                                color: "var(--text-dim)",
+                                fontSize: 11,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {t("chat.mindmapImagePick")}
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          value={node.title}
+                          onChange={(event) => updateNode(node.id, { title: event.target.value })}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onFocus={() => setSelected({ type: "node", id: node.id })}
+                          placeholder={t("chat.mindmapImageCaption")}
+                          style={{
+                            width: "100%",
+                            flexShrink: 0,
+                            border: "none",
+                            outline: "none",
+                            background: "transparent",
+                            color: "var(--text-muted)",
+                            fontSize: 10.5,
+                            padding: 0,
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                      <input
+                        value={node.title}
+                        onChange={(event) => updateNode(node.id, { title: event.target.value })}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onFocus={() => setSelected({ type: "node", id: node.id })}
+                        placeholder={t("chat.mindmapNodeTitle")}
+                        style={{
+                          width: "100%",
+                          border: "none",
+                          outline: "none",
+                          background: "transparent",
+                          color: "var(--text)",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          padding: 0,
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <textarea
+                        value={node.detail}
+                        onChange={(event) => updateNode(node.id, { detail: event.target.value })}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onFocus={() => setSelected({ type: "node", id: node.id })}
+                        placeholder={t("chat.mindmapNodeDetail")}
+                        rows={2}
+                        style={{
+                          flex: "1 1 auto",
+                          width: "100%",
+                          minHeight: 0,
+                          resize: "none",
+                          border: "none",
+                          outline: "none",
+                          background: "transparent",
+                          color: "var(--text-muted)",
+                          fontSize: 11,
+                          lineHeight: 1.4,
+                          padding: 0,
+                          fontFamily: "inherit",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      </>
+                    )}
                     <div
                       onPointerDown={(event) => startLink(event, node)}
                       title={t("chat.mindmapPort")}
@@ -777,6 +1079,109 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
                 {Math.round(view.scale * 100)}%
               </button>
             </div>
+
+            {linkMenu && (() => {
+              // ComfyUI-style: the released wire turns into a node picker right
+              // where the pointer let go, and the new node is already connected.
+              const rect = canvasRef.current?.getBoundingClientRect();
+              const menuWidth = 168;
+              const menuHeight = 34 + MINDMAP_KINDS.length * 26;
+              const left = Math.max(6, Math.min(linkMenu.screen.x, (rect?.width ?? 0) - menuWidth - 6));
+              const top = Math.max(6, Math.min(linkMenu.screen.y, (rect?.height ?? 0) - menuHeight - 6));
+              return (
+                <>
+                  <div
+                    style={{ position: "absolute", inset: 0, zIndex: 5 }}
+                    onPointerDown={() => setLinkMenu(null)}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      left,
+                      top,
+                      zIndex: 6,
+                      width: menuWidth,
+                      padding: 5,
+                      borderRadius: 9,
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      boxShadow: "0 14px 34px rgba(0,0,0,0.32)",
+                    }}
+                  >
+                    <div style={{ padding: "3px 6px 5px", fontSize: 10.5, color: "var(--text-dim)" }}>
+                      {t("chat.mindmapPickKind")}
+                    </div>
+                    {MINDMAP_KINDS.map((kind) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        onClick={() => {
+                          createNode(
+                            kind,
+                            {
+                              x: linkMenu.canvas.x - MINDMAP_NODE_WIDTH / 2,
+                              y: linkMenu.canvas.y - MINDMAP_NODE_HEIGHT / 2,
+                            },
+                            linkMenu.from,
+                          );
+                          setLinkMenu(null);
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          width: "100%",
+                          padding: "4px 7px",
+                          border: "none",
+                          borderRadius: 6,
+                          background: "none",
+                          color: "var(--text)",
+                          fontSize: 11.5,
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.background = "var(--bg-panel)";
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.background = "none";
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            background: KIND_COLORS[kind],
+                            flexShrink: 0,
+                          }}
+                        />
+                        {labels.kinds[kind]}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []);
+                event.target.value = "";
+                const target = imageNodeRef.current;
+                imageNodeRef.current = null;
+                if (target && files[0]) {
+                  void attachImage(target, files[0]);
+                  return;
+                }
+                void placeFiles(files);
+              }}
+            />
           </div>
 
           <div style={{ borderTop: "1px solid var(--border)", flexShrink: 0 }}>
@@ -821,6 +1226,131 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
             )}
           </div>
         </div>
+
+        {notice && (
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: 16,
+              transform: "translateX(-50%)",
+              maxWidth: "80%",
+              padding: "6px 12px",
+              borderRadius: 8,
+              background: "var(--bg-panel)",
+              border: "1px solid var(--border)",
+              fontSize: 11.5,
+              color: "var(--text)",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+              pointerEvents: "none",
+            }}
+          >
+            {notice}
+          </div>
+        )}
+
+        {importOpen && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 20,
+              background: "rgba(0,0,0,0.42)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 18,
+              boxSizing: "border-box",
+            }}
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) setImportOpen(false);
+            }}
+          >
+            <div
+              style={{
+                width: "min(760px, 100%)",
+                maxHeight: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 9,
+                padding: 14,
+                borderRadius: 12,
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
+                boxSizing: "border-box",
+              }}
+            >
+              <strong style={{ fontSize: 13 }}>{t("chat.mindmapImportTitle")}</strong>
+              <span style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--text-dim)" }}>
+                {t("chat.mindmapImportHint")}
+              </span>
+              <textarea
+                value={importText}
+                onChange={(event) => setImportText(event.target.value)}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    applyImport();
+                  }
+                }}
+                placeholder={t("chat.mindmapImportPlaceholder")}
+                spellCheck={false}
+                style={{
+                  flex: "1 1 auto",
+                  minHeight: 240,
+                  resize: "vertical",
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-panel)",
+                  color: "var(--text)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11.5,
+                  lineHeight: 1.55,
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 11.5, color: "var(--text-dim)" }}>
+                  {parsedImport.graph.nodes.length > 0
+                    ? t("chat.mindmapImportSummary", {
+                        nodes: parsedImport.graph.nodes.length,
+                        edges: parsedImport.graph.edges.length,
+                      })
+                    : importText.trim()
+                      ? t("chat.mindmapImportNothing")
+                      : ""}
+                </span>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    style={{ ...buttonStyle, color: "var(--text-muted)" }}
+                    onClick={() => setImportOpen(false)}
+                  >
+                    {t("chat.mindmapCancel")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={parsedImport.graph.nodes.length === 0}
+                    onClick={applyImport}
+                    style={{
+                      ...buttonStyle,
+                      background: parsedImport.graph.nodes.length > 0 ? "var(--accent)" : "var(--bg-panel)",
+                      borderColor: parsedImport.graph.nodes.length > 0 ? "var(--accent)" : "var(--border)",
+                      color: parsedImport.graph.nodes.length > 0 ? "#fff" : "var(--text-dim)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t("chat.mindmapImportApply")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

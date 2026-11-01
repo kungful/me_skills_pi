@@ -1,0 +1,1275 @@
+From 06842a177ee3112e41b2f11a72be1793e7cf5545 Mon Sep 17 00:00:00 2001
+From: kungful <blenderkrita@gmail.com>
+Date: Sun, 1 Nov 2026 08:52:44 +0800
+Subject: [PATCH 2/2] =?UTF-8?q?feat(mindmap):=20=E6=96=87=E6=9C=AC?=
+ =?UTF-8?q?=E5=8F=8D=E5=90=91=E5=AF=BC=E5=85=A5=E3=80=81=E5=9B=BE=E7=89=87?=
+ =?UTF-8?q?=E8=8A=82=E7=82=B9=E3=80=81=E6=8B=96=E7=BA=BF=E5=BC=B9=E5=87=BA?=
+ =?UTF-8?q?=E7=B1=BB=E5=9E=8B=E9=80=89=E6=8B=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- lib/mindmap.ts: deserializeMindMap（大纲→图，缩进还原层级、备注行还原 detail、
+  额外关联还原回边、跨语言 kind 别名），图片节点序列化文件名；新增 image 类型
+- components/MindMapPanel.tsx: 从端口拖到空白处弹出类型菜单（ComfyUI 式，选中即连线）；
+  载入图片/拖入文件生成图片节点（>900KB 自动缩到 720px JPEG，只存在本地 localStorage）；
+  从文本导入面板（预填当前图，实时识别节点/连线数）；新建节点自动避让已占位置
+- i18n: en / zh-CN / zh-TW 新增 19 个键
+- tests: 序列化↔反序列化往返一致、无 kind 标签的大纲、图片节点文件名、坏连线告警
+---
+ components/MindMapPanel.test.mjs |  15 +
+ components/MindMapPanel.tsx      | 666 +++++++++++++++++++++++++++----
+ lib/i18n/messages/en.ts          |  19 +
+ lib/i18n/messages/zh-CN.ts       |  19 +
+ lib/i18n/messages/zh-TW.ts       |  19 +
+ lib/mindmap.test.mjs             |  80 +++-
+ lib/mindmap.ts                   | 190 ++++++++-
+ 7 files changed, 938 insertions(+), 70 deletions(-)
+
+diff --git a/components/MindMapPanel.test.mjs b/components/MindMapPanel.test.mjs
+index 158d432..aa6f57f 100644
+--- a/components/MindMapPanel.test.mjs
++++ b/components/MindMapPanel.test.mjs
+@@ -26,6 +26,21 @@ test("the panel opens as its own dialog and never renders on its own", () => {
+   // Empty state, no serialized text: the insert button is disabled.
+   assert.match(html, /No nodes yet/);
+   assert.match(html, /disabled=""[^>]*>Insert into composer/);
++  // Both directions of the text hand-off, plus image loading, live in the toolbar.
++  assert.match(html, /From text/);
++  assert.match(html, /Add image/);
++  assert.match(html, /type="file"/);
++});
++
++test("the panel starts with no import sheet and no kind picker", () => {
++  const html = render(React.createElement(MindMapPanel, {
++    storageKey: "pi-web:mindmap:test",
++    onInsert() {},
++    onClose() {},
++  }));
++
++  assert.doesNotMatch(html, /Rebuild the graph from text/);
++  assert.doesNotMatch(html, /Pick a kind/);
+ });
+ 
+ test("the composer keeps a mind-map toggle next to the other composer controls", () => {
+diff --git a/components/MindMapPanel.tsx b/components/MindMapPanel.tsx
+index c7dd5c4..b817ee0 100644
+--- a/components/MindMapPanel.tsx
++++ b/components/MindMapPanel.tsx
+@@ -19,6 +19,7 @@ import {
+   bumpNodeId,
+   connectMindMapNodes,
+   createMindMapNode,
++  deserializeMindMap,
+   dropNodePositions,
+   emptyMindMap,
+   nextNodeId,
+@@ -36,10 +37,15 @@ const KIND_COLORS: Record<MindMapNodeKind, string> = {
+   idea: "#a855f7",
+   risk: "#ef4444",
+   result: "#14b8a6",
++  image: "#e879f9",
+ };
+ 
+ const MIN_SCALE = 0.35;
+ const MAX_SCALE = 2;
++/** Longest edge kept when a photo is shrunk before landing in localStorage. */
++const MAX_IMAGE_EDGE = 720;
++/** Above this the data URL is re-encoded as JPEG so storage does not overflow. */
++const MAX_IMAGE_CHARS = 900_000;
+ 
+ interface Props {
+   /** localStorage key so each session/draft keeps its own graph. */
+@@ -63,14 +69,19 @@ function loadGraph(storageKey: string): MindMapGraph {
+     if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) return emptyMindMap();
+     const nodes = parsed.nodes
+       .filter((node): node is MindMapNode => Boolean(node) && typeof node.id === "string")
+-      .map((node) => ({
+-        id: node.id,
+-        kind: MINDMAP_KINDS.includes(node.kind) ? node.kind : "idea",
+-        title: typeof node.title === "string" ? node.title : "",
+-        detail: typeof node.detail === "string" ? node.detail : "",
+-        x: Number.isFinite(node.x) ? node.x : 48,
+-        y: Number.isFinite(node.y) ? node.y : 48,
+-      }));
++      .map((node) => {
++        const restored: MindMapNode = {
++          id: node.id,
++          kind: MINDMAP_KINDS.includes(node.kind) ? node.kind : "idea",
++          title: typeof node.title === "string" ? node.title : "",
++          detail: typeof node.detail === "string" ? node.detail : "",
++          x: Number.isFinite(node.x) ? node.x : 48,
++          y: Number.isFinite(node.y) ? node.y : 48,
++        };
++        if (typeof node.image === "string" && node.image) restored.image = node.image;
++        if (typeof node.imageName === "string" && node.imageName) restored.imageName = node.imageName;
++        return restored;
++      });
+     const ids = new Set(nodes.map((node) => node.id));
+     const edges = parsed.edges
+       .filter((edge) => Boolean(edge) && typeof edge.id === "string" && ids.has(edge.from) && ids.has(edge.to))
+@@ -90,6 +101,17 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+   const [showPreview, setShowPreview] = useState(false);
+   const [copied, setCopied] = useState(false);
+   const [resetArmed, setResetArmed] = useState(false);
++  const [linkMenu, setLinkMenu] = useState<{
++    from: string;
++    canvas: { x: number; y: number };
++    screen: { x: number; y: number };
++  } | null>(null);
++  const [importOpen, setImportOpen] = useState(false);
++  const [importText, setImportText] = useState("");
++  const [notice, setNotice] = useState<string | null>(null);
++  const fileInputRef = useRef<HTMLInputElement>(null);
++  // Set when the file picker was opened from inside an existing image node.
++  const imageNodeRef = useRef<string | null>(null);
+   const canvasRef = useRef<HTMLDivElement>(null);
+   const rootRef = useRef<HTMLDivElement>(null);
+   const viewRef = useRef(view);
+@@ -104,6 +126,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     hint: t("chat.mindmap.hint"),
+     cross: t("chat.mindmap.cross"),
+     detail: t("chat.mindmap.detail"),
++    image: t("chat.mindmap.label.image"),
+     kinds: {
+       goal: t("chat.mindmap.kind.goal"),
+       condition: t("chat.mindmap.kind.condition"),
+@@ -111,6 +134,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+       idea: t("chat.mindmap.kind.idea"),
+       risk: t("chat.mindmap.kind.risk"),
+       result: t("chat.mindmap.kind.result"),
++      image: t("chat.mindmap.kind.image"),
+     },
+   }), [t]);
+ 
+@@ -186,24 +210,57 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     return () => el.removeEventListener("wheel", onWheel);
+   }, []);
+ 
+-  const addNode = useCallback((position?: { x: number; y: number }) => {
+-    const id = nextIdRef.current;
+-    nextIdRef.current = bumpNodeId(id);
++  /** Canvas-space centre of the viewport, used when nothing better is known. */
++  const viewCenter = useCallback(() => {
+     const rect = canvasRef.current?.getBoundingClientRect();
+     const current0 = viewRef.current;
+-    const center = rect
+-      ? {
+-          x: (rect.width / 2 - current0.x) / current0.scale - MINDMAP_NODE_WIDTH / 2,
+-          y: (rect.height / 2 - current0.y) / current0.scale - MINDMAP_NODE_HEIGHT / 2,
+-        }
+-      : { x: 80, y: 80 };
++    if (!rect) return { x: 80, y: 80 };
++    return {
++      x: (rect.width / 2 - current0.x) / current0.scale - MINDMAP_NODE_WIDTH / 2,
++      y: (rect.height / 2 - current0.y) / current0.scale - MINDMAP_NODE_HEIGHT / 2,
++    };
++  }, []);
++
++  /** Slides a spot down-right until it does not land on an existing node card. */
++  const freeSpot = useCallback(
++    (base: { x: number; y: number }) => {
++      const taken = (candidate: { x: number; y: number }) =>
++        graph.nodes.some(
++          (node) =>
++            Math.abs(node.x - candidate.x) < MINDMAP_NODE_WIDTH * 0.7 &&
++            Math.abs(node.y - candidate.y) < MINDMAP_NODE_HEIGHT * 0.7,
++        );
++      let spot = base;
++      for (let attempt = 0; attempt < 40 && taken(spot); attempt += 1) {
++        spot = { x: spot.x + 30, y: spot.y + 30 };
++      }
++      return spot;
++    },
++    [graph.nodes],
++  );
++
++  /** Creates a node and, when `fromId` is given, the edge that points at it. */
++  const createNode = useCallback(
++    (kind: MindMapNodeKind, spot: { x: number; y: number }, fromId?: string, extra?: Partial<MindMapNode>) => {
++      const id = nextIdRef.current;
++      nextIdRef.current = bumpNodeId(id);
++      const created: MindMapNode = { ...createMindMapNode(kind, spot.x, spot.y, id), ...extra };
++      setGraph((current) => {
++        const withNode: MindMapGraph = { ...current, nodes: [...current.nodes, created] };
++        return fromId ? connectMindMapNodes(withNode, fromId, id, `e${fromId}-${id}`) : withNode;
++      });
++      setSelected({ type: "node", id });
++      return id;
++    },
++    [],
++  );
++
++  const addNode = useCallback((position?: { x: number; y: number }, kind?: MindMapNodeKind) => {
+     const offset = (graph.nodes.length % 3) * 28;
+-    const spot = position ?? { x: center.x + offset, y: center.y + offset };
+-    const kind: MindMapNodeKind = graph.nodes.length === 0 ? "goal" : "step";
+-    const created = createMindMapNode(kind, spot.x, spot.y, id);
+-    setGraph((current) => ({ ...current, nodes: [...current.nodes, created] }));
+-    setSelected({ type: "node", id });
+-  }, [graph]);
++    const center = viewCenter();
++    const spot = position ?? freeSpot({ x: center.x + offset, y: center.y + offset });
++    createNode(kind ?? (graph.nodes.length === 0 ? "goal" : "step"), spot);
++  }, [createNode, freeSpot, graph.nodes.length, viewCenter]);
+ 
+   const startNodeDrag = useCallback((event: React.PointerEvent, node: MindMapNode) => {
+     if (event.button !== 0) return;
+@@ -248,9 +305,21 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+       setLinking(null);
+       const target = document.elementFromPoint(upEvent.clientX, upEvent.clientY)?.closest("[data-mindmap-node]");
+       const targetId = target?.getAttribute("data-mindmap-node") ?? null;
+-      if (!targetId || targetId === from) return;
+-      setGraph((current) => connectMindMapNodes(current, from, targetId, `e${from}-${targetId}`));
+-      setSelected({ type: "edge", id: `e${from}-${targetId}` });
++      if (targetId && targetId !== from) {
++        setGraph((current) => connectMindMapNodes(current, from, targetId, `e${from}-${targetId}`));
++        setSelected({ type: "edge", id: `e${from}-${targetId}` });
++        return;
++      }
++      // Released over empty canvas: offer the node kinds right there (ComfyUI
++      // style) instead of demanding a second "new node" click.
++      const rect = canvasRef.current?.getBoundingClientRect();
++      if (!rect) return;
++      const point = toCanvas(upEvent.clientX, upEvent.clientY);
++      setLinkMenu({
++        from,
++        canvas: { x: point.x, y: point.y },
++        screen: { x: upEvent.clientX - rect.left, y: upEvent.clientY - rect.top },
++      });
+     };
+     window.addEventListener("pointermove", move);
+     window.addEventListener("pointerup", up);
+@@ -293,6 +362,15 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+       if (event.key === "Escape") {
+         event.preventDefault();
+         event.stopPropagation();
++        // Innermost layer first: kind menu, then the import sheet, then the panel.
++        if (linkMenu) {
++          setLinkMenu(null);
++          return;
++        }
++        if (importOpen) {
++          setImportOpen(false);
++          return;
++        }
+         onClose();
+         return;
+       }
+@@ -307,7 +385,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     };
+     window.addEventListener("keydown", onKeyDown, true);
+     return () => window.removeEventListener("keydown", onKeyDown, true);
+-  }, [deleteSelection, onClose, selected]);
++  }, [deleteSelection, importOpen, linkMenu, onClose, selected]);
+ 
+   const cycleKind = useCallback((nodeId: string) => {
+     setGraph((current) => ({
+@@ -328,6 +406,109 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     }));
+   }, []);
+ 
++  /** Reads a picked file into a data URL, re-encoding oversized photos. */
++  const readImage = useCallback((file: File): Promise<string> => {
++    return new Promise((resolve, reject) => {
++      const reader = new FileReader();
++      reader.onerror = () => reject(new Error("read failed"));
++      reader.onload = () => {
++        const url = String(reader.result ?? "");
++        if (!url) {
++          reject(new Error("empty"));
++          return;
++        }
++        if (url.length <= MAX_IMAGE_CHARS) {
++          resolve(url);
++          return;
++        }
++        const image = new window.Image();
++        image.onerror = () => resolve(url);
++        image.onload = () => {
++          const ratio = Math.min(1, MAX_IMAGE_EDGE / Math.max(image.width, image.height));
++          const canvas = document.createElement("canvas");
++          canvas.width = Math.max(1, Math.round(image.width * ratio));
++          canvas.height = Math.max(1, Math.round(image.height * ratio));
++          const context = canvas.getContext("2d");
++          if (!context) {
++            resolve(url);
++            return;
++          }
++          context.drawImage(image, 0, 0, canvas.width, canvas.height);
++          resolve(canvas.toDataURL("image/jpeg", 0.82));
++        };
++        image.src = url;
++      };
++      reader.readAsDataURL(file);
++    });
++  }, []);
++
++  /** Turns dropped/picked files into nodes: images preview, anything else lists. */
++  const placeFiles = useCallback(
++    async (files: File[], spot?: { x: number; y: number }) => {
++      if (files.length === 0) return;
++      const images = files.filter((file) => file.type.startsWith("image/"));
++      const others = files.filter((file) => !file.type.startsWith("image/"));
++      const base = spot ?? freeSpot(viewCenter());
++      let index = 0;
++      for (const file of images) {
++        try {
++          const dataUrl = await readImage(file);
++          createNode("image", { x: base.x + index * 26, y: base.y + index * 26 }, undefined, {
++            title: "",
++            image: dataUrl,
++            imageName: file.name,
++          });
++        } catch {
++          setNotice(t("chat.mindmapImageFailed", { name: file.name }));
++        }
++        index += 1;
++      }
++      for (const file of others) {
++        createNode("idea", { x: base.x + index * 26, y: base.y + index * 26 }, undefined, {
++          title: file.name,
++          detail: `${Math.max(1, Math.round(file.size / 1024))} KB`,
++        });
++        index += 1;
++      }
++    },
++    [createNode, freeSpot, readImage, t, viewCenter],
++  );
++
++  const attachImage = useCallback(
++    async (nodeId: string, file: File) => {
++      try {
++        const dataUrl = await readImage(file);
++        updateNode(nodeId, { kind: "image", image: dataUrl, imageName: file.name });
++      } catch {
++        setNotice(t("chat.mindmapImageFailed", { name: file.name }));
++      }
++    },
++    [readImage, t, updateNode],
++  );
++
++  const parsedImport = useMemo(() => deserializeMindMap(importText, labels), [importText, labels]);
++
++  const applyImport = useCallback(() => {
++    if (parsedImport.graph.nodes.length === 0) {
++      setNotice(t("chat.mindmapImportEmpty"));
++      return;
++    }
++    const imported = parsedImport.graph;
++    nextIdRef.current = nextNodeId(imported);
++    setGraph(imported);
++    setSelected(null);
++    setView({ x: 40, y: 40, scale: 1 });
++    setImportOpen(false);
++    setNotice(t("chat.mindmapImportDone", { nodes: imported.nodes.length, edges: imported.edges.length }));
++  }, [parsedImport, t]);
++
++  // Notices are transient: they only explain a failed pick or a finished import.
++  useEffect(() => {
++    if (!notice) return;
++    const timer = window.setTimeout(() => setNotice(null), 2800);
++    return () => window.clearTimeout(timer);
++  }, [notice]);
++
+   const handleCopy = useCallback(async () => {
+     if (!serialized) return;
+     try {
+@@ -388,6 +569,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     >
+       <div
+         style={{
++          position: "relative",
+           width: "min(1180px, 100%)",
+           height: "min(820px, 100%)",
+           display: "flex",
+@@ -448,6 +630,38 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+             </svg>
+             {t("chat.mindmapAddNode")}
+           </button>
++          <button
++            type="button"
++            style={buttonStyle}
++            title={t("chat.mindmapImageHint")}
++            onClick={() => {
++              imageNodeRef.current = null;
++              fileInputRef.current?.click();
++            }}
++          >
++            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
++              <rect x="3" y="4" width="18" height="16" rx="2" />
++              <circle cx="8.5" cy="9.5" r="1.6" />
++              <path d="M21 16l-5-5-9 9" />
++            </svg>
++            {t("chat.mindmapAddImage")}
++          </button>
++          <button
++            type="button"
++            style={buttonStyle}
++            title={t("chat.mindmapImportHint")}
++            onClick={() => {
++              setImportText(serialized);
++              setImportOpen(true);
++            }}
++          >
++            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
++              <path d="M12 15V4" />
++              <polyline points="7 9 12 4 17 9" />
++              <path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" />
++            </svg>
++            {t("chat.mindmapImport")}
++          </button>
+           <button type="button" style={buttonStyle} onClick={() => setGraph((current) => autoLayoutMindMap(current))}>
+             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+               <line x1="4" y1="6" x2="14" y2="6" />
+@@ -504,6 +718,18 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+           <div
+             ref={canvasRef}
+             onPointerDown={startPan}
++            onDragOver={(event) => event.preventDefault()}
++            onDrop={(event) => {
++              event.preventDefault();
++              event.stopPropagation();
++              const files = Array.from(event.dataTransfer?.files ?? []);
++              if (files.length === 0) return;
++              const point = toCanvas(event.clientX, event.clientY);
++              void placeFiles(files, {
++                x: point.x - MINDMAP_NODE_WIDTH / 2,
++                y: point.y - MINDMAP_NODE_HEIGHT / 2,
++              });
++            }}
+             onDoubleClick={(event) => {
+               const point = toCanvas(event.clientX, event.clientY);
+               addNode({ x: point.x - MINDMAP_NODE_WIDTH / 2, y: point.y - MINDMAP_NODE_HEIGHT / 2 });
+@@ -671,47 +897,123 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+                         </svg>
+                       </button>
+                     </div>
+-                    <input
+-                      value={node.title}
+-                      onChange={(event) => updateNode(node.id, { title: event.target.value })}
+-                      onPointerDown={(event) => event.stopPropagation()}
+-                      onFocus={() => setSelected({ type: "node", id: node.id })}
+-                      placeholder={t("chat.mindmapNodeTitle")}
+-                      style={{
+-                        width: "100%",
+-                        border: "none",
+-                        outline: "none",
+-                        background: "transparent",
+-                        color: "var(--text)",
+-                        fontSize: 12.5,
+-                        fontWeight: 600,
+-                        padding: 0,
+-                        boxSizing: "border-box",
+-                      }}
+-                    />
+-                    <textarea
+-                      value={node.detail}
+-                      onChange={(event) => updateNode(node.id, { detail: event.target.value })}
+-                      onPointerDown={(event) => event.stopPropagation()}
+-                      onFocus={() => setSelected({ type: "node", id: node.id })}
+-                      placeholder={t("chat.mindmapNodeDetail")}
+-                      rows={2}
+-                      style={{
+-                        flex: "1 1 auto",
+-                        width: "100%",
+-                        minHeight: 0,
+-                        resize: "none",
+-                        border: "none",
+-                        outline: "none",
+-                        background: "transparent",
+-                        color: "var(--text-muted)",
+-                        fontSize: 11,
+-                        lineHeight: 1.4,
+-                        padding: 0,
+-                        fontFamily: "inherit",
+-                        boxSizing: "border-box",
+-                      }}
+-                    />
++                    {node.kind === "image" ? (
++                      <>
++                        <div
++                          style={{
++                            position: "relative",
++                            flex: "1 1 auto",
++                            minHeight: 0,
++                            borderRadius: 6,
++                            overflow: "hidden",
++                            background: "color-mix(in srgb, var(--border) 26%, transparent)",
++                          }}
++                        >
++                          {node.image ? (
++                            // eslint-disable-next-line @next/next/no-img-element
++                            <img
++                              src={node.image}
++                              alt={node.title || node.imageName || ""}
++                              title={t("chat.mindmapImageReplace")}
++                              onPointerDown={(event) => event.stopPropagation()}
++                              onClick={() => {
++                                imageNodeRef.current = node.id;
++                                fileInputRef.current?.click();
++                              }}
++                              style={{
++                                width: "100%",
++                                height: "100%",
++                                objectFit: "contain",
++                                display: "block",
++                                cursor: "pointer",
++                              }}
++                            />
++                          ) : (
++                            <button
++                              type="button"
++                              onPointerDown={(event) => event.stopPropagation()}
++                              onClick={() => {
++                                imageNodeRef.current = node.id;
++                                fileInputRef.current?.click();
++                              }}
++                              style={{
++                                width: "100%",
++                                height: "100%",
++                                border: "none",
++                                background: "none",
++                                color: "var(--text-dim)",
++                                fontSize: 11,
++                                cursor: "pointer",
++                              }}
++                            >
++                              {t("chat.mindmapImagePick")}
++                            </button>
++                          )}
++                        </div>
++                        <input
++                          value={node.title}
++                          onChange={(event) => updateNode(node.id, { title: event.target.value })}
++                          onPointerDown={(event) => event.stopPropagation()}
++                          onFocus={() => setSelected({ type: "node", id: node.id })}
++                          placeholder={t("chat.mindmapImageCaption")}
++                          style={{
++                            width: "100%",
++                            flexShrink: 0,
++                            border: "none",
++                            outline: "none",
++                            background: "transparent",
++                            color: "var(--text-muted)",
++                            fontSize: 10.5,
++                            padding: 0,
++                            boxSizing: "border-box",
++                          }}
++                        />
++                      </>
++                    ) : (
++                      <>
++                      <input
++                        value={node.title}
++                        onChange={(event) => updateNode(node.id, { title: event.target.value })}
++                        onPointerDown={(event) => event.stopPropagation()}
++                        onFocus={() => setSelected({ type: "node", id: node.id })}
++                        placeholder={t("chat.mindmapNodeTitle")}
++                        style={{
++                          width: "100%",
++                          border: "none",
++                          outline: "none",
++                          background: "transparent",
++                          color: "var(--text)",
++                          fontSize: 12.5,
++                          fontWeight: 600,
++                          padding: 0,
++                          boxSizing: "border-box",
++                        }}
++                      />
++                      <textarea
++                        value={node.detail}
++                        onChange={(event) => updateNode(node.id, { detail: event.target.value })}
++                        onPointerDown={(event) => event.stopPropagation()}
++                        onFocus={() => setSelected({ type: "node", id: node.id })}
++                        placeholder={t("chat.mindmapNodeDetail")}
++                        rows={2}
++                        style={{
++                          flex: "1 1 auto",
++                          width: "100%",
++                          minHeight: 0,
++                          resize: "none",
++                          border: "none",
++                          outline: "none",
++                          background: "transparent",
++                          color: "var(--text-muted)",
++                          fontSize: 11,
++                          lineHeight: 1.4,
++                          padding: 0,
++                          fontFamily: "inherit",
++                          boxSizing: "border-box",
++                        }}
++                      />
++                      </>
++                    )}
+                     <div
+                       onPointerDown={(event) => startLink(event, node)}
+                       title={t("chat.mindmapPort")}
+@@ -777,6 +1079,109 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+                 {Math.round(view.scale * 100)}%
+               </button>
+             </div>
++
++            {linkMenu && (() => {
++              // ComfyUI-style: the released wire turns into a node picker right
++              // where the pointer let go, and the new node is already connected.
++              const rect = canvasRef.current?.getBoundingClientRect();
++              const menuWidth = 168;
++              const menuHeight = 34 + MINDMAP_KINDS.length * 26;
++              const left = Math.max(6, Math.min(linkMenu.screen.x, (rect?.width ?? 0) - menuWidth - 6));
++              const top = Math.max(6, Math.min(linkMenu.screen.y, (rect?.height ?? 0) - menuHeight - 6));
++              return (
++                <>
++                  <div
++                    style={{ position: "absolute", inset: 0, zIndex: 5 }}
++                    onPointerDown={() => setLinkMenu(null)}
++                  />
++                  <div
++                    style={{
++                      position: "absolute",
++                      left,
++                      top,
++                      zIndex: 6,
++                      width: menuWidth,
++                      padding: 5,
++                      borderRadius: 9,
++                      background: "var(--bg)",
++                      border: "1px solid var(--border)",
++                      boxShadow: "0 14px 34px rgba(0,0,0,0.32)",
++                    }}
++                  >
++                    <div style={{ padding: "3px 6px 5px", fontSize: 10.5, color: "var(--text-dim)" }}>
++                      {t("chat.mindmapPickKind")}
++                    </div>
++                    {MINDMAP_KINDS.map((kind) => (
++                      <button
++                        key={kind}
++                        type="button"
++                        onClick={() => {
++                          createNode(
++                            kind,
++                            {
++                              x: linkMenu.canvas.x - MINDMAP_NODE_WIDTH / 2,
++                              y: linkMenu.canvas.y - MINDMAP_NODE_HEIGHT / 2,
++                            },
++                            linkMenu.from,
++                          );
++                          setLinkMenu(null);
++                        }}
++                        style={{
++                          display: "flex",
++                          alignItems: "center",
++                          gap: 8,
++                          width: "100%",
++                          padding: "4px 7px",
++                          border: "none",
++                          borderRadius: 6,
++                          background: "none",
++                          color: "var(--text)",
++                          fontSize: 11.5,
++                          textAlign: "left",
++                          cursor: "pointer",
++                        }}
++                        onMouseEnter={(event) => {
++                          event.currentTarget.style.background = "var(--bg-panel)";
++                        }}
++                        onMouseLeave={(event) => {
++                          event.currentTarget.style.background = "none";
++                        }}
++                      >
++                        <span
++                          style={{
++                            width: 8,
++                            height: 8,
++                            borderRadius: "50%",
++                            background: KIND_COLORS[kind],
++                            flexShrink: 0,
++                          }}
++                        />
++                        {labels.kinds[kind]}
++                      </button>
++                    ))}
++                  </div>
++                </>
++              );
++            })()}
++
++            <input
++              ref={fileInputRef}
++              type="file"
++              accept="image/*"
++              multiple
++              hidden
++              onChange={(event) => {
++                const files = Array.from(event.target.files ?? []);
++                event.target.value = "";
++                const target = imageNodeRef.current;
++                imageNodeRef.current = null;
++                if (target && files[0]) {
++                  void attachImage(target, files[0]);
++                  return;
++                }
++                void placeFiles(files);
++              }}
++            />
+           </div>
+ 
+           <div style={{ borderTop: "1px solid var(--border)", flexShrink: 0 }}>
+@@ -821,6 +1226,131 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+             )}
+           </div>
+         </div>
++
++        {notice && (
++          <div
++            style={{
++              position: "absolute",
++              left: "50%",
++              bottom: 16,
++              transform: "translateX(-50%)",
++              maxWidth: "80%",
++              padding: "6px 12px",
++              borderRadius: 8,
++              background: "var(--bg-panel)",
++              border: "1px solid var(--border)",
++              fontSize: 11.5,
++              color: "var(--text)",
++              boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
++              pointerEvents: "none",
++            }}
++          >
++            {notice}
++          </div>
++        )}
++
++        {importOpen && (
++          <div
++            style={{
++              position: "absolute",
++              inset: 0,
++              zIndex: 20,
++              background: "rgba(0,0,0,0.42)",
++              display: "flex",
++              alignItems: "center",
++              justifyContent: "center",
++              padding: 18,
++              boxSizing: "border-box",
++            }}
++            onPointerDown={(event) => {
++              if (event.target === event.currentTarget) setImportOpen(false);
++            }}
++          >
++            <div
++              style={{
++                width: "min(760px, 100%)",
++                maxHeight: "100%",
++                display: "flex",
++                flexDirection: "column",
++                gap: 9,
++                padding: 14,
++                borderRadius: 12,
++                background: "var(--bg)",
++                border: "1px solid var(--border)",
++                boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
++                boxSizing: "border-box",
++              }}
++            >
++              <strong style={{ fontSize: 13 }}>{t("chat.mindmapImportTitle")}</strong>
++              <span style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--text-dim)" }}>
++                {t("chat.mindmapImportHint")}
++              </span>
++              <textarea
++                value={importText}
++                onChange={(event) => setImportText(event.target.value)}
++                onKeyDown={(event) => {
++                  event.stopPropagation();
++                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
++                    event.preventDefault();
++                    applyImport();
++                  }
++                }}
++                placeholder={t("chat.mindmapImportPlaceholder")}
++                spellCheck={false}
++                style={{
++                  flex: "1 1 auto",
++                  minHeight: 240,
++                  resize: "vertical",
++                  padding: 10,
++                  borderRadius: 8,
++                  border: "1px solid var(--border)",
++                  background: "var(--bg-panel)",
++                  color: "var(--text)",
++                  fontFamily: "var(--font-mono)",
++                  fontSize: 11.5,
++                  lineHeight: 1.55,
++                  outline: "none",
++                  boxSizing: "border-box",
++                }}
++              />
++              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
++                <span style={{ fontSize: 11.5, color: "var(--text-dim)" }}>
++                  {parsedImport.graph.nodes.length > 0
++                    ? t("chat.mindmapImportSummary", {
++                        nodes: parsedImport.graph.nodes.length,
++                        edges: parsedImport.graph.edges.length,
++                      })
++                    : importText.trim()
++                      ? t("chat.mindmapImportNothing")
++                      : ""}
++                </span>
++                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
++                  <button
++                    type="button"
++                    style={{ ...buttonStyle, color: "var(--text-muted)" }}
++                    onClick={() => setImportOpen(false)}
++                  >
++                    {t("chat.mindmapCancel")}
++                  </button>
++                  <button
++                    type="button"
++                    disabled={parsedImport.graph.nodes.length === 0}
++                    onClick={applyImport}
++                    style={{
++                      ...buttonStyle,
++                      background: parsedImport.graph.nodes.length > 0 ? "var(--accent)" : "var(--bg-panel)",
++                      borderColor: parsedImport.graph.nodes.length > 0 ? "var(--accent)" : "var(--border)",
++                      color: parsedImport.graph.nodes.length > 0 ? "#fff" : "var(--text-dim)",
++                      fontWeight: 600,
++                    }}
++                  >
++                    {t("chat.mindmapImportApply")}
++                  </button>
++                </div>
++              </div>
++            </div>
++          </div>
++        )}
+       </div>
+     </div>
+   );
+diff --git a/lib/i18n/messages/en.ts b/lib/i18n/messages/en.ts
+index 6ff858f..b5e34c8 100644
+--- a/lib/i18n/messages/en.ts
++++ b/lib/i18n/messages/en.ts
+@@ -869,6 +869,25 @@ export const enLocale: LocalePlugin = {
+     "chat.mindmap.hint": "The outline below comes from a node graph: ● marks a starting point, indentation means the parent points to the child, and “Note” lines are per-node detail. Read the hierarchy as the user's reasoning and do not repeat it back verbatim.",
+     "chat.mindmap.cross": "Additional links (not shown as nesting)",
+     "chat.mindmap.detail": "Note",
++    "chat.mindmapAddImage": "Add image",
++    "chat.mindmapImageHint": "Pick an image file, or drag files onto the canvas",
++    "chat.mindmapImagePick": "Choose image",
++    "chat.mindmapImageReplace": "Click to replace this image",
++    "chat.mindmapImageCaption": "Caption (optional)",
++    "chat.mindmapImageFailed": "Could not read {name}",
++    "chat.mindmapImport": "From text",
++    "chat.mindmapImportHint": "Paste a mind-map outline back in and it is rebuilt into nodes",
++    "chat.mindmapImportTitle": "Rebuild the graph from text",
++    "chat.mindmapImportPlaceholder": "● [Goal] ...\n  • [Step] ...\n    Note: ...",
++    "chat.mindmapImportSummary": "{nodes} nodes · {edges} links recognized",
++    "chat.mindmapImportNothing": "No bullet lines found yet",
++    "chat.mindmapImportEmpty": "Nothing to import: no ● / • lines were found",
++    "chat.mindmapImportDone": "Imported {nodes} nodes and {edges} links",
++    "chat.mindmapImportApply": "Replace current graph",
++    "chat.mindmapCancel": "Cancel",
++    "chat.mindmapPickKind": "Pick a kind — it connects to the wire",
++    "chat.mindmap.kind.image": "Image",
++    "chat.mindmap.label.image": "Image",
+     "chat.thinkingUseDefault": "Use pi default",
+     "chat.thinkingOff": "Reasoning off",
+     "chat.thinkingMinimal": "Minimal reasoning",
+diff --git a/lib/i18n/messages/zh-CN.ts b/lib/i18n/messages/zh-CN.ts
+index b966ad2..20fc9bc 100644
+--- a/lib/i18n/messages/zh-CN.ts
++++ b/lib/i18n/messages/zh-CN.ts
+@@ -869,6 +869,25 @@ export const zhCNLocale: LocalePlugin = {
+     "chat.mindmap.hint": "下面是从节点图导出的思路：● 表示起点，缩进表示上一级指向下一级，「备注」是节点的补充说明。请按这层层级关系理解意图，不必逐字复述。",
+     "chat.mindmap.cross": "额外关联（未表现成层级）",
+     "chat.mindmap.detail": "备注",
++    "chat.mindmapAddImage": "载入图片",
++    "chat.mindmapImageHint": "选一张图片，或把文件拖到画布上",
++    "chat.mindmapImagePick": "选择图片",
++    "chat.mindmapImageReplace": "点一下换图",
++    "chat.mindmapImageCaption": "说明（可选）",
++    "chat.mindmapImageFailed": "读不了 {name}",
++    "chat.mindmapImport": "从文本导入",
++    "chat.mindmapImportHint": "把之前复制的脑图文本粘回来，这里会按缩进和「备注」行还原成节点图",
++    "chat.mindmapImportTitle": "从文本重建脑图",
++    "chat.mindmapImportPlaceholder": "● [目标] …\n  • [步骤] …\n    备注: …",
++    "chat.mindmapImportSummary": "识别到 {nodes} 个节点 · {edges} 条连线",
++    "chat.mindmapImportNothing": "还没认出节点",
++    "chat.mindmapImportEmpty": "没找到 ● / • 开头的行，无法导入",
++    "chat.mindmapImportDone": "已导入 {nodes} 个节点、{edges} 条连线",
++    "chat.mindmapImportApply": "替换当前图",
++    "chat.mindmapCancel": "取消",
++    "chat.mindmapPickKind": "选个类型，直接接上刚拉出的线",
++    "chat.mindmap.kind.image": "图片",
++    "chat.mindmap.label.image": "图片",
+     "chat.thinkingUseDefault": "使用 pi 默认设置",
+     "chat.thinkingOff": "关闭推理",
+     "chat.thinkingMinimal": "最低限度推理",
+diff --git a/lib/i18n/messages/zh-TW.ts b/lib/i18n/messages/zh-TW.ts
+index 738d5c1..f0177f8 100644
+--- a/lib/i18n/messages/zh-TW.ts
++++ b/lib/i18n/messages/zh-TW.ts
+@@ -869,6 +869,25 @@ export const zhTWLocale: LocalePlugin = {
+     "chat.mindmap.hint": "下面是從節點圖匯出的思路：● 表示起點，縮排表示上一級指向下一級，「備註」是節點的補充說明。請按這層層級關係理解意圖，不必逐字複述。",
+     "chat.mindmap.cross": "額外關聯（未表現成層級）",
+     "chat.mindmap.detail": "備註",
++    "chat.mindmapAddImage": "載入圖片",
++    "chat.mindmapImageHint": "選一張圖片，或把檔案拖到畫布上",
++    "chat.mindmapImagePick": "選擇圖片",
++    "chat.mindmapImageReplace": "點一下換圖",
++    "chat.mindmapImageCaption": "說明（可選）",
++    "chat.mindmapImageFailed": "讀不了 {name}",
++    "chat.mindmapImport": "從文本匯入",
++    "chat.mindmapImportHint": "把之前複製的脟圖文本貼回來，這裡會依縮排與「備註」行還原成節點圖",
++    "chat.mindmapImportTitle": "從文本重建脟圖",
++    "chat.mindmapImportPlaceholder": "● [目標] …\n  • [步驟] …\n    備註: …",
++    "chat.mindmapImportSummary": "辨識出 {nodes} 個節點 · {edges} 條連線",
++    "chat.mindmapImportNothing": "還沒辨識出節點",
++    "chat.mindmapImportEmpty": "沒找到 ● / • 開頭的行，無法匯入",
++    "chat.mindmapImportDone": "已匯入 {nodes} 個節點、{edges} 條連線",
++    "chat.mindmapImportApply": "取代目前圖",
++    "chat.mindmapCancel": "取消",
++    "chat.mindmapPickKind": "選個類型，直接接上剛拉出的線",
++    "chat.mindmap.kind.image": "圖片",
++    "chat.mindmap.label.image": "圖片",
+     "chat.thinkingUseDefault": "使用 pi 預設設定",
+     "chat.thinkingOff": "關閉推理",
+     "chat.thinkingMinimal": "最低程度推理",
+diff --git a/lib/mindmap.test.mjs b/lib/mindmap.test.mjs
+index f9da1d4..9190969 100644
+--- a/lib/mindmap.test.mjs
++++ b/lib/mindmap.test.mjs
+@@ -9,6 +9,7 @@ const {
+   countMindMapComponents,
+   createMindMapNode,
+   dropNodePositions,
++  deserializeMindMap,
+   emptyMindMap,
+   nextNodeId,
+   serializeMindMap,
+@@ -19,7 +20,16 @@ const labels = {
+   hint: "hint",
+   cross: "cross",
+   detail: "note",
+-  kinds: { goal: "goal", condition: "condition", step: "step", idea: "idea", risk: "risk", result: "result" },
++  image: "file",
++  kinds: {
++    goal: "goal",
++    condition: "condition",
++    step: "step",
++    idea: "idea",
++    risk: "risk",
++    result: "result",
++    image: "image",
++  },
+ };
+ 
+ const node = (id, kind, title, x = 0, y = 0, detail = "") => ({ ...createMindMapNode(kind, x, y, id, title), detail });
+@@ -119,3 +129,71 @@ test("auto layout places children one column right of their parent", () => {
+   assert.equal(byId.get("n3").x, 48 + MINDMAP_NODE_WIDTH + 76);
+   assert.ok(byId.get("n3").y > byId.get("n2").y);
+ });
++
++test("an outline reads back into the same graph and serializes identically", () => {
++  const graph = {
++    nodes: [
++      node("n1", "goal", "ship the shop", 0, 0),
++      node("n2", "step", "小红书先起量", 300, 0, "每周 3 条\n- 图集为主"),
++      node("n3", "risk", "产能跟不上", 300, 200),
++    ],
++    edges: [
++      { id: "e1", from: "n1", to: "n2", label: "" },
++      { id: "e2", from: "n1", to: "n3", label: "" },
++      { id: "e3", from: "n3", to: "n2", label: "blocks" },
++    ],
++  };
++  const text = serializeMindMap(graph, labels);
++  const parsed = deserializeMindMap(text, labels);
++  assert.equal(parsed.graph.nodes.length, 3);
++  assert.equal(parsed.graph.edges.length, 3);
++  assert.equal(parsed.warnings.length, 0);
++  assert.equal(serializeMindMap(parsed.graph, labels), text);
++  // Layout is recomputed, so positions are the tidy columns and not the input ones.
++  const byTitle = new Map(parsed.graph.nodes.map((item) => [item.title, item]));
++  assert.equal(byTitle.get("ship the shop").x, 48);
++});
++
++test("a hand-written outline without kind tags still becomes nodes", () => {
++  const text = [
++    "● 先做内容",
++    "  • 每周 3 条",
++    "    备注: 图集为主",
++    "  • 同时谈 2 个经销商",
++  ].join("\n");
++  const parsed = deserializeMindMap(text, labels);
++  assert.deepEqual(parsed.graph.nodes.map((item) => item.title), ["先做内容", "每周 3 条", "同时谈 2 个经销商"]);
++  assert.deepEqual(parsed.graph.edges.map((edge) => `${edge.from}->${edge.to}`), ["n1->n2", "n1->n3"]);
++  assert.equal(parsed.graph.nodes[1].detail, "图集为主");
++});
++
++test("image nodes keep their file name through the outline", () => {
++  const graph = {
++    nodes: [
++      { ...node("n1", "image", "包装打样"), image: "data:image/png;base64,AAAA", imageName: "draft.png" },
++    ],
++    edges: [],
++  };
++  const text = serializeMindMap(graph, labels);
++  assert.match(text, /\[image\] 包装打样/);
++  assert.match(text, /file: draft\.png/);
++  const parsed = deserializeMindMap(text, labels);
++  assert.equal(parsed.graph.nodes[0].kind, "image");
++  assert.equal(parsed.graph.nodes[0].imageName, "draft.png");
++  // The bytes stay local: only the name travels in the outline.
++  assert.equal(parsed.graph.nodes[0].image, undefined);
++});
++
++test("a cross link that names nothing is reported instead of invented", () => {
++  const text = ["[map]", "hint", "", "● [goal] A", "", "cross", "- [goal] A → [step] ghost"].join("\n");
++  const parsed = deserializeMindMap(text, labels);
++  assert.equal(parsed.graph.nodes.length, 1);
++  assert.equal(parsed.graph.edges.length, 0);
++  assert.equal(parsed.warnings.length, 1);
++});
++
++test("text without any bullet line imports nothing", () => {
++  const parsed = deserializeMindMap("随便一段话，没有节点", labels);
++  assert.equal(parsed.graph.nodes.length, 0);
++  assert.equal(serializeMindMap(parsed.graph, labels), "");
++});
+diff --git a/lib/mindmap.ts b/lib/mindmap.ts
+index 8b3b149..0f5b9e8 100644
+--- a/lib/mindmap.ts
++++ b/lib/mindmap.ts
+@@ -7,7 +7,7 @@
+  * a reasoning outline, so the graph never needs its own message type.
+  */
+ 
+-export const MINDMAP_KINDS = ["goal", "condition", "step", "idea", "risk", "result"] as const;
++export const MINDMAP_KINDS = ["goal", "condition", "step", "idea", "risk", "result", "image"] as const;
+ 
+ export type MindMapNodeKind = (typeof MINDMAP_KINDS)[number];
+ 
+@@ -18,6 +18,10 @@ export interface MindMapNode {
+   detail: string;
+   x: number;
+   y: number;
++  /** Data URL of an attached image (kind "image" only); kept out of the outline. */
++  image?: string;
++  /** Original file name of the attached image, for the outline and the card. */
++  imageName?: string;
+ }
+ 
+ export interface MindMapEdge {
+@@ -41,6 +45,8 @@ export interface MindMapLabels {
+   cross: string;
+   /** Prefix for a node's free-form detail line. */
+   detail: string;
++  /** Prefix carrying an attached file's name. */
++  image: string;
+   /** Human label per node kind. */
+   kinds: Record<MindMapNodeKind, string>;
+ }
+@@ -167,6 +173,12 @@ function nodeLine(node: MindMapNode, labels: MindMapLabels): string {
+   return `[${kind}] ${title}`;
+ }
+ 
++/** Extra outline line naming the file behind an image node. */
++function fileLine(node: MindMapNode, labels: MindMapLabels): string | null {
++  const name = node.imageName?.trim();
++  return name ? `${labels.image}: ${name}` : null;
++}
++
+ /**
+  * Renders the graph as an indented outline (nesting = edge direction) plus a
+  * trailing list for back-edges and cycles. With an empty graph this returns
+@@ -202,6 +214,8 @@ export function serializeMindMap(graph: MindMapGraph, labels: MindMapLabels): st
+     visited.add(node.id);
+     const pad = "  ".repeat(depth);
+     lines.push(`${pad}${depth === 0 ? "●" : "•"} ${nodeLine(node, labels)}`);
++    const file = fileLine(node, labels);
++    if (file) lines.push(`${pad}  ${file}`);
+     const detail = node.detail.trim();
+     if (detail) {
+       for (const detailLine of detail.split(/\r?\n/)) {
+@@ -257,3 +271,177 @@ export function countMindMapComponents(graph: MindMapGraph): number {
+   for (const node of graph.nodes) roots.add(find(node.id));
+   return roots.size;
+ }
++
++/**
++ * Kind labels in every locale we write, so an outline still parses when it is
++ * pasted back into a UI running another language.
++ */
++const KIND_ALIASES: Record<string, MindMapNodeKind> = {
++  goal: "goal",
++  目标: "goal",
++  目標: "goal",
++  condition: "condition",
++  条件: "condition",
++  條件: "condition",
++  step: "step",
++  步骤: "step",
++  步驟: "step",
++  idea: "idea",
++  想法: "idea",
++  risk: "risk",
++  风险: "risk",
++  風險: "risk",
++  result: "result",
++  结果: "result",
++  結果: "result",
++  image: "image",
++  图片: "image",
++  圖片: "image",
++  文件: "image",
++  file: "image",
++};
++
++const BULLET = /^([ \t]*)([●•▪◦*+-])\s+(.*)$/;
++const ARROW = /\s*(?:→|->|=>|⇒)\s*/;
++const CROSS_HEADINGS = ["额外关联", "额外关系", "extra links", "cross links"];
++
++function indentDepth(prefix: string): number {
++  let width = 0;
++  for (const ch of prefix) width += ch === "\t" ? 2 : 1;
++  return Math.floor(width / 2);
++}
++
++function matchKind(text: string): { kind: MindMapNodeKind; rest: string } | null {
++  const match = /^\[([^\]]*)\]\s*(.*)$/.exec(text.trim());
++  if (!match) return null;
++  const label = match[1].trim().toLowerCase();
++  const kind = KIND_ALIASES[label] ?? KIND_ALIASES[match[1].trim()];
++  if (!kind) return null;
++  return { kind, rest: match[2].trim() };
++}
++
++function startsWithAny(text: string, prefixes: string[]): boolean {
++  const lower = text.toLowerCase();
++  return prefixes.some((prefix) => prefix && lower.startsWith(prefix.toLowerCase()));
++}
++
++export interface MindMapParseResult {
++  graph: MindMapGraph;
++  /** Human-readable notes about lines that could not be used. */
++  warnings: string[];
++}
++
++/**
++ * Rebuild a graph from the outline `serializeMindMap` produced (or any similar
++ * hand-written outline): bullets nest by indentation, `备注:` lines become the
++ * detail, `图片:` lines name an attached file and the trailing extra-links block
++ * becomes back-edges. Positions are recomputed with `autoLayoutMindMap`.
++ */
++export function deserializeMindMap(text: string, labels: MindMapLabels): MindMapParseResult {
++  const warnings: string[] = [];
++  const nodes: MindMapNode[] = [];
++  const edges: MindMapEdge[] = [];
++  const lines = text.replace(/\r\n?/g, "\n").split("\n");
++
++  const crossAt = lines.findIndex((line) => {
++    const trimmed = line.trim();
++    return trimmed === labels.cross.trim() || startsWithAny(trimmed, CROSS_HEADINGS);
++  });
++  const bodyLines = crossAt >= 0 ? lines.slice(0, crossAt) : lines;
++  const crossLines = crossAt >= 0 ? lines.slice(crossAt + 1) : [];
++
++  const stack: { depth: number; id: string }[] = [];
++  let current: MindMapNode | null = null;
++  let counter = 0;
++
++  const detailPrefixes = [labels.detail, "备注", "备注:", "註", "备注：", "note", "notes"];
++  const filePrefixes = [labels.image, "图片", "圖片", "文件", "image", "file"];
++
++  for (const raw of bodyLines) {
++    if (!raw.trim()) continue;
++    const bullet = BULLET.exec(raw);
++    if (bullet) {
++      const rest = bullet[3].trim();
++      if (startsWithAny(rest, CROSS_HEADINGS)) continue;
++      const parsedKind = matchKind(rest);
++      const depth = indentDepth(bullet[1]);
++      counter += 1;
++      const node = createMindMapNode(parsedKind?.kind ?? "idea", 0, 0, `n${counter}`, parsedKind?.rest ?? rest);
++      nodes.push(node);
++      current = node;
++
++      while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
++      const parent = stack[stack.length - 1];
++      if (parent) edges.push({ id: `e${parent.id}-${node.id}`, from: parent.id, to: node.id, label: "" });
++      stack.push({ depth, id: node.id });
++      continue;
++    }
++
++    const trimmed = raw.trim();
++    if (trimmed === labels.header.trim() || trimmed.startsWith(labels.hint.trim().slice(0, 12))) {
++      continue;
++    }
++
++    // `前缀: 值` lines belong to the node above them.
++    const separator = trimmed.search(/[:：]/);
++    const prefix = separator >= 0 ? trimmed.slice(0, separator).trim() : "";
++    const value = separator >= 0 ? trimmed.slice(separator + 1).trim() : "";
++
++    if (current && prefix && startsWithAny(prefix, filePrefixes)) {
++      current.imageName = value;
++      continue;
++    }
++    if (current && prefix && startsWithAny(prefix, detailPrefixes)) {
++      current.detail = current.detail ? `${current.detail}\n${value}` : value;
++      continue;
++    }
++    if (current) {
++      // Loose prose between bullets is treated as more detail rather than dropped.
++      current.detail = current.detail ? `${current.detail}\n${trimmed}` : trimmed;
++      continue;
++    }
++    if (counter === 0 && trimmed) warnings.push(trimmed.slice(0, 80));
++  }
++
++  const byLine = new Map<string, MindMapNode>();
++  for (const node of nodes) byLine.set(nodeLine(node, labels).toLowerCase(), node);
++  const byTitle = new Map<string, MindMapNode>();
++  for (const node of nodes) {
++    const key = node.title.trim().toLowerCase();
++    if (key && !byTitle.has(key)) byTitle.set(key, node);
++  }
++  const resolveRef = (value: string): MindMapNode | null => {
++    const exact = byLine.get(value.trim().toLowerCase());
++    if (exact) return exact;
++    const parsed = matchKind(value);
++    const title = (parsed?.rest ?? value).trim().toLowerCase();
++    return byTitle.get(title) ?? null;
++  };
++
++  for (const raw of crossLines) {
++    const line = raw.replace(/^\s*[-*•]\s*/, "").trim();
++    if (!line) continue;
++    const parts = line.split(ARROW);
++    if (parts.length < 2) {
++      warnings.push(line.slice(0, 80));
++      continue;
++    }
++    const from = resolveRef(parts[0]);
++    let relation = "";
++    let tail = parts.slice(1).join(" → ").trim();
++    const colon = tail.lastIndexOf(": ");
++    if (colon >= 0 && tail.slice(colon + 2).trimStart().startsWith("[")) {
++      relation = tail.slice(0, colon).trim();
++      tail = tail.slice(colon + 2).trim();
++    }
++    const to = resolveRef(tail);
++    if (!from || !to || from.id === to.id) {
++      warnings.push(line.slice(0, 80));
++      continue;
++    }
++    if (edges.some((edge) => edge.from === from.id && edge.to === to.id)) continue;
++    edges.push({ id: `e${from.id}-${to.id}`, from: from.id, to: to.id, label: relation });
++  }
++
++  return { graph: autoLayoutMindMap({ nodes, edges }), warnings };
++}

@@ -7,7 +7,7 @@
  * a reasoning outline, so the graph never needs its own message type.
  */
 
-export const MINDMAP_KINDS = ["goal", "condition", "step", "idea", "risk", "result"] as const;
+export const MINDMAP_KINDS = ["goal", "condition", "step", "idea", "risk", "result", "image"] as const;
 
 export type MindMapNodeKind = (typeof MINDMAP_KINDS)[number];
 
@@ -18,6 +18,10 @@ export interface MindMapNode {
   detail: string;
   x: number;
   y: number;
+  /** Data URL of an attached image (kind "image" only); kept out of the outline. */
+  image?: string;
+  /** Original file name of the attached image, for the outline and the card. */
+  imageName?: string;
 }
 
 export interface MindMapEdge {
@@ -41,6 +45,8 @@ export interface MindMapLabels {
   cross: string;
   /** Prefix for a node's free-form detail line. */
   detail: string;
+  /** Prefix carrying an attached file's name. */
+  image: string;
   /** Human label per node kind. */
   kinds: Record<MindMapNodeKind, string>;
 }
@@ -167,6 +173,12 @@ function nodeLine(node: MindMapNode, labels: MindMapLabels): string {
   return `[${kind}] ${title}`;
 }
 
+/** Extra outline line naming the file behind an image node. */
+function fileLine(node: MindMapNode, labels: MindMapLabels): string | null {
+  const name = node.imageName?.trim();
+  return name ? `${labels.image}: ${name}` : null;
+}
+
 /**
  * Renders the graph as an indented outline (nesting = edge direction) plus a
  * trailing list for back-edges and cycles. With an empty graph this returns
@@ -202,6 +214,8 @@ export function serializeMindMap(graph: MindMapGraph, labels: MindMapLabels): st
     visited.add(node.id);
     const pad = "  ".repeat(depth);
     lines.push(`${pad}${depth === 0 ? "●" : "•"} ${nodeLine(node, labels)}`);
+    const file = fileLine(node, labels);
+    if (file) lines.push(`${pad}  ${file}`);
     const detail = node.detail.trim();
     if (detail) {
       for (const detailLine of detail.split(/\r?\n/)) {
@@ -256,4 +270,178 @@ export function countMindMapComponents(graph: MindMapGraph): number {
   const roots = new Set<string>();
   for (const node of graph.nodes) roots.add(find(node.id));
   return roots.size;
+}
+
+/**
+ * Kind labels in every locale we write, so an outline still parses when it is
+ * pasted back into a UI running another language.
+ */
+const KIND_ALIASES: Record<string, MindMapNodeKind> = {
+  goal: "goal",
+  目标: "goal",
+  目標: "goal",
+  condition: "condition",
+  条件: "condition",
+  條件: "condition",
+  step: "step",
+  步骤: "step",
+  步驟: "step",
+  idea: "idea",
+  想法: "idea",
+  risk: "risk",
+  风险: "risk",
+  風險: "risk",
+  result: "result",
+  结果: "result",
+  結果: "result",
+  image: "image",
+  图片: "image",
+  圖片: "image",
+  文件: "image",
+  file: "image",
+};
+
+const BULLET = /^([ \t]*)([●•▪◦*+-])\s+(.*)$/;
+const ARROW = /\s*(?:→|->|=>|⇒)\s*/;
+const CROSS_HEADINGS = ["额外关联", "额外关系", "extra links", "cross links"];
+
+function indentDepth(prefix: string): number {
+  let width = 0;
+  for (const ch of prefix) width += ch === "\t" ? 2 : 1;
+  return Math.floor(width / 2);
+}
+
+function matchKind(text: string): { kind: MindMapNodeKind; rest: string } | null {
+  const match = /^\[([^\]]*)\]\s*(.*)$/.exec(text.trim());
+  if (!match) return null;
+  const label = match[1].trim().toLowerCase();
+  const kind = KIND_ALIASES[label] ?? KIND_ALIASES[match[1].trim()];
+  if (!kind) return null;
+  return { kind, rest: match[2].trim() };
+}
+
+function startsWithAny(text: string, prefixes: string[]): boolean {
+  const lower = text.toLowerCase();
+  return prefixes.some((prefix) => prefix && lower.startsWith(prefix.toLowerCase()));
+}
+
+export interface MindMapParseResult {
+  graph: MindMapGraph;
+  /** Human-readable notes about lines that could not be used. */
+  warnings: string[];
+}
+
+/**
+ * Rebuild a graph from the outline `serializeMindMap` produced (or any similar
+ * hand-written outline): bullets nest by indentation, `备注:` lines become the
+ * detail, `图片:` lines name an attached file and the trailing extra-links block
+ * becomes back-edges. Positions are recomputed with `autoLayoutMindMap`.
+ */
+export function deserializeMindMap(text: string, labels: MindMapLabels): MindMapParseResult {
+  const warnings: string[] = [];
+  const nodes: MindMapNode[] = [];
+  const edges: MindMapEdge[] = [];
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+
+  const crossAt = lines.findIndex((line) => {
+    const trimmed = line.trim();
+    return trimmed === labels.cross.trim() || startsWithAny(trimmed, CROSS_HEADINGS);
+  });
+  const bodyLines = crossAt >= 0 ? lines.slice(0, crossAt) : lines;
+  const crossLines = crossAt >= 0 ? lines.slice(crossAt + 1) : [];
+
+  const stack: { depth: number; id: string }[] = [];
+  let current: MindMapNode | null = null;
+  let counter = 0;
+
+  const detailPrefixes = [labels.detail, "备注", "备注:", "註", "备注：", "note", "notes"];
+  const filePrefixes = [labels.image, "图片", "圖片", "文件", "image", "file"];
+
+  for (const raw of bodyLines) {
+    if (!raw.trim()) continue;
+    const bullet = BULLET.exec(raw);
+    if (bullet) {
+      const rest = bullet[3].trim();
+      if (startsWithAny(rest, CROSS_HEADINGS)) continue;
+      const parsedKind = matchKind(rest);
+      const depth = indentDepth(bullet[1]);
+      counter += 1;
+      const node = createMindMapNode(parsedKind?.kind ?? "idea", 0, 0, `n${counter}`, parsedKind?.rest ?? rest);
+      nodes.push(node);
+      current = node;
+
+      while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
+      const parent = stack[stack.length - 1];
+      if (parent) edges.push({ id: `e${parent.id}-${node.id}`, from: parent.id, to: node.id, label: "" });
+      stack.push({ depth, id: node.id });
+      continue;
+    }
+
+    const trimmed = raw.trim();
+    if (trimmed === labels.header.trim() || trimmed.startsWith(labels.hint.trim().slice(0, 12))) {
+      continue;
+    }
+
+    // `前缀: 值` lines belong to the node above them.
+    const separator = trimmed.search(/[:：]/);
+    const prefix = separator >= 0 ? trimmed.slice(0, separator).trim() : "";
+    const value = separator >= 0 ? trimmed.slice(separator + 1).trim() : "";
+
+    if (current && prefix && startsWithAny(prefix, filePrefixes)) {
+      current.imageName = value;
+      continue;
+    }
+    if (current && prefix && startsWithAny(prefix, detailPrefixes)) {
+      current.detail = current.detail ? `${current.detail}\n${value}` : value;
+      continue;
+    }
+    if (current) {
+      // Loose prose between bullets is treated as more detail rather than dropped.
+      current.detail = current.detail ? `${current.detail}\n${trimmed}` : trimmed;
+      continue;
+    }
+    if (counter === 0 && trimmed) warnings.push(trimmed.slice(0, 80));
+  }
+
+  const byLine = new Map<string, MindMapNode>();
+  for (const node of nodes) byLine.set(nodeLine(node, labels).toLowerCase(), node);
+  const byTitle = new Map<string, MindMapNode>();
+  for (const node of nodes) {
+    const key = node.title.trim().toLowerCase();
+    if (key && !byTitle.has(key)) byTitle.set(key, node);
+  }
+  const resolveRef = (value: string): MindMapNode | null => {
+    const exact = byLine.get(value.trim().toLowerCase());
+    if (exact) return exact;
+    const parsed = matchKind(value);
+    const title = (parsed?.rest ?? value).trim().toLowerCase();
+    return byTitle.get(title) ?? null;
+  };
+
+  for (const raw of crossLines) {
+    const line = raw.replace(/^\s*[-*•]\s*/, "").trim();
+    if (!line) continue;
+    const parts = line.split(ARROW);
+    if (parts.length < 2) {
+      warnings.push(line.slice(0, 80));
+      continue;
+    }
+    const from = resolveRef(parts[0]);
+    let relation = "";
+    let tail = parts.slice(1).join(" → ").trim();
+    const colon = tail.lastIndexOf(": ");
+    if (colon >= 0 && tail.slice(colon + 2).trimStart().startsWith("[")) {
+      relation = tail.slice(0, colon).trim();
+      tail = tail.slice(colon + 2).trim();
+    }
+    const to = resolveRef(tail);
+    if (!from || !to || from.id === to.id) {
+      warnings.push(line.slice(0, 80));
+      continue;
+    }
+    if (edges.some((edge) => edge.from === from.id && edge.to === to.id)) continue;
+    edges.push({ id: `e${from.id}-${to.id}`, from: from.id, to: to.id, label: relation });
+  }
+
+  return { graph: autoLayoutMindMap({ nodes, edges }), warnings };
 }

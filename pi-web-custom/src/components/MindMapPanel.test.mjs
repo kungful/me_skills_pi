@@ -26,6 +26,21 @@ test("the panel opens as its own dialog and never renders on its own", () => {
   // Empty state, no serialized text: the insert button is disabled.
   assert.match(html, /No nodes yet/);
   assert.match(html, /disabled=""[^>]*>Insert into composer/);
+  // Both directions of the text hand-off, plus image loading, live in the toolbar.
+  assert.match(html, /From text/);
+  assert.match(html, /Add image/);
+  assert.match(html, /type="file"/);
+});
+
+test("the panel starts with no import sheet and no kind picker", () => {
+  const html = render(React.createElement(MindMapPanel, {
+    storageKey: "pi-web:mindmap:test",
+    onInsert() {},
+    onClose() {},
+  }));
+
+  assert.doesNotMatch(html, /Rebuild the graph from text/);
+  assert.doesNotMatch(html, /Pick a kind/);
 });
 
 test("the composer keeps a mind-map toggle next to the other composer controls", () => {
