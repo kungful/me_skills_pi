@@ -28,6 +28,7 @@ test("the panel opens as its own dialog and never renders on its own", () => {
   assert.match(html, /disabled=""[^>]*>Insert into composer/);
   // Both directions of the text hand-off, plus image loading, live in the toolbar.
   assert.match(html, /From text/);
+  assert.match(html, /From a prompt/);
   assert.match(html, /Add image/);
   assert.match(html, /type="file"/);
 });

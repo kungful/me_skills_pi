@@ -445,3 +445,103 @@ export function deserializeMindMap(text: string, labels: MindMapLabels): MindMap
 
   return { graph: autoLayoutMindMap({ nodes, edges }), warnings };
 }
+
+/**
+ * Prompt → graph, the reverse of `serializeMindMap`: one sentence about what the
+ * user wants becomes a first-draft node graph they can edit. It runs locally on
+ * keyword rules — instant and free — so it never blocks on a model round trip.
+ */
+
+const PROMPT_KIND_RULES: { kind: MindMapNodeKind; pattern: RegExp }[] = [
+  { kind: "risk", pattern: /风险|担心|隐患|坑|失败|阻力|问题|risk|concern|worry/i },
+  { kind: "condition", pattern: /如果|假如|前提|条件|除非|只要|if |unless/i },
+  { kind: "result", pattern: /结果|最终|产出|交付|验收|上线|完成|result|outcome|deliver/i },
+  {
+    kind: "step",
+    pattern: /先|首先|然后|接着|之后|再|同时|顺便|其次|最后|下一步|步骤|step|then|next|first/i,
+  },
+  { kind: "goal", pattern: /目标|目的|想要|我想|我要|打算|希望|计划|愿景|goal|want|wish|aim/i },
+];
+
+/** A comma before a linking word starts a new clause: 「先做A，同时做B」 */
+const PROMPT_CONNECTOR =
+  /[，,]?\s*(然后|接着|之后|同时|另外|其次|最后|而且|并且|以及|但是|不过|所以|因为|首先|先|风险|担心|隐患|前提|条件|如果|除非|只要|目标|目的|结果|问题)\s*/g;
+
+const PROMPT_TITLE_MAX = 26;
+const PROMPT_MAX_CLAUSES = 14;
+const PROMPT_LEAD =
+  /^(首先|然后|接着|之后|同时|另外|其次|最后|而且|并且|以及|但是|不过|所以|因为|先|风险是|风险|担心|目的是|目的|目标是|目标|结果是|结果|问题是|问题|前提是|前提|条件是|条件)\s*[，,]?\s*/;
+
+function splitPromptClauses(prompt: string): string[] {
+  return prompt
+    .replace(/\r\n?/g, "\n")
+    .replace(PROMPT_CONNECTOR, "。$1")
+    .split(/[。！？；;\n]+/)
+    .map((part) => part.trim().replace(/^[、，,\s]+/, "").replace(/[、，,\s]+$/, ""))
+    .filter((part) => part.replace(/[^\p{L}\p{N}]/gu, "").length >= 2)
+    .slice(0, PROMPT_MAX_CLAUSES);
+}
+
+function classifyPromptClause(clause: string): MindMapNodeKind {
+  for (const rule of PROMPT_KIND_RULES) {
+    if (rule.pattern.test(clause)) return rule.kind;
+  }
+  return "idea";
+}
+
+function promptClauseTitle(clause: string): string {
+  const trimmed = clause.replace(PROMPT_LEAD, "").trim() || clause.trim();
+  return trimmed.length > PROMPT_TITLE_MAX ? `${trimmed.slice(0, PROMPT_TITLE_MAX - 1)}…` : trimmed;
+}
+
+/**
+ * Turns a prompt into a goal-rooted graph: the first clause becomes the root,
+ * the rest hang off it in order, and 「因为/所以」 clauses nest under the clause
+ * they explain. Long clauses keep their full text as the node detail.
+ */
+export function promptToMindMap(prompt: string): MindMapGraph {
+  const clauses = splitPromptClauses(prompt);
+  if (clauses.length === 0) return emptyMindMap();
+
+  const nodes: MindMapNode[] = [];
+  const edges: MindMapEdge[] = [];
+  const add = (kind: MindMapNodeKind, clause: string, index: number) => {
+    const title = promptClauseTitle(clause);
+    const node = createMindMapNode(kind, 0, 0, `n${index + 1}`, title);
+    const detail = clause.trim();
+    if (detail && detail !== title) node.detail = detail;
+    nodes.push(node);
+    return node;
+  };
+
+  const firstKind = classifyPromptClause(clauses[0]);
+  const root = add(firstKind === "step" || firstKind === "result" ? "goal" : firstKind, clauses[0], 0);
+  let previous = root;
+
+  for (let index = 1; index < clauses.length; index += 1) {
+    const clause = clauses[index];
+    const node = add(classifyPromptClause(clause), clause, index);
+    const parent = /^(因为|所以)/.test(clause) ? previous : root;
+    edges.push({ id: `e${parent.id}-${node.id}`, from: parent.id, to: node.id, label: "" });
+    previous = node;
+  }
+
+  return autoLayoutMindMap({ nodes, edges });
+}
+
+/** Re-indexes a graph so its ids continue after `nextId` (used when appending). */
+export function reindexMindMap(graph: MindMapGraph, nextId: string): MindMapGraph {
+  const start = Number(/^n(\d+)$/.exec(nextId)?.[1] ?? 1);
+  const map = new Map<string, string>();
+  graph.nodes.forEach((node, index) => {
+    map.set(node.id, `n${start + index}`);
+  });
+  return {
+    nodes: graph.nodes.map((node) => ({ ...node, id: map.get(node.id) ?? node.id })),
+    edges: graph.edges.map((edge) => {
+      const from = map.get(edge.from) ?? edge.from;
+      const to = map.get(edge.to) ?? edge.to;
+      return { ...edge, id: `e${from}-${to}`, from, to };
+    }),
+  };
+}

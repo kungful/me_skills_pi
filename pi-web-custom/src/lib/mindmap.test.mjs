@@ -12,6 +12,8 @@ const {
   deserializeMindMap,
   emptyMindMap,
   nextNodeId,
+  promptToMindMap,
+  reindexMindMap,
   serializeMindMap,
 } = await createJiti(import.meta.url).import("./mindmap.ts");
 
@@ -196,4 +198,53 @@ test("text without any bullet line imports nothing", () => {
   const parsed = deserializeMindMap("随便一段话，没有节点", labels);
   assert.equal(parsed.graph.nodes.length, 0);
   assert.equal(serializeMindMap(parsed.graph, labels), "");
+});
+
+test("a one-line prompt becomes a goal-rooted draft graph", () => {
+  const graph = promptToMindMap(
+    "我想把茶叶厂的批发转到线上，先做小红书每周三条，同时谈两个经销商，风险是产能跟不上",
+  );
+  const kinds = graph.nodes.map((item) => item.kind);
+  assert.ok(graph.nodes.length >= 4, "expected at least four clauses");
+  assert.equal(graph.nodes[0].kind, "goal");
+  assert.ok(kinds.includes("risk"));
+  // Everything hangs off the first clause, in the order it was written.
+  const root = graph.nodes[0];
+  const children = graph.edges.filter((edge) => edge.from === root.id).map((edge) => edge.to);
+  assert.deepEqual(children.sort(), graph.nodes.slice(1).map((item) => item.id).sort());
+  assert.match(graph.nodes[0].title, /茶叶厂/);
+});
+
+test("because/so clauses nest under the clause they explain", () => {
+  const graph = promptToMindMap("目标是线上占三成，先做内容，因为没有流量");
+  const step = graph.nodes.find((item) => item.kind === "step");
+  const reason = graph.nodes[graph.nodes.length - 1];
+  assert.ok(step && reason);
+  assert.ok(
+    graph.edges.some((edge) => edge.from === step.id && edge.to === reason.id),
+    "「因为」should attach to the previous step, not the root",
+  );
+});
+
+test("a long clause keeps its full text as the detail", () => {
+  const long = "先把这个季度所有线下经销商的库存和返点政策逐条核对一遍再决定要不要继续压货";
+  const graph = promptToMindMap(long);
+  assert.equal(graph.nodes.length, 1);
+  assert.ok(graph.nodes[0].title.length <= 26);
+  assert.equal(graph.nodes[0].detail, long);
+});
+
+test("a prompt with nothing to split imports nothing", () => {
+  assert.equal(promptToMindMap("").nodes.length, 0);
+  assert.equal(promptToMindMap("   ，。 ").nodes.length, 0);
+});
+
+test("reindexing continues after the current id and rewrites edges", () => {
+  const graph = {
+    nodes: [node("n1", "goal", "A"), node("n2", "step", "B")],
+    edges: [{ id: "e1", from: "n1", to: "n2", label: "" }],
+  };
+  const shifted = reindexMindMap(graph, "n5");
+  assert.deepEqual(shifted.nodes.map((item) => item.id), ["n5", "n6"]);
+  assert.deepEqual(shifted.edges.map((edge) => `${edge.id}:${edge.from}->${edge.to}`), ["en5-n6:n5->n6"]);
 });

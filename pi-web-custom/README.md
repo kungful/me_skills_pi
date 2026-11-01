@@ -15,6 +15,7 @@ pi-web-custom/
   README.md                                  # 本文件
   patches/0001-mindmap-editor.patch           # 脑图编辑器（节点/连线/序列化/浮层）
   patches/0002-mindmap-text-image-linkmenu.patch  # 反向导入 + 图片节点 + 拖线弹类型
+  patches/0003-mindmap-prompt-draft.patch        # 「提示生成」：一句话拆成草稿图
   src/                                        # 源码快照（可直接 npm install && npm run dev）
 ```
 
@@ -29,8 +30,8 @@ pi-web-custom/
 
 | 文件 | 说明 |
 |---|---|
-| `lib/mindmap.ts` | 模型层：节点/连线类型、`connectMindMapNodes`、`autoLayoutMindMap`（按连线 BFS 分列）、`serializeMindMap`（缩进大纲）、**`deserializeMindMap`（大纲→图，缩进还原层级 / `备注:` 还原 detail / 额外关联还原回边 / 跨语言 kind 别名）**、`nextNodeId` / `bumpNodeId` |
-| `components/MindMapPanel.tsx` | 全屏浮层编辑器：拖节点、**从右侧端口拖到空白处弹出类型菜单（ComfyUI 式，选中即连线）**、滚轮缩放（0.35–2 光标为中心）、平移、双击空白新建、`Delete` 删除、`Esc` 逐层关闭、类型循环、自动整理、**载入图片/拖入文件**、**从文本导入**、可折叠预览、复制、插入输入框 |
+| `lib/mindmap.ts` | 模型层：节点/连线类型、`connectMindMapNodes`、`autoLayoutMindMap`（按连线 BFS 分列）、`serializeMindMap`（缩进大纲）、**`deserializeMindMap`（大纲→图，缩进还原层级 / `备注:` 还原 detail / 额外关联还原回边 / 跨语言 kind 别名）**、`nextNodeId` / `bumpNodeId`、**`promptToMindMap`（一句话 → 草稿图：本地规则分句 + 关键词判类型）**、`reindexMindMap`（追加时续号） |
+| `components/MindMapPanel.tsx` | 全屏浮层编辑器：拖节点、**从右侧端口拖到空白处弹出类型菜单（ComfyUI 式，选中即连线）**、滚轮缩放（0.35–2 光标为中心）、平移、双击空白新建、`Delete` 删除、`Esc` 逐层关闭、类型循环、自动整理、**载入图片/拖入文件**、**从文本导入**、**提示生成**、可折叠预览、复制、插入输入框 |
 | `components/ChatInput.tsx` | 底部控制条「脑图」按钮（思考等级左边）；浮层以 `role="dialog"` 渲染在 `<fieldset>` 内；插入时把大纲**追加**到草稿后面（空行分隔）并聚焦光标到末尾，**不会自动发送** |
 | `lib/i18n/messages/{en,zh-CN,zh-TW}.ts` | 文案，三份 key 与占位符必须一致（`lib/i18n/registry.test.mjs` 校验） |
 | `lib/mindmap.test.mjs` / `components/MindMapPanel.test.mjs` | 13 + 3 个测试（含序列化↔反序列化往返一致） |
@@ -50,6 +51,9 @@ pi-web-custom/
   能原样还原成节点图（往返测试保证 `serialize(deserialize(x)) === x`）。
 - **图片不进气**：图片节点把文件缩到最长边 720px 的 JPEG 存在浏览器 `localStorage`
   （每份草稿一份图），大纲里只带 `图片: 文件名`，不会把 base64 灌进 prompt。
+- **提示生成是本地规则**：点「提示生成」写一句话（目标 / 先做什么 / 担心什么），
+  按「，先… 同时… 风险是…」这类连接词本地分句并判类型，瞬间出一版草稿，**不调模型、不联网、不花钱**；
+  选中某个节点再生成可以「接到选中节点」，草稿整体落到图右侧并连上。
 - **持久化**：每个草稿/会话一份，key 为 `pi-web:mindmap:<draftKey>`，刷新不丢。
 
 ## 跑起来

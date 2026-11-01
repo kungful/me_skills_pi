@@ -23,6 +23,8 @@ import {
   dropNodePositions,
   emptyMindMap,
   nextNodeId,
+  promptToMindMap,
+  reindexMindMap,
   serializeMindMap,
   type MindMapGraph,
   type MindMapLabels,
@@ -108,6 +110,8 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
   } | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptText, setPromptText] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Set when the file picker was opened from inside an existing image node.
@@ -367,8 +371,9 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
           setLinkMenu(null);
           return;
         }
-        if (importOpen) {
+        if (importOpen || promptOpen) {
           setImportOpen(false);
+          setPromptOpen(false);
           return;
         }
         onClose();
@@ -385,7 +390,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [deleteSelection, importOpen, linkMenu, onClose, selected]);
+  }, [deleteSelection, importOpen, linkMenu, onClose, promptOpen, selected]);
 
   const cycleKind = useCallback((nodeId: string) => {
     setGraph((current) => ({
@@ -501,6 +506,51 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
     setImportOpen(false);
     setNotice(t("chat.mindmapImportDone", { nodes: imported.nodes.length, edges: imported.edges.length }));
   }, [parsedImport, t]);
+
+  const parsedPrompt = useMemo(() => promptToMindMap(promptText), [promptText]);
+
+  /** Inserts a prompt-draft either as the whole graph or as a subtree of the selection. */
+  const applyPrompt = useCallback(
+    (attach: boolean) => {
+      const draft = parsedPrompt;
+      if (draft.nodes.length === 0) {
+        setNotice(t("chat.mindmapPromptEmpty"));
+        return;
+      }
+      const anchorNode =
+        attach && selected?.type === "node" ? graph.nodes.find((node) => node.id === selected.id) : undefined;
+      if (!anchorNode) {
+        nextIdRef.current = nextNodeId(draft);
+        setGraph(draft);
+        setSelected({ type: "node", id: draft.nodes[0].id });
+        setView({ x: 40, y: 40, scale: 1 });
+      } else {
+        const shifted = reindexMindMap(draft, nextIdRef.current);
+        const lastId = shifted.nodes[shifted.nodes.length - 1]?.id ?? nextIdRef.current;
+        nextIdRef.current = bumpNodeId(lastId);
+        // Park the draft to the right of everything, so it never lands on a card.
+        const dx = Math.max(...graph.nodes.map((node) => node.x)) + MINDMAP_NODE_WIDTH + 96;
+        const dy = anchorNode.y;
+        const rootId = shifted.nodes[0].id;
+        setGraph((current) => ({
+          nodes: [
+            ...current.nodes,
+            ...shifted.nodes.map((node) => ({ ...node, x: node.x + dx, y: node.y + dy })),
+          ],
+          edges: [
+            ...current.edges,
+            ...shifted.edges,
+            { id: `e${anchorNode.id}-${rootId}`, from: anchorNode.id, to: rootId, label: "" },
+          ],
+        }));
+        setSelected({ type: "node", id: rootId });
+      }
+      setPromptOpen(false);
+      setPromptText("");
+      setNotice(t("chat.mindmapPromptDone", { nodes: draft.nodes.length }));
+    },
+    [graph.nodes, parsedPrompt, selected, t],
+  );
 
   // Notices are transient: they only explain a failed pick or a finished import.
   useEffect(() => {
@@ -645,6 +695,18 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
               <path d="M21 16l-5-5-9 9" />
             </svg>
             {t("chat.mindmapAddImage")}
+          </button>
+          <button
+            type="button"
+            style={buttonStyle}
+            title={t("chat.mindmapPromptHint")}
+            onClick={() => setPromptOpen(true)}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z" />
+              <path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" />
+            </svg>
+            {t("chat.mindmapPrompt")}
           </button>
           <button
             type="button"
@@ -1246,6 +1308,115 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
             }}
           >
             {notice}
+          </div>
+        )}
+
+        {promptOpen && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 20,
+              background: "rgba(0,0,0,0.42)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 18,
+              boxSizing: "border-box",
+            }}
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) setPromptOpen(false);
+            }}
+          >
+            <div
+              style={{
+                width: "min(620px, 100%)",
+                maxHeight: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 9,
+                padding: 14,
+                borderRadius: 12,
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
+                boxSizing: "border-box",
+              }}
+            >
+              <strong style={{ fontSize: 13 }}>{t("chat.mindmapPromptTitle")}</strong>
+              <span style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--text-dim)" }}>
+                {t("chat.mindmapPromptHintLong")}
+              </span>
+              <textarea
+                value={promptText}
+                onChange={(event) => setPromptText(event.target.value)}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    applyPrompt(Boolean(selected?.type === "node"));
+                  }
+                }}
+                placeholder={t("chat.mindmapPromptPlaceholder")}
+                autoFocus
+                style={{
+                  minHeight: 112,
+                  resize: "vertical",
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-panel)",
+                  color: "var(--text)",
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11.5, color: "var(--text-dim)" }}>
+                  {parsedPrompt.nodes.length > 0
+                    ? t("chat.mindmapPromptSummary", { nodes: parsedPrompt.nodes.length })
+                    : promptText.trim()
+                      ? t("chat.mindmapImportNothing")
+                      : ""}
+                </span>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    style={{ ...buttonStyle, color: "var(--text-muted)" }}
+                    onClick={() => setPromptOpen(false)}
+                  >
+                    {t("chat.mindmapCancel")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={parsedPrompt.nodes.length === 0 || selected?.type !== "node"}
+                    onClick={() => applyPrompt(true)}
+                    style={{
+                      ...buttonStyle,
+                      color: selected?.type === "node" ? "var(--text)" : "var(--text-dim)",
+                    }}
+                  >
+                    {t("chat.mindmapPromptAttach")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={parsedPrompt.nodes.length === 0}
+                    onClick={() => applyPrompt(false)}
+                    style={{
+                      ...buttonStyle,
+                      background: parsedPrompt.nodes.length > 0 ? "var(--accent)" : "var(--bg-panel)",
+                      borderColor: parsedPrompt.nodes.length > 0 ? "var(--accent)" : "var(--border)",
+                      color: parsedPrompt.nodes.length > 0 ? "#fff" : "var(--text-dim)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t("chat.mindmapPromptReplace")}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

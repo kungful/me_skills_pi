@@ -1,0 +1,505 @@
+From bb85165ca17d4e81409d20d797161964dacec27c Mon Sep 17 00:00:00 2001
+From: kungful <blenderkrita@gmail.com>
+Date: Sun, 1 Nov 2026 09:13:55 +0800
+Subject: [PATCH 3/3] =?UTF-8?q?feat(mindmap):=20=E3=80=8C=E6=8F=90?=
+ =?UTF-8?q?=E7=A4=BA=E7=94=9F=E6=88=90=E3=80=8D=E2=80=94=E2=80=94=E4=B8=80?=
+ =?UTF-8?q?=E5=8F=A5=E8=AF=9D=E8=87=AA=E5=8A=A8=E6=8B=86=E6=88=90=E8=8A=82?=
+ =?UTF-8?q?=E7=82=B9=E5=9B=BE=E8=8D=89=E7=A8=BF?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- lib/mindmap.ts: promptToMindMap（本地规则分句 + 关键词判类型 + 目标为根，
+  「因为/所以」挂到上一句；长句标题截断、全文进备注）、reindexMindMap（追加时续号）
+- components/MindMapPanel.tsx: 工具栏「提示生成」+ 弹层（实时显示拆出几个节点），
+  支持「替换当前图」与「接到选中节点」（草稿整体落到现有图右侧并连线，不压卡片）
+- i18n: 三语新增 10 键
+- tests: 分句/类型判定/「因为」嵌套/长句截断/空提示/续号重编
+---
+ components/MindMapPanel.test.mjs |   1 +
+ components/MindMapPanel.tsx      | 175 ++++++++++++++++++++++++++++++-
+ lib/i18n/messages/en.ts          |  10 ++
+ lib/i18n/messages/zh-CN.ts       |  10 ++
+ lib/i18n/messages/zh-TW.ts       |  10 ++
+ lib/mindmap.test.mjs             |  51 +++++++++
+ lib/mindmap.ts                   | 100 ++++++++++++++++++
+ 7 files changed, 355 insertions(+), 2 deletions(-)
+
+diff --git a/components/MindMapPanel.test.mjs b/components/MindMapPanel.test.mjs
+index aa6f57f..150dc28 100644
+--- a/components/MindMapPanel.test.mjs
++++ b/components/MindMapPanel.test.mjs
+@@ -28,6 +28,7 @@ test("the panel opens as its own dialog and never renders on its own", () => {
+   assert.match(html, /disabled=""[^>]*>Insert into composer/);
+   // Both directions of the text hand-off, plus image loading, live in the toolbar.
+   assert.match(html, /From text/);
++  assert.match(html, /From a prompt/);
+   assert.match(html, /Add image/);
+   assert.match(html, /type="file"/);
+ });
+diff --git a/components/MindMapPanel.tsx b/components/MindMapPanel.tsx
+index b817ee0..152c881 100644
+--- a/components/MindMapPanel.tsx
++++ b/components/MindMapPanel.tsx
+@@ -23,6 +23,8 @@ import {
+   dropNodePositions,
+   emptyMindMap,
+   nextNodeId,
++  promptToMindMap,
++  reindexMindMap,
+   serializeMindMap,
+   type MindMapGraph,
+   type MindMapLabels,
+@@ -108,6 +110,8 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+   } | null>(null);
+   const [importOpen, setImportOpen] = useState(false);
+   const [importText, setImportText] = useState("");
++  const [promptOpen, setPromptOpen] = useState(false);
++  const [promptText, setPromptText] = useState("");
+   const [notice, setNotice] = useState<string | null>(null);
+   const fileInputRef = useRef<HTMLInputElement>(null);
+   // Set when the file picker was opened from inside an existing image node.
+@@ -367,8 +371,9 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+           setLinkMenu(null);
+           return;
+         }
+-        if (importOpen) {
++        if (importOpen || promptOpen) {
+           setImportOpen(false);
++          setPromptOpen(false);
+           return;
+         }
+         onClose();
+@@ -385,7 +390,7 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     };
+     window.addEventListener("keydown", onKeyDown, true);
+     return () => window.removeEventListener("keydown", onKeyDown, true);
+-  }, [deleteSelection, importOpen, linkMenu, onClose, selected]);
++  }, [deleteSelection, importOpen, linkMenu, onClose, promptOpen, selected]);
+ 
+   const cycleKind = useCallback((nodeId: string) => {
+     setGraph((current) => ({
+@@ -502,6 +507,51 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+     setNotice(t("chat.mindmapImportDone", { nodes: imported.nodes.length, edges: imported.edges.length }));
+   }, [parsedImport, t]);
+ 
++  const parsedPrompt = useMemo(() => promptToMindMap(promptText), [promptText]);
++
++  /** Inserts a prompt-draft either as the whole graph or as a subtree of the selection. */
++  const applyPrompt = useCallback(
++    (attach: boolean) => {
++      const draft = parsedPrompt;
++      if (draft.nodes.length === 0) {
++        setNotice(t("chat.mindmapPromptEmpty"));
++        return;
++      }
++      const anchorNode =
++        attach && selected?.type === "node" ? graph.nodes.find((node) => node.id === selected.id) : undefined;
++      if (!anchorNode) {
++        nextIdRef.current = nextNodeId(draft);
++        setGraph(draft);
++        setSelected({ type: "node", id: draft.nodes[0].id });
++        setView({ x: 40, y: 40, scale: 1 });
++      } else {
++        const shifted = reindexMindMap(draft, nextIdRef.current);
++        const lastId = shifted.nodes[shifted.nodes.length - 1]?.id ?? nextIdRef.current;
++        nextIdRef.current = bumpNodeId(lastId);
++        // Park the draft to the right of everything, so it never lands on a card.
++        const dx = Math.max(...graph.nodes.map((node) => node.x)) + MINDMAP_NODE_WIDTH + 96;
++        const dy = anchorNode.y;
++        const rootId = shifted.nodes[0].id;
++        setGraph((current) => ({
++          nodes: [
++            ...current.nodes,
++            ...shifted.nodes.map((node) => ({ ...node, x: node.x + dx, y: node.y + dy })),
++          ],
++          edges: [
++            ...current.edges,
++            ...shifted.edges,
++            { id: `e${anchorNode.id}-${rootId}`, from: anchorNode.id, to: rootId, label: "" },
++          ],
++        }));
++        setSelected({ type: "node", id: rootId });
++      }
++      setPromptOpen(false);
++      setPromptText("");
++      setNotice(t("chat.mindmapPromptDone", { nodes: draft.nodes.length }));
++    },
++    [graph.nodes, parsedPrompt, selected, t],
++  );
++
+   // Notices are transient: they only explain a failed pick or a finished import.
+   useEffect(() => {
+     if (!notice) return;
+@@ -646,6 +696,18 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+             </svg>
+             {t("chat.mindmapAddImage")}
+           </button>
++          <button
++            type="button"
++            style={buttonStyle}
++            title={t("chat.mindmapPromptHint")}
++            onClick={() => setPromptOpen(true)}
++          >
++            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
++              <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z" />
++              <path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" />
++            </svg>
++            {t("chat.mindmapPrompt")}
++          </button>
+           <button
+             type="button"
+             style={buttonStyle}
+@@ -1249,6 +1311,115 @@ export function MindMapPanel({ storageKey, onInsert, onClose }: Props) {
+           </div>
+         )}
+ 
++        {promptOpen && (
++          <div
++            style={{
++              position: "absolute",
++              inset: 0,
++              zIndex: 20,
++              background: "rgba(0,0,0,0.42)",
++              display: "flex",
++              alignItems: "center",
++              justifyContent: "center",
++              padding: 18,
++              boxSizing: "border-box",
++            }}
++            onPointerDown={(event) => {
++              if (event.target === event.currentTarget) setPromptOpen(false);
++            }}
++          >
++            <div
++              style={{
++                width: "min(620px, 100%)",
++                maxHeight: "100%",
++                display: "flex",
++                flexDirection: "column",
++                gap: 9,
++                padding: 14,
++                borderRadius: 12,
++                background: "var(--bg)",
++                border: "1px solid var(--border)",
++                boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
++                boxSizing: "border-box",
++              }}
++            >
++              <strong style={{ fontSize: 13 }}>{t("chat.mindmapPromptTitle")}</strong>
++              <span style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--text-dim)" }}>
++                {t("chat.mindmapPromptHintLong")}
++              </span>
++              <textarea
++                value={promptText}
++                onChange={(event) => setPromptText(event.target.value)}
++                onKeyDown={(event) => {
++                  event.stopPropagation();
++                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
++                    event.preventDefault();
++                    applyPrompt(Boolean(selected?.type === "node"));
++                  }
++                }}
++                placeholder={t("chat.mindmapPromptPlaceholder")}
++                autoFocus
++                style={{
++                  minHeight: 112,
++                  resize: "vertical",
++                  padding: 10,
++                  borderRadius: 8,
++                  border: "1px solid var(--border)",
++                  background: "var(--bg-panel)",
++                  color: "var(--text)",
++                  fontSize: 12,
++                  lineHeight: 1.6,
++                  outline: "none",
++                  boxSizing: "border-box",
++                }}
++              />
++              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
++                <span style={{ fontSize: 11.5, color: "var(--text-dim)" }}>
++                  {parsedPrompt.nodes.length > 0
++                    ? t("chat.mindmapPromptSummary", { nodes: parsedPrompt.nodes.length })
++                    : promptText.trim()
++                      ? t("chat.mindmapImportNothing")
++                      : ""}
++                </span>
++                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
++                  <button
++                    type="button"
++                    style={{ ...buttonStyle, color: "var(--text-muted)" }}
++                    onClick={() => setPromptOpen(false)}
++                  >
++                    {t("chat.mindmapCancel")}
++                  </button>
++                  <button
++                    type="button"
++                    disabled={parsedPrompt.nodes.length === 0 || selected?.type !== "node"}
++                    onClick={() => applyPrompt(true)}
++                    style={{
++                      ...buttonStyle,
++                      color: selected?.type === "node" ? "var(--text)" : "var(--text-dim)",
++                    }}
++                  >
++                    {t("chat.mindmapPromptAttach")}
++                  </button>
++                  <button
++                    type="button"
++                    disabled={parsedPrompt.nodes.length === 0}
++                    onClick={() => applyPrompt(false)}
++                    style={{
++                      ...buttonStyle,
++                      background: parsedPrompt.nodes.length > 0 ? "var(--accent)" : "var(--bg-panel)",
++                      borderColor: parsedPrompt.nodes.length > 0 ? "var(--accent)" : "var(--border)",
++                      color: parsedPrompt.nodes.length > 0 ? "#fff" : "var(--text-dim)",
++                      fontWeight: 600,
++                    }}
++                  >
++                    {t("chat.mindmapPromptReplace")}
++                  </button>
++                </div>
++              </div>
++            </div>
++          </div>
++        )}
++
+         {importOpen && (
+           <div
+             style={{
+diff --git a/lib/i18n/messages/en.ts b/lib/i18n/messages/en.ts
+index b5e34c8..84b1e5e 100644
+--- a/lib/i18n/messages/en.ts
++++ b/lib/i18n/messages/en.ts
+@@ -884,6 +884,16 @@ export const enLocale: LocalePlugin = {
+     "chat.mindmapImportEmpty": "Nothing to import: no ● / • lines were found",
+     "chat.mindmapImportDone": "Imported {nodes} nodes and {edges} links",
+     "chat.mindmapImportApply": "Replace current graph",
++    "chat.mindmapPrompt": "From a prompt",
++    "chat.mindmapPromptTitle": "Draft a graph from a prompt",
++    "chat.mindmapPromptHint": "Describe it in one sentence and it is split into a draft graph",
++    "chat.mindmapPromptHintLong": "Write what you want in one sentence (the goal, what comes first, what worries you). This draft comes from local rules — no model call, no network, instant — so you have something to edit right away.",
++    "chat.mindmapPromptPlaceholder": "e.g. move the tea factory from wholesale to online: start with Xiaohongshu, sign two distributors, the risk is production capacity",
++    "chat.mindmapPromptSummary": "{nodes} nodes drafted",
++    "chat.mindmapPromptAttach": "Attach to selected node",
++    "chat.mindmapPromptReplace": "Replace current graph",
++    "chat.mindmapPromptEmpty": "Write a sentence first (at least one clause)",
++    "chat.mindmapPromptDone": "Drafted {nodes} nodes",
+     "chat.mindmapCancel": "Cancel",
+     "chat.mindmapPickKind": "Pick a kind — it connects to the wire",
+     "chat.mindmap.kind.image": "Image",
+diff --git a/lib/i18n/messages/zh-CN.ts b/lib/i18n/messages/zh-CN.ts
+index 20fc9bc..e207471 100644
+--- a/lib/i18n/messages/zh-CN.ts
++++ b/lib/i18n/messages/zh-CN.ts
+@@ -884,6 +884,16 @@ export const zhCNLocale: LocalePlugin = {
+     "chat.mindmapImportEmpty": "没找到 ● / • 开头的行，无法导入",
+     "chat.mindmapImportDone": "已导入 {nodes} 个节点、{edges} 条连线",
+     "chat.mindmapImportApply": "替换当前图",
++    "chat.mindmapPrompt": "提示生成",
++    "chat.mindmapPromptTitle": "从一句话生成脑图",
++    "chat.mindmapPromptHint": "写一句话，自动拆成一版节点图草稿",
++    "chat.mindmapPromptHintLong": "把你想做的事写成一句话（目标、先做什么、担心什么）。这一版是本地规则拆的——不调模型、不联网、立刻出图，先给你一份能直接改的草稿。",
++    "chat.mindmapPromptPlaceholder": "例：想把茶叶厂的批发转到线上，先做小红书每周三条，同时谈两个经销商，风险是产能跟不上",
++    "chat.mindmapPromptSummary": "拆出 {nodes} 个节点",
++    "chat.mindmapPromptAttach": "接到选中节点",
++    "chat.mindmapPromptReplace": "替换当前图",
++    "chat.mindmapPromptEmpty": "先写一句话（至少一个分句）",
++    "chat.mindmapPromptDone": "已生成 {nodes} 个节点",
+     "chat.mindmapCancel": "取消",
+     "chat.mindmapPickKind": "选个类型，直接接上刚拉出的线",
+     "chat.mindmap.kind.image": "图片",
+diff --git a/lib/i18n/messages/zh-TW.ts b/lib/i18n/messages/zh-TW.ts
+index f0177f8..4126933 100644
+--- a/lib/i18n/messages/zh-TW.ts
++++ b/lib/i18n/messages/zh-TW.ts
+@@ -884,6 +884,16 @@ export const zhTWLocale: LocalePlugin = {
+     "chat.mindmapImportEmpty": "沒找到 ● / • 開頭的行，無法匯入",
+     "chat.mindmapImportDone": "已匯入 {nodes} 個節點、{edges} 條連線",
+     "chat.mindmapImportApply": "取代目前圖",
++    "chat.mindmapPrompt": "提示生成",
++    "chat.mindmapPromptTitle": "用一句話生成腦圖",
++    "chat.mindmapPromptHint": "寫一句話，自動拆成一版節點圖草稿",
++    "chat.mindmapPromptHintLong": "把你想做的事寫成一句話（目標、先做什麼、擔心什麼）。這一版是本地規則拆的——不呼叫模型、不連網、立刻出圖，先給你一份可以直接改的草稿。",
++    "chat.mindmapPromptPlaceholder": "例：想把茶葉廠的批發轉到線上，先做小紅書每週三條，同時談兩個經銷商，風險是產能跟不上",
++    "chat.mindmapPromptSummary": "拆出 {nodes} 個節點",
++    "chat.mindmapPromptAttach": "接到選取節點",
++    "chat.mindmapPromptReplace": "取代目前圖",
++    "chat.mindmapPromptEmpty": "先寫一句話（至少一個分句）",
++    "chat.mindmapPromptDone": "已生成 {nodes} 個節點",
+     "chat.mindmapCancel": "取消",
+     "chat.mindmapPickKind": "選個類型，直接接上剛拉出的線",
+     "chat.mindmap.kind.image": "圖片",
+diff --git a/lib/mindmap.test.mjs b/lib/mindmap.test.mjs
+index 9190969..8e603c4 100644
+--- a/lib/mindmap.test.mjs
++++ b/lib/mindmap.test.mjs
+@@ -12,6 +12,8 @@ const {
+   deserializeMindMap,
+   emptyMindMap,
+   nextNodeId,
++  promptToMindMap,
++  reindexMindMap,
+   serializeMindMap,
+ } = await createJiti(import.meta.url).import("./mindmap.ts");
+ 
+@@ -197,3 +199,52 @@ test("text without any bullet line imports nothing", () => {
+   assert.equal(parsed.graph.nodes.length, 0);
+   assert.equal(serializeMindMap(parsed.graph, labels), "");
+ });
++
++test("a one-line prompt becomes a goal-rooted draft graph", () => {
++  const graph = promptToMindMap(
++    "我想把茶叶厂的批发转到线上，先做小红书每周三条，同时谈两个经销商，风险是产能跟不上",
++  );
++  const kinds = graph.nodes.map((item) => item.kind);
++  assert.ok(graph.nodes.length >= 4, "expected at least four clauses");
++  assert.equal(graph.nodes[0].kind, "goal");
++  assert.ok(kinds.includes("risk"));
++  // Everything hangs off the first clause, in the order it was written.
++  const root = graph.nodes[0];
++  const children = graph.edges.filter((edge) => edge.from === root.id).map((edge) => edge.to);
++  assert.deepEqual(children.sort(), graph.nodes.slice(1).map((item) => item.id).sort());
++  assert.match(graph.nodes[0].title, /茶叶厂/);
++});
++
++test("because/so clauses nest under the clause they explain", () => {
++  const graph = promptToMindMap("目标是线上占三成，先做内容，因为没有流量");
++  const step = graph.nodes.find((item) => item.kind === "step");
++  const reason = graph.nodes[graph.nodes.length - 1];
++  assert.ok(step && reason);
++  assert.ok(
++    graph.edges.some((edge) => edge.from === step.id && edge.to === reason.id),
++    "「因为」should attach to the previous step, not the root",
++  );
++});
++
++test("a long clause keeps its full text as the detail", () => {
++  const long = "先把这个季度所有线下经销商的库存和返点政策逐条核对一遍再决定要不要继续压货";
++  const graph = promptToMindMap(long);
++  assert.equal(graph.nodes.length, 1);
++  assert.ok(graph.nodes[0].title.length <= 26);
++  assert.equal(graph.nodes[0].detail, long);
++});
++
++test("a prompt with nothing to split imports nothing", () => {
++  assert.equal(promptToMindMap("").nodes.length, 0);
++  assert.equal(promptToMindMap("   ，。 ").nodes.length, 0);
++});
++
++test("reindexing continues after the current id and rewrites edges", () => {
++  const graph = {
++    nodes: [node("n1", "goal", "A"), node("n2", "step", "B")],
++    edges: [{ id: "e1", from: "n1", to: "n2", label: "" }],
++  };
++  const shifted = reindexMindMap(graph, "n5");
++  assert.deepEqual(shifted.nodes.map((item) => item.id), ["n5", "n6"]);
++  assert.deepEqual(shifted.edges.map((edge) => `${edge.id}:${edge.from}->${edge.to}`), ["en5-n6:n5->n6"]);
++});
+diff --git a/lib/mindmap.ts b/lib/mindmap.ts
+index 0f5b9e8..ca21b8e 100644
+--- a/lib/mindmap.ts
++++ b/lib/mindmap.ts
+@@ -445,3 +445,103 @@ export function deserializeMindMap(text: string, labels: MindMapLabels): MindMap
+ 
+   return { graph: autoLayoutMindMap({ nodes, edges }), warnings };
+ }
++
++/**
++ * Prompt → graph, the reverse of `serializeMindMap`: one sentence about what the
++ * user wants becomes a first-draft node graph they can edit. It runs locally on
++ * keyword rules — instant and free — so it never blocks on a model round trip.
++ */
++
++const PROMPT_KIND_RULES: { kind: MindMapNodeKind; pattern: RegExp }[] = [
++  { kind: "risk", pattern: /风险|担心|隐患|坑|失败|阻力|问题|risk|concern|worry/i },
++  { kind: "condition", pattern: /如果|假如|前提|条件|除非|只要|if |unless/i },
++  { kind: "result", pattern: /结果|最终|产出|交付|验收|上线|完成|result|outcome|deliver/i },
++  {
++    kind: "step",
++    pattern: /先|首先|然后|接着|之后|再|同时|顺便|其次|最后|下一步|步骤|step|then|next|first/i,
++  },
++  { kind: "goal", pattern: /目标|目的|想要|我想|我要|打算|希望|计划|愿景|goal|want|wish|aim/i },
++];
++
++/** A comma before a linking word starts a new clause: 「先做A，同时做B」 */
++const PROMPT_CONNECTOR =
++  /[，,]?\s*(然后|接着|之后|同时|另外|其次|最后|而且|并且|以及|但是|不过|所以|因为|首先|先|风险|担心|隐患|前提|条件|如果|除非|只要|目标|目的|结果|问题)\s*/g;
++
++const PROMPT_TITLE_MAX = 26;
++const PROMPT_MAX_CLAUSES = 14;
++const PROMPT_LEAD =
++  /^(首先|然后|接着|之后|同时|另外|其次|最后|而且|并且|以及|但是|不过|所以|因为|先|风险是|风险|担心|目的是|目的|目标是|目标|结果是|结果|问题是|问题|前提是|前提|条件是|条件)\s*[，,]?\s*/;
++
++function splitPromptClauses(prompt: string): string[] {
++  return prompt
++    .replace(/\r\n?/g, "\n")
++    .replace(PROMPT_CONNECTOR, "。$1")
++    .split(/[。！？；;\n]+/)
++    .map((part) => part.trim().replace(/^[、，,\s]+/, "").replace(/[、，,\s]+$/, ""))
++    .filter((part) => part.replace(/[^\p{L}\p{N}]/gu, "").length >= 2)
++    .slice(0, PROMPT_MAX_CLAUSES);
++}
++
++function classifyPromptClause(clause: string): MindMapNodeKind {
++  for (const rule of PROMPT_KIND_RULES) {
++    if (rule.pattern.test(clause)) return rule.kind;
++  }
++  return "idea";
++}
++
++function promptClauseTitle(clause: string): string {
++  const trimmed = clause.replace(PROMPT_LEAD, "").trim() || clause.trim();
++  return trimmed.length > PROMPT_TITLE_MAX ? `${trimmed.slice(0, PROMPT_TITLE_MAX - 1)}…` : trimmed;
++}
++
++/**
++ * Turns a prompt into a goal-rooted graph: the first clause becomes the root,
++ * the rest hang off it in order, and 「因为/所以」 clauses nest under the clause
++ * they explain. Long clauses keep their full text as the node detail.
++ */
++export function promptToMindMap(prompt: string): MindMapGraph {
++  const clauses = splitPromptClauses(prompt);
++  if (clauses.length === 0) return emptyMindMap();
++
++  const nodes: MindMapNode[] = [];
++  const edges: MindMapEdge[] = [];
++  const add = (kind: MindMapNodeKind, clause: string, index: number) => {
++    const title = promptClauseTitle(clause);
++    const node = createMindMapNode(kind, 0, 0, `n${index + 1}`, title);
++    const detail = clause.trim();
++    if (detail && detail !== title) node.detail = detail;
++    nodes.push(node);
++    return node;
++  };
++
++  const firstKind = classifyPromptClause(clauses[0]);
++  const root = add(firstKind === "step" || firstKind === "result" ? "goal" : firstKind, clauses[0], 0);
++  let previous = root;
++
++  for (let index = 1; index < clauses.length; index += 1) {
++    const clause = clauses[index];
++    const node = add(classifyPromptClause(clause), clause, index);
++    const parent = /^(因为|所以)/.test(clause) ? previous : root;
++    edges.push({ id: `e${parent.id}-${node.id}`, from: parent.id, to: node.id, label: "" });
++    previous = node;
++  }
++
++  return autoLayoutMindMap({ nodes, edges });
++}
++
++/** Re-indexes a graph so its ids continue after `nextId` (used when appending). */
++export function reindexMindMap(graph: MindMapGraph, nextId: string): MindMapGraph {
++  const start = Number(/^n(\d+)$/.exec(nextId)?.[1] ?? 1);
++  const map = new Map<string, string>();
++  graph.nodes.forEach((node, index) => {
++    map.set(node.id, `n${start + index}`);
++  });
++  return {
++    nodes: graph.nodes.map((node) => ({ ...node, id: map.get(node.id) ?? node.id })),
++    edges: graph.edges.map((edge) => {
++      const from = map.get(edge.from) ?? edge.from;
++      const to = map.get(edge.to) ?? edge.to;
++      return { ...edge, id: `e${from}-${to}`, from, to };
++    }),
++  };
++}
