@@ -8,6 +8,14 @@
 
 ## 三种使用方式，按需要选
 
+其它电脑拿到这套东西：
+
+```bash
+git clone https://github.com/kungful/me_skills_pi.git
+cd me_skills_pi/projects/flashvsr      # 所有文档、源码、脚本都在这里
+```
+
+
 | 你想干什么 | 需要什么 | 看哪节 |
 | --- | --- | --- |
 | **只是想用**（放大视频） | 一台能开浏览器的电脑 + 一个还在跑的实例地址 | [DEPLOY.md §1](DEPLOY.md#1-最快路径直接开一台用现成镜像) |

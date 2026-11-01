@@ -83,7 +83,8 @@ curl -sS -X POST "$API/open/instance/deploy" \
 
 ```bash
 # 轮询到 status = running；首次铺镜像可能要 2~3 分钟，别中断
-watch -n 5 'python "$X" instance <实例id> | grep -E "\"(status|ssh_domain|ssh_port|price_per_hour)\""'
+X=~/.pi/agent/skills/xgc-api/scripts/xgc.py
+watch -n 5 "python $X instance <实例id> | grep -E '\"(status|ssh_domain|ssh_port|price_per_hour)\"'"
 ```
 
 拿到 `running` 之后，**计费才开始**。WebUI 还要再等 ~40 s（容器自启脚本）：
