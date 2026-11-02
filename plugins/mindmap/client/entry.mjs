@@ -222,8 +222,11 @@ const CSS = `
 .mmp-title-in { color: var(--text); font-size: 12.5px; font-weight: 600; padding: 0; }
 .mmp-detail-in { flex: 1 1 auto; min-height: 0; resize: none; color: var(--text-dim); font-size: 11px; line-height: 1.35; padding: 0; }
 .mmp-caption-in { color: var(--text-dim); font-size: 10.5px; padding: 0; }
-.mmp-port { position: absolute; right: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); cursor: crosshair; padding: 0; }
-.mmp-port:hover { background: var(--accent); }
+.mmp-port { position: absolute; right: -9px; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; border: 2px solid var(--accent); background: color-mix(in srgb, var(--bg) 78%, transparent); cursor: crosshair; padding: 0; transition: transform .12s, background .12s; }
+.mmp-port::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--accent); opacity: .55; }
+.mmp-port:hover, .mmp-node:hover .mmp-port { background: var(--accent); transform: scale(1.12); }
+.mmp-port:hover::after, .mmp-node:hover .mmp-port::after { opacity: 1; background: var(--bg); }
+.mmp-kbd { margin-left: auto; padding: 0 4px; font-size: 9px; line-height: 1.5; border-radius: 4px; border: 1px solid var(--border); color: var(--text-dim); font-family: var(--mono, monospace); }
 .mmp-imgbox { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 6px; overflow: hidden; background: color-mix(in srgb, var(--border) 26%, transparent); }
 .mmp-imgbox img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
 .mmp-imgpick { width: 100%; height: 100%; border: 0; background: none; color: var(--text-dim); font: inherit; font-size: 11px; cursor: pointer; }
@@ -252,9 +255,9 @@ const CSS = `
 .mmp-raw[hidden] { display: none; }
 .mmp-raw pre { max-height: 160px; overflow: auto; margin: 6px 0 0; padding: 8px; border-radius: 8px; background: var(--code-bg, rgba(0,0,0,.2)); border: 1px solid var(--border); white-space: pre-wrap; word-break: break-word; font-family: var(--mono, monospace); font-size: 11px; color: var(--text); }
 .mmp-dialog .row .grow { flex: 1 1 auto; font-size: 11px; color: var(--text-dim); }
-.mmp-kindmenu { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: 10px; background: var(--bg-elev2, #1b1b22); border: 1px solid var(--border); box-shadow: 0 12px 32px rgba(0,0,0,.4); min-width: 132px; }
+.mmp-kindmenu { position: fixed; z-index: 10001; display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: 10px; background: var(--bg-elev2, #1b1b22); border: 1px solid var(--border); box-shadow: 0 12px 32px rgba(0,0,0,.4); min-width: 132px; }
 .mmp-kindmenu .label { font-size: 10px; color: var(--text-dim); padding: 2px 6px 4px; }
-.mmp-kindmenu button { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border: 0; border-radius: 6px; background: none; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; text-align: left; }
+.mmp-kindmenu button { display: flex; align-items: center; gap: 7px; min-width: 128px; padding: 5px 8px; border: 0; border-radius: 6px; background: none; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; text-align: left; }
 .mmp-kindmenu button:hover { background: var(--row-active, color-mix(in srgb, var(--accent) 18%, transparent)); }
 .mmp-kindmenu .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
 .mmp-overlay { position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; padding: 3vh 3vw; }
@@ -308,6 +311,7 @@ function createEditor(host, opts = {}) {
 	let dragState = null;
 	let toastTimer = null;
 	let kindMenuEl = null;
+	let kindMenuOff = null;
 	let imageTargetId = null; // 文件选择器是为哪个节点打开的（null = 新建）
 	let destroying = false;
 	const offs = [];
@@ -733,40 +737,78 @@ function createEditor(host, opts = {}) {
 		closeKindMenu();
 		const menu = el("div", "mmp-kindmenu");
 		menu.append(el("div", "label", S.pickKind));
-		for (const kind of MINDMAP_KINDS) {
+		MINDMAP_KINDS.forEach((kind, index) => {
 			const item = el("button");
 			item.type = "button";
+			item.dataset.kind = kind;
 			const dot = el("span", "dot");
 			dot.style.background = KIND_COLORS[kind];
-			item.append(dot, el("span", "", S.kinds[kind]));
+			item.append(dot, el("span", "", S.kinds[kind]), el("kbd", "mmp-kbd", String(index + 1)));
 			item.addEventListener("click", () => {
 				closeKindMenu();
 				onPick(kind);
 			});
 			menu.append(item);
-		}
+		});
 		document.body.append(menu);
 		const rect = menu.getBoundingClientRect();
-		menu.style.left = `${Math.min(clientX, window.innerWidth - rect.width - 8)}px`;
-		menu.style.top = `${Math.min(clientY, window.innerHeight - rect.height - 8)}px`;
+		menu.style.left = `${Math.max(8, Math.min(clientX, window.innerWidth - rect.width - 8))}px`;
+		menu.style.top = `${Math.max(8, Math.min(clientY, window.innerHeight - rect.height - 8))}px`;
 		kindMenuEl = menu;
-		setTimeout(() => {
-			const off = (event) => {
-				if (!menu.contains(event.target)) {
-					closeKindMenu();
-					window.removeEventListener("pointerdown", off, true);
-				}
-			};
-			window.addEventListener("pointerdown", off, true);
-			offs.push(() => window.removeEventListener("pointerdown", off, true));
-		}, 0);
+
+		// 点外面关掉；1-7 直接选；Esc 取消。注意：只对「当前这个菜单」生效——
+		// 之前每次开菜单都挂一个闭包在 window 上，旧闭包会把新菜单一起关掉（真实鼠标
+		// 事件下表现为「菜单弹出来但点不动」）。
+		const onDown = (event) => {
+			if (kindMenuEl !== menu) return;
+			if (!menu.contains(event.target)) closeKindMenu();
+		};
+		const onKey = (event) => {
+			if (kindMenuEl !== menu) return;
+			if (event.key === "Escape") {
+				event.stopPropagation();
+				event.preventDefault();
+				closeKindMenu();
+				return;
+			}
+			const n = Number(event.key);
+			if (Number.isInteger(n) && n >= 1 && n <= MINDMAP_KINDS.length) {
+				event.stopPropagation();
+				event.preventDefault();
+				closeKindMenu();
+				onPick(MINDMAP_KINDS[n - 1]);
+			}
+		};
+		window.addEventListener("pointerdown", onDown, true);
+		window.addEventListener("keydown", onKey, true);
+		kindMenuOff = () => {
+			window.removeEventListener("pointerdown", onDown, true);
+			window.removeEventListener("keydown", onKey, true);
+		};
 	}
 
 	function closeKindMenu() {
+		if (kindMenuOff) {
+			kindMenuOff();
+			kindMenuOff = null;
+		}
 		if (kindMenuEl) {
 			kindMenuEl.remove();
 			kindMenuEl = null;
 		}
+	}
+
+	/** 把画布坐标夹进可视区，保证新建的节点不会落到视野外。 */
+	function clampToView(point) {
+		const rect = canvas.getBoundingClientRect();
+		const minX = (8 - view.x) / view.scale;
+		const minY = (8 - view.y) / view.scale;
+		const maxX = Math.max(minX, (rect.width - 8 - view.x) / view.scale - NODE_W);
+		const maxY = Math.max(minY, (rect.height - 8 - view.y) / view.scale - NODE_H);
+		return {
+			x: Math.min(Math.max(point.x, minX), maxX),
+			y: Math.min(Math.max(point.y, minY), maxY),
+		};
 	}
 
 	// ---- 卡片拖动 ----
@@ -838,9 +880,12 @@ function createEditor(host, opts = {}) {
 	canvas.addEventListener("contextmenu", (event) => {
 		if (event.target.closest(".mmp-node")) return;
 		event.preventDefault();
-		const point = canvasPoint(event.clientX, event.clientY);
+		const point = clampToView({
+			x: canvasPoint(event.clientX, event.clientY).x - NODE_W / 2,
+			y: canvasPoint(event.clientX, event.clientY).y - NODE_H / 2,
+		});
 		openKindMenu(event.clientX, event.clientY, (kind) => {
-			const id = addNode(kind, { x: point.x - NODE_W / 2, y: point.y - NODE_H / 2 });
+			const id = addNode(kind, { x: point.x, y: point.y });
 			if (kind === "image" && id) pickImageFor(id);
 		});
 	});

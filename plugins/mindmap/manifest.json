@@ -2,7 +2,7 @@
 	"id": "mindmap",
 	"name": "脑图",
 	"icon": "🧠",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"apiVersion": 1,
 	"description": "节点逻辑图编辑器：模仿 ComfyUI 的拉线建节点，一句话交给 pi 的模型生成图，再一键序列化成缩进大纲插进输入框。移植自 pi-web-custom 的 MindMapPanel。",
 	"permissions": [
