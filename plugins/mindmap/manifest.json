@@ -1,0 +1,28 @@
+{
+	"id": "mindmap",
+	"name": "脑图",
+	"icon": "🧠",
+	"version": "1.1.0",
+	"apiVersion": 1,
+	"description": "节点逻辑图编辑器：模仿 ComfyUI 的拉线建节点，一句话交给 pi 的模型生成图，再一键序列化成缩进大纲插进输入框。移植自 pi-web-custom 的 MindMapPanel。",
+	"permissions": [
+		"http"
+	],
+	"settings": [
+		{
+			"key": "model",
+			"type": "text",
+			"label": "AI 生成用的模型",
+			"default": "",
+			"hint": "留空用 pi 当前默认模型；也可写 provider/model，例如 anthropic/claude-sonnet-4"
+		},
+		{
+			"key": "timeoutSec",
+			"type": "number",
+			"label": "AI 生成超时（秒）",
+			"default": 90,
+			"min": 15,
+			"max": 600
+		}
+	]
+}
