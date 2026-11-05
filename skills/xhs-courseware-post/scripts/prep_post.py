@@ -125,11 +125,12 @@ def pick_slots(data, cap, with_steps=False):
         for s in steps:
             add(s, "范画步骤")
 
-    # 3) 知识页素材，优先「面部/特写」那张
+    # 3) 知识页素材：最多取 2 张，特写优先（近景细节比远景更有点击欲）
     know = [pg["uses"][0] for pg in by_type.get("knowledge", []) if pg.get("uses")]
     if know:
-        face = next((s for s in know if "面部" in s or "特写" in s), None)
-        add(face or know[0], "观察素材：近景细节")
+        close = [s for s in know if "面部" in s or "特写" in s]
+        for s in (close + [s for s in know if s not in close])[:2]:
+            add(s, "观察素材：近景细节")
 
     # 4) 实物观察页（真东西，卖点）
     real = []
@@ -275,7 +276,7 @@ def build_copy(data, n_pages, brand, with_steps=False):
     poses = [clean(pg.get("title", "")) for pg in by.get("poses", [])]
     ideas = [clean(pg.get("title", "")) for pg in by.get("idea_list", [])]
     if obs or poses or ideas:
-        L.append("· 观察与联想：外形特点 / 身体结构 / 各种姿势 / 还会出现在哪里")
+        L.append("· 观察与联想：外形特点 / 组成部分 / 各种样子 / 还会出现在哪里")
     # 「·」在这里是列举分隔符，不是多余符号，先换成顿号再 clean（clean 会把它吃掉）
     c = [clean(pg.get("title", "").replace("·", "，")).replace("同类色小知识", "").strip("，—- ")
          for pg in by.get("color_swatches", [])]
