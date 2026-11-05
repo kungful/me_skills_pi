@@ -1,13 +1,21 @@
 ---
 name: xhs-courseware-post
-description: 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 用于：把课件发小红书/发笔记/上架；给课件写小红书文案、起标题、配话题标签；挑图、补封面、去重图；发出去以后核实、看通知、回评论。要做课件本身（做课件/改课件/导 PDF）用 courseware-factory。
+description: 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 默认「成品流」：只发成品+成品细节，不发步骤图；文案固定带 AIGC 声明与购买引导（课件 / 做课件的工具）。用于：把课件发小红书/发笔记/上架；给课件写小红书文案、起标题、配话题标签；挑图、补封面、去重图；发出去以后核实、看通知、回评论。要做课件本身（做课件/改课件/导 PDF）用 courseware-factory。
 ---
 
 # 小红书发课件 · 一条龙
 
 把 `courseware-factory` 产出的 `project.json` 变成一条真发出去的小红书图文笔记，并负责发完之后的核实与回评论。
 
-**一句话流程**：`prep_post.py`（选图+补封面+生成文案草稿）→ **人工/agent 改两处文案** → `publish_post.py`（发布+核实）→ `replies.py`（回评论）。
+**一句话流程**：`published.py --list`（查台账，已发的课题不能发）→ `prep_post.py`（选图+补封面+裁细节+生成文案草稿）→ **人工/agent 改两处文案** → `publish_post.py`（发布+核实+登记台账）→ `replies.py`（回评论）。
+
+## 发布策略（2026-11 起，改策略先看这段）
+
+1. **一个课题只发一次，一张图只出现一次**。发布台账 `发布台账.json`（在项目根）记录每个课题发过几篇、每张图的 md5。`prep_post.py` 发布前必查：课题已发 → 直接拒绝并列出未发课题；图片 md5 已用过 → 拒绝。用 `--next` 自动挑未发课题，别每次手选。
+2. **只发成品，不发步骤图**。步骤图证明「这是套模板」，而且是最不好看的几张；成品图才是点击和转化的来源。默认选图 = 封面成品 + 从成品裁的局部特写 + 知识素材 / 实物 / 材料。要恢复老策略加 `--with-steps`。
+3. **必须写明 AI 生成**。画面是模型出的，正文里固定带 `AI_DISCLOSURE` 那段（「画面由 AI 生成，课题设计/教学流程/文字由人工编排校对」）。这段话有两个作用：平台 AIGC 合规，以及挡掉「AI 画的还卖钱」的举报。MCP 的发布接口**没有 AIGC 勾选字段**，所以只能写在正文；发完最好去 App/创作中心看有没有需要补的标识。
+4. **必须有购买引导，先卖课件再卖工具**。正文固定带 `CTA_DECK` / `CTA_CUSTOM` / `CTA_TOOL` 三行：单套/课包 → 点题定制 → 私信「工具」（做课件的工具，高客单）。CTA 只能引导「评论区 / 私信 / 主页」，**不能出现微信/QQ/电话/外链**。
+5. 三行 CTA 是常量（`prep_post.py` 顶部），改口播方式改那里，不要每次手改 post.json。
 
 ## 作用域（先看这条）
 
@@ -40,30 +48,46 @@ Start-Process 'C:\Users\hua\tools\xiaohongshu-mcp\xiaohongshu-mcp.exe' `
 
 ## 一条龙：四步
 
+### 第 0 步 · 查台账（**先做这步，不然白干**）
+
+```bash
+cd "C:/Users/hua/Documents/备份代码/小红书卖课件"
+python "C:/Users/hua/.pi/agent/skills/xhs-courseware-post/scripts/published.py" --list
+```
+
+- 已发过的课题会列出来，**默认拒绝再发**（粉丝会认出同一张图，平台也会判重）。
+- 未发课题为 0 → 说明该出新课件了，用 `courseware-factory` 做新课，别硬重发。
+- 台账第一次用要先从主页初始化：`published.py --sync`（历史笔记没有图片 md5，只能按课题名去重；新发的会自动记 md5）。
+
 ### 第 1 步 · 生成草稿
 
 ```bash
 cd "C:/Users/hua/Documents/备份代码/小红书卖课件"
-python "C:/Users/hua/.pi/agent/skills/xhs-courseware-post/scripts/prep_post.py" "项目/小象洗澡-4-6岁/project.json"
+python "C:/Users/hua/.pi/agent/skills/xhs-courseware-post/scripts/prep_post.py" --next
+python .../prep_post.py "项目/圣诞树-4-6岁/project.json"      # 指定课题
 ```
 
 它会自动做四件事，并打印一份**选图理由报告**（哪张图因为什么被选中/丢弃）：
 
-1. **按页面语义选图**：成品（封面）→ 范画每一步 → 知识页素材（优先「面部/特写」）→ 实物观察 → 材料工具；默认最多 9 张，超了从最不重要的开始丢（材料 → 实物 → 素材 → 步骤），封面永远保留。
+1. **按页面语义选图（成品流）**：成品（封面）→ 其它成品视角 → 知识页素材（优先「面部/特写」）→ 实物观察 → 材料工具；**默认跳过 `step` 页**。默认最多 9 张，超了从最不重要的开始丢（材料 → 实物 → 素材），封面永远保留。
 2. **md5 去重**：三套课件都有「范画步骤5_加背景」与「范画成品」**内容完全相同**的坑，会自动跳过后一张。
-3. **复制到纯 ASCII 暂存目录** `C:\Users\hua\tools\xiaohongshu-mcp\upload\<slug>\`，命名 `01_cover.jpg`、`02.jpg`…（**中文路径会导致发布失败**，必须转存）。
+3. **复制到纯 ASCII 暂存目录** `C:\Users\hua\tools\xiaohongshu-mcp\upload\<slug>\`，命名 `01_cover.jpg`、`02_detail1.jpg`…（**中文路径会导致发布失败**，必须转存）。
 4. **封面补成 3:4**（首页瀑布流按 3:4 裁切，1536x1024 的横图会被切掉两边）：取四边像素中位色做背景补边，接缝看不出来，输出 1080x1440。
+5. **从成品裁细节图**：默认 2 张（`--details`），从成品图按不同区域裁 3:4 放大。取代步骤图的「凑图数」作用，还比步骤图好看。
 
 输出 `项目/<课件>/post.json`：`title` / `title_alt` / `content` / `tags` / `images` / `visibility`。
 
-常用参数：`--cap 12`（多放几张）、`--slug xxx`（指定暂存目录名）、`--visibility` 见第 3 步。
+常用参数：`--next`（自动挑未发课题）、`--cap 12`（多放几张）、`--details 3`（多裁几张成品细节）、`--with-steps`（也发步骤图，老策略）、`--allow-repeat`（确实要重发）、`--slug xxx`（指定暂存目录名）。
 
 ### 第 2 步 · 改两处文案（**别跳，这一步决定点击率**）
 
 脚本只能生成机械的那 80%，`content` 里留了**两个 `【】` 占位**，必须改掉：
 
-1. **开头钩子** —— 第一行，决定别人点不点。写画面里最抓人的那个细节，不要写"这是一套课件"。
+1. **开头钩子** —— 第一行，决定别人点不点。写画面里最抓人的那个细节 + 「一节课孩子能画成这样」，不要写"这是一套课件"。
 2. **「这个课题好上的地方」** —— 写 2~3 条，站在买课件的老师角度：形体好不好抓形 / 实物观察是不是真东西 / 颜色挑不挑笔。
+
+**其余段落不要删**：`🖼 图上就是成品`、`🛒 想要这套`（三行 CTA）、`🤖 说明（AIGC）`、`📎 品牌`。
+其中 CTA 和 AIGC 声明的文案在 `prep_post.py` 顶部常量里，要统一换说法改那里，不要每篇手改。
 
 **`publish_post.py` 看到正文里还有 `【】` 会拒绝发布**，改完再发。改的时候直接编辑 `post.json` 的 `content` 字段。
 
@@ -101,19 +125,26 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 
 ## 红线
 
-1. **中文路径不能进发布请求**。图片必须先转存到 ASCII 目录（`prep_post.py` 已经做了，别绕开它手拼 `images`）。
-2. **品牌名占位符（`【你的机构名】`）的课件直接拒绝发布** —— 品牌会印在每一页页脚，发出去就是废品。先改 `project.json` 的 `meta.brand`，再重跑 `工厂/builder.py` + `工厂/exporter.py`，然后才发。硬要发加 `--allow-placeholder-brand`。
-3. **标题 ≤20 字、正文 ≤1000 字、标签 ≤10 个、图文 ≤18 张**（服务端会截断标签、拒绝超长正文，脚本前置就拦）。
-4. **默认发「仅自己可见」，验证过再转公开**。公开版建议对标题/正文做点微调，避免和测试笔记撞重复检测。
-5. **不要用个人生活号发课件**。笔记会被推给关注你生活内容的粉丝，画像乱掉、转化极差 —— 要用垂直号。当前 `xiaohongshu-mcp` 登录的号是不是垂直号，发之前确认一下。
-6. 一条龙里 `工厂/pipeline.py`、`工厂/builder.py` 等**必须带 `--no-ui`**（否则会弹浏览器窗口）。
-7. 别动用户的 WPS 文档；`out/` 里的 pptx/pdf 常被 WPS 锁住，写不进去就交付到 `out_new/`。
+1. **同一课题 / 同一张图不能重发**。默认由台账拦截（课题名 + 图片 md5 双重），不要习惯性 `--allow-repeat` —— 粉丝认出「又是这只大象」比少发一篇伤得多。真要重发同一课题，必须重出图（新 md5）并重写文案。
+2. **AIGC 声明不能删、不能弱化**。画面是 AI 出的，正文里必须留 `🤖 说明` 那段。删了既不符合平台对 AI 内容的标注要求，也容易被同行举报「AI 生成还当原创课件卖」。
+3. **CTA 不能出现微信 / QQ / 电话 / 外链 / "加我"**，也不能在正文里写价格（价格写评论区或私信）。只能引导「评论区扣课题名 / 私信 / 主页合集」。
+4. **中文路径不能进发布请求**。图片必须先转存到 ASCII 目录（`prep_post.py` 已经做了，别绕开它手拼 `images`）。
+5. **品牌名占位符（`【你的机构名】`）的课件直接拒绝发布** —— 品牌会印在每一页页脚，发出去就是废品。先改 `project.json` 的 `meta.brand`，再重跑 `工厂/builder.py` + `工厂/exporter.py`，然后才发。硬要发加 `--allow-placeholder-brand`。
+6. **标题 ≤20 字、正文 ≤1000 字、标签 ≤10 个、图文 ≤18 张**（服务端会截断标签、拒绝超长正文，脚本前置就拦）。
+7. **默认发「仅自己可见」，验证过再转公开**。公开版建议对标题/正文做点微调，避免和测试笔记撞重复检测。
+8. **不要用个人生活号发课件**。笔记会被推给关注你生活内容的粉丝，画像乱掉、转化极差 —— 要用垂直号。当前 `xiaohongshu-mcp` 登录的号是不是垂直号，发之前确认一下。
+9. 一条龙里 `工厂/pipeline.py`、`工厂/builder.py` 等**必须带 `--no-ui`**（否则会弹浏览器窗口）。
+10. 别动用户的 WPS 文档；`out/` 里的 pptx/pdf 常被 WPS 锁住，写不进去就交付到 `out_new/`。
 
 ## 命令速查
 
 | 目的 | 命令 |
 | --- | --- |
-| 生成草稿 | `python .../scripts/prep_post.py 项目/<课件>/project.json [--cap 12] [--slug x]` |
+| 查台账（先做） | `python .../scripts/published.py --list` |
+| 从主页初始化台账 | `python .../scripts/published.py --sync` |
+| 生成草稿（自动挑未发） | `python .../scripts/prep_post.py --next` |
+| 生成草稿（指定课题） | `python .../scripts/prep_post.py 项目/<课件>/project.json [--cap 12] [--details 3]` |
+| 生成草稿（带步骤图） | `python .../scripts/prep_post.py 项目/<课件>/project.json --with-steps` |
 | 校验（不发） | `python .../scripts/publish_post.py 项目/<课件>/post.json --dry-run` |
 | 发（仅自己可见） | `python .../scripts/publish_post.py 项目/<课件>/post.json` |
 | 发（公开） | `python .../scripts/publish_post.py 项目/<课件>/post.json --visibility public` |
@@ -140,9 +171,13 @@ python .../replies.py stats                                     # 粉丝/赞藏/
   ```
   ⚠️ Windows 的 Python **不认 git-bash 的 `/tmp/...` 路径**（会当成 `C:\tmp\...`），要写 Windows 真实路径。
 - 这个 MCP 的响应常常**套两层** `data.data`（通知未读数、笔记列表都是），取数据要往里挖一层。
+- **`/api/v1/user/me` 会偶发返回空的 `data.data`**（风控/超时），看起来像「我一条笔记都没有」。`xhs.my_notes()` 已内置重试 3 次；自己写脚本拉主页时也要重试，别拿空结果去判重。
+- 台账 key 的归一化（`published.norm`）会去掉年龄、页数、`创意美术`、`课件`、标点 —— 标题 `《小象洗澡》4-6岁创意美术课件26页` 和项目名 `小象洗澡-4-6岁` 会归一到同一个 key。改 `norm` 后必须重建台账（删掉 `发布台账.json` 再 `--sync`），否则旧 key 和 `--next` 对不上。
 - 通知列表结构：`data.data.{tab,filtered,items[]}`，item 形如 `{id,type,title,time,from:{user_id,nickname,xsec_token},feed_id,feed_title}`。
 - **`范画步骤5_加背景` 和 `范画成品` md5 相同**（三套课件都这样），不去重会发两张一样的图。
-- 封面必须 3:4；直接裁会切掉两边，要**补边**（取边缘中位色）。
+- **步骤图会让笔记像模板广告**：默认已经不发，别为了凑图数又把 `--with-steps` 打开；要凑图数用 `--details`。
+- **MCP 发布接口没有 AIGC 标识字段**，AI 声明只能写正文（`AI_DISCLOSURE`）。发完去 App 看是否有「内容由 AI 生成」选项要补勾。
+- **封面必须 3:4**；直接裁会切掉两边，要**补边**（取边缘中位色）。细节图本身裁成 3:4，不触发二次裁切。
 - Windows 控制台是 GBK，脚本里打印 emoji 会 `UnicodeEncodeError` —— 脚本已做 `utf-8` 重定向，自己加打印时注意。
 - `.ps1` 存成 UTF-8 **带 BOM**；`.cmd` 存成纯 ASCII **不带 BOM**（带 BOM 的 cmd 会执行失败）。
 - 解析课件数据时注意：`images[]` 里是 **`slot`** 字段（没有 id/filename），实际路径规则是 `img_sell/<slot>.jpg` 优先、其次 `img/<slot>.png`，跟 `工厂/project.py` 一致。
@@ -160,9 +195,13 @@ C:/Users/hua/.pi/agent/skills/xhs-courseware-post/
 ├── SKILL.md
 └── scripts/
     ├── xhs.py             HTTP 封装 + 标题字数算法（镜像服务端 Go 实现）+ 规则校验
-    ├── prep_post.py       project.json -> post.json（选图/去重/补封面/生成文案）
-    ├── publish_post.py    发布 + 回主页 diff 核实
+    ├── published.py       发布台账：课题去重 / 图片 md5 去重 / --sync / --list
+    ├── prep_post.py       project.json -> post.json（选图/去重/补封面/裁细节/生成文案）
+    ├── publish_post.py    发布 + 回主页 diff 核实 + 成功后登记台账
     └── replies.py         未读/通知/评论/回复/账号数据
+
+C:/Users/hua/Documents/备份代码/小红书卖课件/
+└── 发布台账.json         ← 已发课题 + 已用图片 md5（去重的唯一依据）
 
 C:/Users/hua/tools/xiaohongshu-mcp/          ← MCP 本体 + 图片 ASCII 暂存区
 ├── xiaohongshu-mcp.exe / xiaohongshu-login.exe

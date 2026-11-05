@@ -84,21 +84,35 @@ def my_profile(timeout=300):
     return call("/api/v1/user/me", timeout=timeout)
 
 
-def my_notes(timeout=300):
-    r = my_profile(timeout=timeout)
-    if not r.get("success"):
-        return []
-    inner = r.get("data", {}).get("data", {}) or {}
-    out = []
-    for f in inner.get("feeds", []) or []:
-        c = f.get("noteCard", {}) or {}
-        out.append({
-            "id": f.get("id"),
-            "xsec_token": f.get("xsecToken"),
-            "title": c.get("displayTitle") or "",
-            "type": c.get("type") or "",
-        })
-    return out
+def my_notes(timeout=300, retries=3):
+    """我的主页笔记列表。
+
+    这个接口偶发返回空 data.data（风控/超时），不是没笔记 —— 所以重试几次，
+    真没笔记的情况极少（账号至少有历史笔记）。
+    """
+    import time
+    for i in range(max(1, retries)):
+        r = my_profile(timeout=timeout)
+        if r.get("success"):
+            inner = r.get("data", {}).get("data", {}) or {}
+            feeds = inner.get("feeds") or []
+            if feeds:
+                out = []
+                for f in feeds:
+                    c = f.get("noteCard", {}) or {}
+                    out.append({
+                        "id": f.get("id"),
+                        "xsec_token": f.get("xsecToken"),
+                        "title": c.get("displayTitle") or "",
+                        "type": c.get("type") or "",
+                    })
+                return out
+            if i == 0 and not feeds:
+                # 空列表可能是真没发过笔记，但也可能是偶发空包；继续重试
+                pass
+        if i < retries - 1:
+            time.sleep(5)
+    return []
 
 
 def publish(title, content, images, tags=None, visibility=None, is_original=False,

@@ -20,6 +20,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import xhs  # noqa: E402
+import published  # noqa: E402
 from xhs import utf8_stdout  # noqa: E402
 
 VIS = {"tmp": "仅自己可见", "public": "公开可见", "friends": "仅互关好友可见"}
@@ -90,6 +91,25 @@ def main():
         return 2
     print("登录: OK")
 
+    # 发布前再查一次台账（防止 prep 之后有人手动改了 post.json / 重发了同一批图）
+    led = published.load()
+    _dk, _rec = published.find_deck(led, post.get("name") or "", post.get("age") or "")
+    if _rec and _rec.get("notes") and not (a.force or a.allow_dup):
+        print()
+        print("✗ 台账显示这个课题已经发过（%d 篇）：%s" %
+              (len(_rec["notes"]), _rec.get("name", post.get("name"))))
+        print("   换课题，或确认要重发加 --force")
+        return 2
+    for p in post.get("images") or []:
+        h = published.md5_file(p)
+        seen = published.image_seen(led, h)
+        if seen and not (a.force or a.allow_dup):
+            print()
+            print("✗ 这张图已经发布过（《%s》），拒绝重复发：%s" %
+                  (seen.get("deck", "?"), os.path.basename(p)))
+            print("   换课题 / 重新出图，确实要发加 --force")
+            return 2
+
     before = xhs.my_notes()
     titles = [n["title"] for n in before]
     print("发布前我的笔记数:", len(before))
@@ -132,6 +152,20 @@ def main():
         print("  ! 没检测到新增，但已存在同标题笔记（可能是刷新延迟）:", hit[0]["id"])
     else:
         print("  ! 主页没看到这条笔记 —— 可能发布被平台拦截，去创作中心确认")
+
+    # ---- 登记台账：以后同一课题/同一张图会被拦 ----
+    note = (new[0] if new else (hit[0] if hit else None))
+    md5s, slots = [], []
+    for p in post.get("images") or []:
+        try:
+            md5s.append(published.md5_file(p))
+            slots.append(os.path.basename(p))
+        except Exception:
+            pass
+    published.add_note(led, post.get("name") or "", post.get("age") or "",
+                       post.get("title") or "", note["id"] if note else "", md5s, slots)
+    ledp = published.save(led)
+    print("台账: %s（课题 %d 个 / 图片 %d 张）" % (ledp, len(led["decks"]), len(led["images"])))
     print()
     print("✓ 完成。可见范围:", visibility)
     if visibility != "公开可见":
