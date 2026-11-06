@@ -18,14 +18,14 @@ public class MainActivity extends Activity {
 
     static final int REQ_PICK = 1001;
 
-    private static final String[] TAB_LABEL = {"出图", "仙宫云", "ComfyUI", "设置"};
-    private static final String[] TAB_ICON = {"✦", "☁", "🖼", "⚙"};
+    private static final String[] TAB_LABEL = {"出图", "仙宫云", "ComfyUI", "MCP", "设置"};
+    private static final String[] TAB_ICON = {"✦", "☁", "🖼", "🔌", "⚙"};
 
     private FrameLayout content;
     private LinearLayout tabBar;
-    private final View[] pages = new View[4];
-    private final LinearLayout[] tabs = new LinearLayout[4];
-    private final TextView[] tabText = new TextView[4];
+    private final View[] pages = new View[TAB_LABEL.length];
+    private final LinearLayout[] tabs = new LinearLayout[TAB_LABEL.length];
+    private final TextView[] tabText = new TextView[TAB_LABEL.length];
     private int current = 0;
     private String pendingComfyId;
 
@@ -84,6 +84,16 @@ public class MainActivity extends Activity {
 
         if (b != null) current = b.getInt("tab", 0);
         show(current);
+        resumeMcp();
+    }
+
+    /** 上次开着 MCP 的话，打开 App 就把它重新拉起来（前台服务不会自己复活）。 */
+    private void resumeMcp() {
+        McpHost host = McpHost.get(this);
+        if (!host.enabled()) return;
+        Intent i = new Intent(this, McpService.class).setAction(McpService.ACTION_START);
+        if (android.os.Build.VERSION.SDK_INT >= 26) startForegroundService(i);
+        else startService(i);
     }
 
     @Override
@@ -118,6 +128,7 @@ public class MainActivity extends Activity {
             case 0: return new GrsaiView(this);
             case 1: return new XgcView(this);
             case 2: return new ComfyView(this);
+            case 3: return new McpView(this);
             default: return new SettingsView(this);
         }
     }

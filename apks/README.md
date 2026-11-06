@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-11-06 18:40:29**　|　共 **17** 个应用　|　APK 合计 **105.2 MB**
+最后同步：**2026-11-06 23:32:03**　|　共 **17** 个应用　|　APK 合计 **105.2 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -19,7 +19,7 @@ apks/<分类>/<应用>/
 
 | 应用 | 版本 | APK | 源码 | 体积 | 说明 |
 |---|---|---|---|---|---|
-| **跑图助手** | 1.0 | [`paintbox.apk`](design/paintbox/paintbox.apk) | [`src/`](design/paintbox/src/) | 96.9 KB | 连本机 ComfyUI / 跑图服务看图与下载 |
+| **跑图助手** | 1.0 | [`paintbox.apk`](design/paintbox/paintbox.apk) | [`src/`](design/paintbox/src/) | 116.9 KB | 连本机 ComfyUI / 跑图服务看图与下载 |
 | **钢琴墙 3D** | 1.0 | [`pianowall.apk`](design/pianowall/pianowall.apk) | [`src/`](design/pianowall/src/) | 221.2 KB | 钢琴键盘图案墙的三维演示 + 全套带尺寸施工图 |
 
 ## 学习 / 科普

@@ -18,6 +18,9 @@ public class Grsai {
             "gpt-image-2.5",
             "gpt-image-2.5-flare",
             "gpt-image-2.5-sunburst",
+            "gpt-image-2.6",
+            "gpt-image-2.6-flare",
+            "gpt-image-2.6-sunburst",
     };
 
     public static final String[] ASPECTS = {
@@ -29,10 +32,11 @@ public class Grsai {
     public static String[] qualitiesFor(String model) {
         if ("gpt-image-2".equals(model)) return new String[]{"auto"};
         if ("gpt-image-2-vip".equals(model)) return new String[]{"medium"};
-        if ("gpt-image-2.5-flare".equals(model)) return new String[]{"low", "medium", "high"};
-        if ("gpt-image-2.5-sunburst".equals(model)) {
+        if ("gpt-image-2.6".equals(model)) return new String[]{"auto"};
+        if (model != null && model.endsWith("-sunburst")) {
             return new String[]{"low", "medium", "high", "xhigh", "max"};
         }
+        if (model != null && model.endsWith("-flare")) return new String[]{"low", "medium", "high"};
         return new String[]{"auto", "low", "medium", "high"};
     }
 
