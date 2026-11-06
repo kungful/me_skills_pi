@@ -26,6 +26,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from xhs import calc_title_len, TITLE_MAX, TAGS_MAX, utf8_stdout  # noqa: E402
 import published  # noqa: E402
+import watermark  # noqa: E402
 
 try:
     from PIL import Image
@@ -346,6 +347,13 @@ def main():
     ap.add_argument("--stage", default=STAGE_ROOT, help="图片暂存根目录（必须纯 ASCII）")
     ap.add_argument("--out", help="post.json 输出路径，默认写到课件目录下")
     ap.add_argument("--brand", help="覆盖 meta.brand")
+    ap.add_argument("--no-watermark", action="store_true",
+                    help="不打水印（默认：全图平铺 + 右下角品牌条）")
+    ap.add_argument("--wm-text", help="水印主文字，默认用品牌名")
+    ap.add_argument("--wm-id", default=os.environ.get("XHS_WM_ID", "49788519703"),
+                    help="水印副文字（账号号），默认 49788519703")
+    ap.add_argument("--wm-opacity", type=float, default=0.10,
+                    help="平铺水印透明度 0~0.3，默认 0.10")
     ap.add_argument("--allow-placeholder-brand", action="store_true",
                     help="课件品牌名还是占位符时也继续（默认拒绝）")
     a = ap.parse_args()
@@ -478,6 +486,22 @@ def main():
         print("  %02d %-18s %s" % (len(images) + 1, slot, "x".join(map(str, size))))
         images.append(dst)
 
+    # ---- 水印 + 原图备份（防白嫖：展示图可盗但裁不掉品牌，原图留档可维权）----
+    wm_main = "" if a.no_watermark else ((a.wm_text or brand or "") + " · 原创课件")
+    wm_sub = (("小红书 " + a.wm_id) if (a.wm_id and not a.no_watermark) else None)
+    if wm_main:
+        for p in images:
+            watermark.mark_file(p, wm_main, wm_sub, opacity=max(0.0, min(0.3, a.wm_opacity)))
+        print()
+        print("--- 水印（平铺 + 右下角）---")
+        print("  主文字: %s   透明度: %.0f%%   副文字: %s"
+              % (wm_main, a.wm_opacity * 100, wm_sub or "-"))
+    man = watermark.backup_originals(
+        pdir, [(s, pp) for s, pp, _r in srcs],
+        deck=name, brand=brand,
+        extra={"slots_published": [s for s, _p, _r in srcs]})
+    print("  原图备份:", man)
+
     # 台账第二道：成品图 md5（补边/裁切后的实际发布文件才是会被粉丝看到的那张）
     hit_imgs = []
     for p in images:
@@ -513,6 +537,9 @@ def main():
             "details": max(0, a.details),
             "with_steps": bool(a.with_steps),
             "image_md5": [md5(p) for p in images],
+            "watermark": {"enabled": bool(wm_main), "text": wm_main,
+                            "sub": wm_sub, "opacity": a.wm_opacity},
+            "orig_manifest": man,
             "need_edit": ["开头钩子（【钩子…】那行）", "好上的地方（【写 2-3 条…】那一段）"],
             "must_keep": ["AIGC 声明（AI_DISCLOSURE 那段，删了容易被举报/限流）",
                           "购买引导（CTA_DECK / CTA_CUSTOM / CTA_TOOL）"],

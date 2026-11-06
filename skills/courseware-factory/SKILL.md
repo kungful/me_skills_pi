@@ -349,6 +349,8 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 - [ ] PDF 里无缺图占位框（`/api/status` 报"无缺图"）
 - [ ] 实物观察页的图**对题**（AI 生成的一定对题；若混用了网搜图，必须过视觉复核）
 - [ ] 全部图片均为 AI 生成，无第三方版权风险
+- [ ] **展示图先过水印**：发小红书 / 商品页前用 `xhs-courseware-post/scripts/watermark.py`（`prep_post.py` 已自动调用）打平铺 + 右下角品牌条；原图自动存到 `项目/<课件>/img_orig/` 并记 md5
+- [ ] **交付给买家的 PPTX/PDF 不带水印** —— 水印只打在展示图/商品图上，不能打进交付物
 - [ ] 步骤 1→5 逐级递进、最后一步 = 成品（alias）
 - [ ] 线条是「干净实线」
 - [ ] 附：教案 Word / 家长话术 / 小红书商品页文案（可选增值）
@@ -365,5 +367,5 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 **汇报用事实，别用猜测**：用户对"猜"很反感。先查文件 mtime / md5 / API 返回值，再下结论。
 
 ## 相关技能
-- 发布与运营：`xhs-courseware-post`（读 `project.json` 一条龙发小红书：选图、补 3:4 封面、出文案、发布、核实、回评论）
+- 发布与运营：`xhs-courseware-post`（读 `project.json` 一条龙发小红书：选图、补 3:4 封面、裁成品细节、**打水印 + 原图存证**、出文案、发布、核实、回评论）
 - 出图底层：`grsai-image-2-5`（gpt-image 系）、`grsai-nano-banana`（nano 系）

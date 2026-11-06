@@ -16,6 +16,7 @@ description: 把课件工厂产出的课件一条龙发到小红书（选图 →
 3. **必须写明 AI 生成**。画面是模型出的，正文里固定带 `AI_DISCLOSURE` 那段（「画面由 AI 生成，课题设计/教学流程/文字由人工编排校对」）。这段话有两个作用：平台 AIGC 合规，以及挡掉「AI 画的还卖钱」的举报。MCP 的发布接口**没有 AIGC 勾选字段**，所以只能写在正文；发完最好去 App/创作中心看有没有需要补的标识。
 4. **必须有购买引导，但正文里不能写交易词**。正文固定带 `CTA_DECK` / `CTA_CUSTOM` / `CTA_TOOL` 三行，只允许说「主页 / 合集 / 评论区告诉我」，把成交留给私信和主页。**实测「课包 / 打包更划算 / 想要这套 / 私信『工具』」这类词会让发布按钮点下去不跳转**（MCP 只报 `PUBLISH_FAILED`，看不见真实原因）。
 5. 三行 CTA 是常量（`prep_post.py` 顶部），改口播方式改那里，不要每次手改 post.json。
+6. **展示图必须带水印，原图必须留档**（防白嫖）。`prep_post.py` 默认给每张发布图打两层水印：全图平铺「品牌 · 原创课件」+ 右下角品牌条（含小红书号）；同时把本次用到的原图复制到 `项目/<课件>/img_orig/` 并写 `manifest.json`（md5 / 尺寸 / 时间）。同行盗图裁不掉、维权时有原图存证；只有内部预览才用 `--no-watermark`。
 
 ## 作用域（先看这条）
 
@@ -74,10 +75,11 @@ python .../prep_post.py "项目/圣诞树-4-6岁/project.json"      # 指定课�
 3. **复制到纯 ASCII 暂存目录** `C:\Users\hua\tools\xiaohongshu-mcp\upload\<slug>\`，命名 `01_cover.jpg`、`02_detail1.jpg`…（**中文路径会导致发布失败**，必须转存）。
 4. **封面补成 3:4**（首页瀑布流按 3:4 裁切，1536x1024 的横图会被切掉两边）：取四边像素中位色做背景补边，接缝看不出来，输出 1080x1440。
 5. **从成品裁细节图**：默认 2 张（`--details`），从成品图按不同区域裁 3:4 放大。取代步骤图的「凑图数」作用，还比步骤图好看。
+6. **打水印 + 备原图**：每张发布图加全图平铺文字（默认 10% 透明度）和右下角品牌条（品牌 + 小红书号）；同时把原图复制到 `项目/<课件>/img_orig/`，写 `manifest.json`（md5 / 尺寸 / 时间 / 发布记录）。
 
 输出 `项目/<课件>/post.json`：`title` / `title_alt` / `content` / `tags` / `images` / `visibility`。
 
-常用参数：`--next`（自动挑未发课题）、`--cap 12`（多放几张）、`--details 3`（多裁几张成品细节）、`--with-steps`（也发步骤图，老策略）、`--allow-repeat`（确实要重发）、`--slug xxx`（指定暂存目录名）。
+常用参数：`--next`（自动挑未发课题）、`--cap 12`（多放几张）、`--details 3`（多裁几张成品细节）、`--with-steps`（也发步骤图，老策略）、`--allow-repeat`（确实要重发）、`--no-watermark`（内部预览）、`--wm-text` / `--wm-id` / `--wm-opacity`（改水印文案/账号号/透明度）、`--slug xxx`（指定暂存目录名）。
 
 ### 第 2 步 · 改两处文案（**别跳，这一步决定点击率**）
 
@@ -125,7 +127,8 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 
 ## 红线
 
-1. **同一课题 / 同一张图不能重发**。默认由台账拦截（课题名 + 图片 md5 双重），不要习惯性 `--allow-repeat` —— 粉丝认出「又是这只大象」比少发一篇伤得多。真要重发同一课题，必须重出图（新 md5）并重写文案。
+1. **同一课题 / 同一张图不能重发**。默认由台账拦截（课题名 + 图片 md5 双重）。不要习惯性用 `--allow-repeat` 重发已经发过的课题——粉丝认出「又是那只大象」比少发一篇伤得多。真要重发同一课题，必须重出图（新 md5）并重写文案。
+2. **发布图不能是裸图**。默认已经打水印（平铺 + 右下角品牌条）；`--no-watermark` 只用于内部预览，正式发出去之前确认 `_prep.watermark.enabled = true`。原图会在 `img_orig/` 留一份带 md5 的存证，别删。
 2. **AIGC 声明不能删、不能弱化**。画面是 AI 出的，正文里必须留 `🤖 说明` 那段。删了既不符合平台对 AI 内容的标注要求，也容易被同行举报「AI 生成还当原创课件卖」。
 3. **CTA 不能出现微信 / QQ / 电话 / 外链 / "加我"**，也不能出现 **「课包 / 打包 / 想要这套 / 私信工具」这类交易词**（实测会被拦，笔记发不出去）。只留「主页 / 合集 / 评论区」。价格更不要写正文。
 4. **中文路径不能进发布请求**。图片必须先转存到 ASCII 目录（`prep_post.py` 已经做了，别绕开它手拼 `images`）。
@@ -143,6 +146,7 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 | 查台账（先做） | `python .../scripts/published.py --list` |
 | 从主页初始化台账 | `python .../scripts/published.py --sync` |
 | 生成草稿（自动挑未发） | `python .../scripts/prep_post.py --next` |
+| 生成草稿（不打水印，仅预览） | `python .../scripts/prep_post.py 项目/<课件>/project.json --no-watermark` |
 | 生成草稿（指定课题） | `python .../scripts/prep_post.py 项目/<课件>/project.json [--cap 12] [--details 3]` |
 | 生成草稿（带步骤图） | `python .../scripts/prep_post.py 项目/<课件>/project.json --with-steps` |
 | 发布被拦时诊断 | 删掉 🛒 整段 → 发「仅自己可见」，能发就是文案问题 |
@@ -201,12 +205,17 @@ C:/Users/hua/.pi/agent/skills/xhs-courseware-post/
 └── scripts/
     ├── xhs.py             HTTP 封装 + 标题字数算法（镜像服务端 Go 实现）+ 规则校验
     ├── published.py       发布台账：课题去重 / 图片 md5 去重 / --sync / --list
-    ├── prep_post.py       project.json -> post.json（选图/去重/补封面/裁细节/生成文案）
+    ├── watermark.py       水印（平铺 + 右下角品牌条）+ 原图备份 + 版权存证 manifest
+    ├── prep_post.py       project.json -> post.json（选图/去重/补封面/裁细节/水印/生成文案）
     ├── publish_post.py    发布 + 回主页 diff 核实 + 成功后登记台账
     └── replies.py         未读/通知/评论/回复/账号数据
 
 C:/Users/hua/Documents/备份代码/小红书卖课件/
 └── 发布台账.json         ← 已发课题 + 已用图片 md5（去重的唯一依据）
+
+项目/<课件>/
+├── img_orig/           ← 原图存证（img_orig/manifest.json 记 md5 / 尺寸 / 时间 / 发布记录）
+└── 商品素材/            ← 商品主图 + 详情长图 + 上架文案（图片同样带水印）
 
 C:/Users/hua/tools/xiaohongshu-mcp/          ← MCP 本体 + 图片 ASCII 暂存区
 ├── xiaohongshu-mcp.exe / xiaohongshu-login.exe
