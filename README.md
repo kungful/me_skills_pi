@@ -1,7 +1,7 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-11-06 20:44:08**
+最后同步：**2026-11-06 23:21:32**
 
 共 **46** 个 skill。
 
@@ -30,7 +30,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`flameox`](skills/flameox/) | 用 Flameox 采集有界、可复现的运行时证据——CPU/内存/GPU/推理栈的性能剖析，或把一条命令的输出抓成结构化 artifact 供后续分析比对。当用户说"profile 一下 / 性能剖析 / 火焰图 / 找性能瓶颈 / 跑个 benchmark 采数据 / 追踪 trace / 抓一次运行证据 / ... | pi |
 | [`generate-social-preview`](skills/generate-social-preview/) | 生成或修改仓库的社交预览图（GitHub 社交卡片 / 包页 / 发布贴 / 链接卡片）。当用户说"做个社交预览图 / 项目的封面图 / GitHub 分享图 / 1280x640 卡片 / 参考这张图改一个"时使用。Create or revise repository-aware social preview... | pi |
 | [`gitcontribute`](skills/gitcontribute/) | 用 GitContribute 做"给开源仓库贡献"的前期调研——判断某个 issue 还值不值得做、有没有人在做、适不适合外部贡献者、有没有足够证据动手，以及收集仓库贡献规范、相关 issue/PR、代码上下文和验证结果。当用户说"给这个仓库提个 PR / 这个 issue 我能做吗 / 找点能贡献的活 / 看... | pi |
-| [`grsai-image-2-5`](skills/grsai-image-2-5/) | Generate or restyle images through the grsai API (gpt-image-2 / 2.5 family; text-to-image, image-to-image with base64 or URL references, transparent backgrou... | pi |
+| [`grsai-image-2-5`](skills/grsai-image-2-5/) | Generate or restyle images through the grsai API (gpt-image-2 / 2.5 / 2.6 family, default gpt-image-2.6; text-to-image, image-to-image with base64 or URL ref... | pi |
 | [`grsai-nano-banana`](skills/grsai-nano-banana/) | Generate or edit images through the grsai legacy Nano Banana API (/v1/draw/nano-banana, /v1/draw/result) or the Gemini-compatible route (/v1beta/models/<mode... | pi |
 | [`internalcot`](skills/internalcot/) | 开启 InternalCoT 可见思维链模式：在每次实质工具调用和回答前，必须先写 internalcot CLI 笔记，整个会话持续生效。仅当用户明确说"$internalcot / internalcot on / 开 internalcot"时才用；用户只是说"仔细想 / 深入推理 / 展示思路"不算触发。... | pi |
 | [`jacobian-math`](skills/jacobian-math/) | 当精确计算或结构分析能帮助解题时，用 Jacobian（`math.find` / `math.run`）的类型化数学操作。当用户说"精确算一下 / 符号计算 / 矩阵分解 / 组合枚举 / 数论 / 验证这个数学结论 / 有什么数学操作可用"时使用。Use Jacobian’s typed operations... | pi |

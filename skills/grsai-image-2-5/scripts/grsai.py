@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""grsai image generation client (gpt-image-2 / 2.5 family).
+"""grsai image generation client (gpt-image-2 / 2.5 / 2.6 family).
 
 Usage:
-  # basic
+  # basic (defaults to gpt-image-2.6)
   python grsai.py gen -p "a cat" --out cat.png
   # with prompt file + local reference images (auto -> base64 data URI)
   python grsai.py gen -p prompt.txt -r view.png massing.png --model gpt-image-2.5 --quality high --aspect 1536x1024 --out house.png
+  # animated GIF (gpt-image-2.6 only, verified)
+  python grsai.py gen -p "a rotating teapot" --gif --out teapot.gif
   # remote references
   python grsai.py gen -p prompt.txt -r https://a.png https://b.png --out out.png
   # poll an existing task / re-download (URLs live ~2h)
@@ -24,6 +26,7 @@ import pathlib
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 HOSTS = {
@@ -35,14 +38,17 @@ HOSTS = {
 # undocumented values (verified: gpt-image-2.5 with quality=high returns a high-detail image),
 # so a mismatch warns instead of failing unless --strict-quality is passed.
 MODELS = {
-    "gpt-image-2": {"qualities": ["auto"], "background": False},
-    "gpt-image-2-vip": {"qualities": ["medium"], "background": True},
-    "gpt-image-2.5": {"qualities": ["auto"], "background": False},
-    "gpt-image-2.5-flare": {"qualities": ["low", "medium", "high"], "background": True},
-    "gpt-image-2.5-sunburst": {"qualities": ["low", "medium", "high", "xhigh", "max"], "background": True},
+    "gpt-image-2": {"qualities": ["auto"], "background": False, "note": "1K only; ~0.03 CNY/call"},
+    "gpt-image-2-vip": {"qualities": ["medium"], "background": True, "note": "1K/2K/4K; ~0.10 CNY/call"},
+    "gpt-image-2.5": {"qualities": ["auto"], "background": False, "note": "1K only; ~0.03 CNY/call"},
+    "gpt-image-2.6": {"qualities": ["auto", "high"], "background": True, "note": "1K only; GIF output; ~0.03 CNY/call (documented quality: auto; verified: auto, high)"},
+    "gpt-image-2.5-flare": {"qualities": ["low", "medium", "high"], "background": True, "note": "1K/2K/4K; ~0.10 CNY/call"},
+    "gpt-image-2.5-sunburst": {"qualities": ["low", "medium", "high", "xhigh", "max"], "background": True, "note": "1K/2K/4K; ~0.12 CNY/call"},
 }
 
-VERIFIED_ASPECTS = ["1024x1024", "1536x1024", "1024x1536"]
+VERIFIED_ASPECTS = ["1024x1024", "1536x1024", "1024x1536", "2048x1152"]
+GIF_MODELS = {"gpt-image-2.6"}
+GIF_CLAUSE = "\n\nOutput format: animated GIF, short looping cycle, roughly 12-16 frames, no text."
 
 
 def load_key(explicit=None):
@@ -95,9 +101,24 @@ def read_prompt(value):
     return value
 
 
+IMG_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+
 def download(url, out):
     out = pathlib.Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
+    # the server picks the real format (2.6 can answer a .gif), so trust the URL suffix
+    url_suffix = pathlib.PurePath(urllib.parse.urlparse(url).path).suffix.lower()
+    if url_suffix in IMG_SUFFIXES and out.suffix.lower() in ("",) + IMG_SUFFIXES and out.suffix.lower() != url_suffix:
+        alt = out.with_suffix(url_suffix)
+        print(f"[note] server returned {url_suffix}, saving as {alt.name} instead of {out.name}", flush=True)
+        out = alt
+    if out.exists():  # never clobber an existing file
+        for i in range(1, 1000):
+            cand = out.with_name(f"{out.stem}-{i}{out.suffix}")
+            if not cand.exists():
+                out = cand
+                break
     data = urllib.request.urlopen(url, timeout=300).read()
     out.write_bytes(data)
     out.with_suffix(out.suffix + ".url.txt").write_text(url, encoding="utf-8")
@@ -123,9 +144,15 @@ def cmd_gen(a):
             sys.exit(msg.replace("note: ", "error: "))
         print(msg, file=sys.stderr, flush=True)
 
+    prompt = read_prompt(a.prompt)
+    if a.gif:
+        if model not in GIF_MODELS:
+            sys.exit(f"--gif needs one of {sorted(GIF_MODELS)} (model={model} returns still images)")
+        prompt += GIF_CLAUSE
+
     payload = {
         "model": model,
-        "prompt": read_prompt(a.prompt),
+        "prompt": prompt,
         "aspectRatio": a.aspect,
         "quality": quality,
         "webHook": "-1",  # immediate id, then poll /v1/draw/result
@@ -196,13 +223,14 @@ def cmd_poll(a):
 
 def cmd_models(_a):
     for m, spec in MODELS.items():
-        print(f"{m:26s} quality={','.join(spec['qualities'])}  background={spec['background']}")
-    print("\nverified aspectRatio:", ", ".join(VERIFIED_ASPECTS))
+        print(f"{m:24s} quality={','.join(spec['qualities']):22s} background={str(spec['background']):5s} {spec['note']}")
+    print("\nverified aspectRatio:", ", ".join(VERIFIED_ASPECTS), "(sets the ratio; 1K-only models return ~1254-1672 px long edge)")
+    print("gif output:", ", ".join(sorted(GIF_MODELS)), "(--gif, or ask for an animated GIF in the prompt)")
     return 0
 
 
 def main():
-    ap = argparse.ArgumentParser(description="grsai image client (gpt-image-2 / 2.5)")
+    ap = argparse.ArgumentParser(description="grsai image client (gpt-image-2 / 2.5 / 2.6)")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     def common(sp):
@@ -216,10 +244,11 @@ def main():
     common(g)
     g.add_argument("-p", "--prompt", required=True, help="prompt text or path to a .txt")
     g.add_argument("-r", "--refs", nargs="*", help="reference images: local paths or URLs")
-    g.add_argument("--model", default="gpt-image-2.5", choices=list(MODELS))
+    g.add_argument("--model", default="gpt-image-2.6", choices=list(MODELS))
     g.add_argument("--quality", help="default: model's only/first option")
     g.add_argument("--aspect", default="1536x1024")
-    g.add_argument("--background", help="transparent (only 2-vip / 2.5-flare / 2.5-sunburst)")
+    g.add_argument("--background", help="transparent (2-vip / 2.5-flare / 2.5-sunburst / 2.6)")
+    g.add_argument("--gif", action="store_true", help="ask for an animated GIF (gpt-image-2.6 only)")
     g.add_argument("--mask", help="mask image path or URL")
     g.add_argument("--out", default="result.png")
     g.add_argument("--retries", type=int, default=2, help="retry on failure_reason=error")

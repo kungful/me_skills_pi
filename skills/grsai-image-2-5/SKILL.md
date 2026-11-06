@@ -1,6 +1,6 @@
 ---
 name: grsai-image-2-5
-description: Generate or restyle images through the grsai API (gpt-image-2 / 2.5 family; text-to-image, image-to-image with base64 or URL references, transparent background, up to 3840x2160). Use when the user asks to 出图/生成/渲染/换风格 an image, turn a photo or 3D view into photoreal architecture or product art, or handle /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.
+description: Generate or restyle images through the grsai API (gpt-image-2 / 2.5 / 2.6 family, default gpt-image-2.6; text-to-image, image-to-image with base64 or URL references, transparent background, animated GIF on 2.6, up to 3840x2160 on sunburst). Use when the user asks to 出图/生成/渲染/换风格 an image, asks for a GIF/动图, turns a photo or 3D view into photoreal architecture or product art, or handles /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.
 license: MIT
 compatibility: Python 3.8+; outbound HTTPS to grsai.dakka.com.cn (domestic) or grsaiapi.com (overseas); Windows/macOS/Linux.
 metadata:
@@ -10,11 +10,14 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 
-# grsai Image Generation (gpt-image-2 / 2.5)
+# grsai Image Generation (gpt-image-2 / 2.5 / 2.6)
+
+Directory and skill name stay `grsai-image-2-5` for compatibility; the **default model is now `gpt-image-2.6`** (same ~¥0.03/call as 2.5, adds GIF output).
 
 ## When to Use
 
 - The user asks to generate, render, restyle, or "跑一张/出一张/换风格" an image.
+- The user wants an **animated GIF / 动图** (2.6 only — see the GIF section).
 - The user gives a style reference photo and wants an existing image or 3D view restyled while keeping structure.
 - The user wants a Blender/FreeCAD view turned into a photoreal architectural or product visual.
 - Any task involving `/v1/draw/completions`, `/v1/draw/result`, model `gpt-image-2*`, or grsai task ids.
@@ -25,13 +28,13 @@ Sibling skill `grsai-nano-banana` covers the legacy Nano Banana route (`/v1/draw
 
 ## Hard Rules (read before any paid call)
 
-1. **Every `gen` submit costs credits.** Before the first submit of a session, state model + quality + aspect + how many images and get the user's OK. Default to `gpt-image-2` for cheap tests; use `gpt-image-2.5 --quality high` for finals; `sunburst xhigh/max` and `3840x2160` only when explicitly requested.
+1. **Every `gen` submit costs credits.** Before the first submit of a session, state model + quality + aspect + how many images and get the user's OK. Default to `gpt-image-2.6` (¥0.03/call, GIF capable); use `gpt-image-2.5-sunburst --quality high/max` when 2K/4K is needed; `3840x2160` only when explicitly requested.
 2. **No batch spam.** One task at a time; never generate more images than the user asked for; poll interval >= 5 s; retries on `failure_reason=error` capped at 2 (the CLI default). Never loop "regenerate until it looks good" without the user driving each round.
 3. **Never bypass moderation.** On `failure_reason` of `input_moderation` or `output_moderation`, stop and report. Do not rephrase to sneak content through (max one neutral rewording, only if the user asks). Never request: real identifiable people or their likeness, NSFW, gore, political figures, copyrighted characters, logos or trademarks.
 4. **Key hygiene.** Never print, echo, screenshot, or commit the API key; keep it in `$GRSAI_API_KEY` or a `.grsai_key` file outside version control; never embed it in prompt text, generated images, or logs. If exposed, tell the user to rotate it.
 5. **Privacy of references.** Reference images are uploaded to grsai's servers. Do not send confidential, unpublished, or NDR'd material without the user's explicit consent.
 6. **Download immediately.** Result URLs expire in ~2 h. Save every result to disk right away; save into the user's current project directory with a descriptive name; never overwrite an existing file — add a numeric suffix; clean up temp files afterwards.
-7. **Report facts, not wishes.** After download, read the PNG header and report the *actual* pixel size (requested aspect is not always honoured). Never claim the image matches real-world dimensions, materials, or code compliance; say it is an AI visualization.
+7. **Report facts, not wishes.** After download, read the image header and report the *actual* pixel size and format (requested aspect is not always honoured; a `.gif` is ~300 px wide, not 1K). Never claim the image matches real-world dimensions, materials, or code compliance; say it is an AI visualization.
 8. **Keep geometry locked.** For re-skinning a model/photo, always send the geometry-lock paragraph from `references/prompt-templates.md` and both references (styled view + white massing). Never let the model add, remove, or move storeys, openings, or balconies silently.
 9. **Fail loudly.** On HTTP errors, timeouts, or `failed` status, report the raw `failure_reason`/`error` and the task id (so `poll --id` can resume). Never hide a failure or present a stale cached image as new.
 10. **Stay in scope.** Only this skill's API and scripts; quote paths containing spaces or CJK characters; UTF-8 everywhere; do not modify files outside the user's project without asking.
@@ -41,8 +44,11 @@ Sibling skill `grsai-nano-banana` covers the legacy Nano Banana route (`/v1/draw
 ```bash
 S=~/.pi/agent/skills/grsai-image-2-5/scripts/grsai.py
 
-# text to image
+# text to image (defaults to gpt-image-2.6)
 python "$S" gen -p "a red ceramic teapot on white, studio light" --out teapot.png
+
+# animated GIF (gpt-image-2.6 only; --gif appends the animation clause)
+python "$S" gen -p "a red ceramic teapot slowly rotating on white" --gif --out teapot.gif
 
 # image to image: references may be local paths (auto base64) or URLs
 python "$S" gen -p prompt.txt -r ref_view.png ref_massing.png \
@@ -53,8 +59,8 @@ python "$S" gen -p prompt.txt -r ref.png --model gpt-image-2.5-sunburst \
   --quality max --aspect 3840x2160 --out big.png
 
 # transparent cut-out
-python "$S" gen -p "a single pear, product photo" --model gpt-image-2.5-flare \
-  --quality high --background transparent --out pear.png
+python "$S" gen -p "a single pear, product photo" --model gpt-image-2.6 \
+  --background transparent --out pear.png
 
 # resume an existing task / re-download
 python "$S" poll --id 11-xxxxxxxx --out out.png
@@ -75,22 +81,41 @@ Hosts: `--host domestic` (default, `https://grsai.dakka.com.cn`), `--host overse
 
 ### Models
 
-| model | documented quality | background | notes |
-|---|---|---|---|
-| gpt-image-2 | auto | no | cheapest |
-| gpt-image-2-vip | medium | yes | |
-| gpt-image-2.5 | auto | no | best default speed/quality |
-| gpt-image-2.5-flare | low/medium/high | yes | good for cut-outs |
-| gpt-image-2.5-sunburst | low/medium/high/xhigh/max | yes | highest detail, supports 3840x2160 |
+Prices are live from grsai's model page (2026-11-06); each call is 1 image.
 
-The API **silently accepts undocumented quality values** (verified: `gpt-image-2.5` with `high` returns a high-detail image). The CLI warns and proceeds; `--strict-quality` hard-fails instead. Omit `--quality` to send the documented default.
+| model | documented quality | background | size | price | notes |
+|---|---|---|---|---|---|
+| gpt-image-2 | auto | no | 1K | ¥0.03 | cheapest, legacy |
+| gpt-image-2-vip | medium | yes | 1K/2K/4K | ¥0.10 | |
+| gpt-image-2.5 | auto | no | 1K | ¥0.03 | |
+| **gpt-image-2.6** | auto (high verified) | yes | 1K | ¥0.03 | **default**; GIF output; transparent verified |
+| gpt-image-2.5-flare | low/medium/high | yes | 1K/2K/4K | ¥0.10 | good for cut-outs |
+| gpt-image-2.5-sunburst | low/medium/high/xhigh/max | yes | 1K/2K/4K | ¥0.12 | highest detail, 3840x2160 |
+
+The API **silently accepts undocumented quality values** (verified: `gpt-image-2.5` and `2.6` with `high` return high-detail images). The CLI warns and proceeds; `--strict-quality` hard-fails instead. Omit `--quality` to send the documented default.
+
+`gpt-image-2.6` verified 2026-11-06: `GET /v1/models` lists it; `1536x1024` returns exactly 1536x1024; `1024x1024` returns 1254x1254; `2048x1152` returns 1672x941 (the model is 1K-class — a larger `aspectRatio` only changes the **ratio**, not the pixel budget); `quality=high` and `background=transparent` (real RGBA, alpha=0 outside the subject) both work.
+
+## GIF / Animated Output (gpt-image-2.6)
+
+Verified 2026-11-06 — this is the reason to prefer 2.6 over 2.5 at the same price:
+
+```bash
+python "$S" gen -p "a red ceramic teapot slowly rotating on white background" --gif --out teapot.gif
+```
+
+- The result URL ends in `.gif` (GIF89a, multi-frame loop). Observed: 1024x1024 request → 309x307, 16 frames, ~290 KB; a 1536x1024 request returned a `.gif` too.
+- Two ways to trigger it: `--gif` (appends an English "animated GIF, short looping cycle, roughly 12-16 frames, no text" clause) or just ask for it in the prompt ("生成 gif 动图，循环播放").
+- `--gif` is refused on every non-2.6 model (they return stills); `gif` is never silently downgraded.
+- **The URL suffix wins on save.** The CLI renames `<out>` to the server's real suffix and prints `[note] server returned .gif, saving as ...`, so a `.png` out-name never hides a GIF. GIFs are small and low-resolution — do not promise 1K GIFs.
+- Chat platforms (微信/小红书/抖音) usually want MP4; convert with `ffmpeg -i in.gif -movflags faststart -pix_fmt yuv420p out.mp4` if the target is a video upload.
 
 ### aspectRatio
 
 Sets the **ratio**; returned pixels are model-dependent — always verify the actual file (Rule 7).
 
 - Verified accepted: `1024x1024`, `1536x1024`, `1024x1536`, `3840x2160` (4K only on sunburst).
-- Observed: `gpt-image-2` at `1024x1024` returned 1254x1254; `2048x1152` returned 1672x941; `gpt-image-2.5` at `1536x1024` and sunburst at `3840x2160` returned exactly the request.
+- Observed: `gpt-image-2` at `1024x1024` returned 1254x1254; `2048x1152` returned 1672x941; `gpt-image-2.5` at `1536x1024` and sunburst at `3840x2160` returned exactly the request; `gpt-image-2.6` at `1536x1024` returned exactly 1536x1024, at `1024x1024` 1254x1254, at `2048x1152` 1672x941.
 
 ### References (`urls`)
 
@@ -118,6 +143,6 @@ Labelled blocks, in this order (full templates in `references/prompt-templates.m
 
 ## Reference Files
 
-- `scripts/grsai.py` — CLI: `gen` / `poll` / `models`; base64 or URL references; auto-retry; immediate download; writes `<out>.url.txt`.
+- `scripts/grsai.py` — CLI: `gen` / `poll` / `models`; base64 or URL references; auto-retry; immediate download; suffix-correcting, non-clobbering save; writes `<out>.url.txt`.
 - `scripts/blender_capture.py` — paste into `blender_execute_blender_code`; emits the styled render + white massing render for the current camera.
 - `references/prompt-templates.md` — geometry-lock paragraph, camera block, three architecture styles, product cut-out, joint/light blocks, material word bank.

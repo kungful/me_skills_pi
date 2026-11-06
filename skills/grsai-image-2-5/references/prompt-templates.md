@@ -1,5 +1,8 @@
 # grsai Prompt Templates
 
+Prompt cookbooks for `grsai-image-2-5` (gpt-image-2 / 2.5 / 2.6 family). Sections 1-4 are stills;
+section 5 is the animated-GIF block for `gpt-image-2.6`.
+
 All templates use the same labelled-block skeleton:
 
 `ROLE OF THE REFERENCES` → `CAMERA` → `MATERIALS AND TEXTURE` (real mm, micro-relief)
@@ -131,6 +134,24 @@ balance, high dynamic range, extremely high micro-detail, restrained film grain,
 architectural photography, no people, no cars, no signage, no text, no watermark, no distortion,
 no fisheye.
 ```
+
+## 5. Animated GIF block (gpt-image-2.6 only)
+
+The model decides the format from the prompt; `--gif` appends an English clause, but a full block gives
+much better motion. Keep the subject identical across frames and say what loops.
+
+```
+ANIMATION - a seamless short loop of {N} frames, {subject} {single described motion: rotates once
+clockwise / flag flutters / steam curls upward / pages turn}, camera completely static, framing
+identical to frame 1 at the end so the loop closes with no jump cut.
+CONSISTENCY - the product, its colour, proportions and label stay pixel-identical in every frame;
+only the described element moves; no morphing, no flicker, no background shimmer, no text.
+OUTPUT - animated GIF, looping, clean flat background, no dithering artefacts, no drop shadow change.
+```
+
+Notes: 2.6 answers with a real `.gif` (GIF89a) at a small pixel size (observed ~309x307, 16 frames)
+even when 1024x1024 is requested - never promise 1K GIFs. GIF has a 256-colour palette, so keep
+backgrounds flat and gradients minimal; a photographic gradient will band.
 
 ## Material / finish word bank
 
