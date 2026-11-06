@@ -55,6 +55,7 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 | 线条不好看 | 「线条风格：干净实线」 |
 | 导出 PDF / 单张图 | 「审图台」→ 导出入口 |
 | **做完要卖 → 打交付包（PDF+原图）** | `python 工厂/deliver.py 项目/<课题>/project.json --zip` |
+| **出图后跑自检（必须）** | `python 工厂/preflight.py 项目/<课题>/project.json` |
 | **先看别人什么在跑量再选题** | 「选题」章节 + `python 挖爆款.py` |
 | 一次改好几套课件 | 「审图台」→ 多课件工作台 + 批量操作 |
 | 报错了 | 「常见坑」（先查 `netstat` 看是不是僵尸服务） |
@@ -116,13 +117,16 @@ python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch 
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch real   # 实物/素材 10 张
 python 工厂/pipeline.py 项目/小兔子吃萝卜-4-6岁/project.json --batch photo
 
-# 4. 装配 pptx
+# 4. 出图后先自检（★ 必须，别急着装配）
+python 工厂/preflight.py 项目/小兔子吃萝卜-4-6岁/project.json
+
+# 5. 装配 pptx
 python 工厂/builder.py 项目/小兔子吃萝卜-4-6岁/project.json
 
-# 5. 导出 pdf + 预览（exporter.py 没有 --no-ui 参数，别加）
+# 6. 导出 pdf + 预览（exporter.py 没有 --no-ui 参数，别加）
 python 工厂/exporter.py 项目/小兔子吃萝卜-4-6岁/project.json
 
-# 6. 交付打包（卖货用，一步出「一个课件 = 一个文件夹」）
+# 7. 交付打包（卖货用，一步出「一个课件 = 一个文件夹」）
 python 工厂/deliver.py 项目/小兔子吃萝卜-4-6岁/project.json --zip
 ```
 
@@ -171,6 +175,12 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 
 - **anchor（成品）**：无参考图，独立生成 → 定义整幅画的设计
 - **步骤 1~4**：参考图 = `[成品, 上一步]`（`refs_for()` 自动「锚点优先」拼接）
+- **⚠️ 步骤 1 必须自己挂上成品**（默认它是 `refs: []`、`ref_prev: false`，等于**从零发明**）：
+  实测「从零画铅笔稿」的形一定和成品不一样（多出底座/托盘、彩球画成螺旋串、树更胖），
+  而步骤 2→4 全跟着这个错骨架走，于是**成品和步骤变成两棵树**，老师上课会发现画不出来。
+  正确写法：`refs: ["范画成品"]` + prompt 写成「把参考图**降级**成淡灰铅笔骨架，几何完全不变、只去掉颜色和粗线」，
+  即“在成品上做减法”，而不是“另画一张”。同理，涂色步骤要写死 `background stays pure blank white paper`，
+  否则模型会提前把天空涂了（实测）。
 - **最后一步 = 成品的别名**（`"alias": "范画成品"`）→ **直接复制文件，像素级一致，0 成本**
 
 ```jsonc
@@ -301,6 +311,41 @@ manifest.json            ← 每个文件的 md5 / 尺寸 / 时间 / 品牌（�
 **没有 PDF 时脚本会直接拒绝**，并提示先跑 builder + exporter —— 这是刻意的：
 实测 38 套课题里只有 5 套真的导出过 PDF，剩下的「做过图的」并不能卖。
 
+## 出图自检：`工厂/preflight.py`（**跑完出图第一件事**）
+
+```bash
+python 工厂/preflight.py 项目/<课题>/project.json            # 看报告
+python 工厂/preflight.py ... --json r.json                  # 机器可读
+python 工厂/preflight.py ... --no-pdf --sheet off           # 还没导出 PDF / 不要印样
+python 工厂/preflight.py ... --strict                        # WARN 也当失败（上架前用）
+```
+
+**它抓 7 类错**（都是“不盯图看不出来、发出去就是废品”那种）：
+
+| 检查 | 能抓住什么 | 级别 |
+|---|---|---|
+| 结构 | pages 为空/不足 26、页面 `uses` 引用不存在的槽位、槽位没被任何页用到、`brand` 还是占位符 | FAIL/WARN |
+| 链条 | **步骤1 的 `refs` 里没有成品** → 会从零发明骨架（本轮最大坑，100% 抓得） | FAIL |
+| 链条 | 涂色页 prompt 没写死背景留白；LOCK 没禁止底座/托盘 | WARN |
+| 图像 | 起形页彩色占比 >3%（应该是淡灰铅笔） | FAIL |
+| 图像 | 勾线页偏彩色（>6%） | WARN |
+| 图像 | **涂色/加深页四边彩色 >10%** → 背景被提前涂了（实测能抓到） | WARN |
+| 图像 | alias 图与源图 md5 不一致（alias 没生效） | FAIL |
+| 图像 | 与成品的**边缘图**相似度 <0.60 → 可能不是同一张画 | WARN |
+
+**厚度细节**：指标不是拍脑袋 —— 先把纸从“木桌俯拍”里裁出来（`paper_box()`：亮且低饱和的区域），
+再在纸内算饱和像素占比；一致性用 **边缘图** NCC 而不是灰度 NCC（成品深蓝满屏 vs 步骤白底，
+灰度 NCC 会把同一棵树判成两张画，实测 0.46 → 边缘 0.73）。
+
+**它拓不住的**（这两条必须人眼，不要假装能自动）：
+
+1. **图不对题**：例如材料工具页跑出一张画着小象的儿童画（模型自由发挥）。
+2. **小元素错**：步骤1 自己多出一个底座/托盘（整体轮廓像，边缘相似度反而更高）。
+
+所以 `--sheet` 会自动出一张**接触印样** `out/_自检_全部图.jpg`（4列、带 `c=`（彩色占比）/`b=`（四边占比）、
+有问题的标红框）。人的动作就是“扫一眼这张图”，而不是点开 16 张。
+**汇报给用户时直接把这张印样发给他**（不要只说“图都好了”）。
+
 ## 审图台（WebUI）闭环
 
 ```bash
@@ -368,6 +413,7 @@ python run_ui.py [项目目录名或 project.json]      # 端口 8777，DECKUI_P
 | **某张图 3 次全 `generate image failed`（秒失败，不是超时）** | 服务端**内容过滤**：prompt 里同时出现 `close-up portrait` + `face` + `front teeth` 这类人脸词易被拒 | 改写措辞（实测改成 `A close-up wildlife photograph of a red squirrel in the forest, showing its head and shoulders...` 一次过）。判定方法：先用无关 prompt（如 “a red apple”）跑一发 —— 能过就是 prompt 被拒，不是服务端挂了 |
 | **图生成成功但 `[saved]` 不打印、脚本卡住** | 下载 CDN 慢/断 | 从日志里拿到 `[result] https://fileN.aitohumanize.com/...` 直接 `curl --max-time 300 --retry 3 -o img/<slot>.png <url>`，再补一个 `<slot>.png.url.txt` 就完事（别重画，省一张钱） |
 | **单张图超 600 秒被判 FAIL** | `grsai.py` 默认 `--timeout 600`，**任务在服务端还在跑** | 别重画：从日志拿 `[submit] ... id=X`，`grsai.py poll --id X --out img/<slot>.png` 续拉（实测续拉 3 分钟拿到） |
+| **重跑了但图"没变"** | `gen_one()` 不覆盖已有文件，会存成 `<槽位>-1.png`、`-2.png`（防误覆盖） | 审图看 `-N`；定稿后把 `-N` 挪成正式名、旧的移进 `img_alt/`（别删，作备选）。**看 mtime 判断有没有重画会踩空** |
 | **项目是半成品跑不出来** | `pages: []` + 只有 6 张 chain 图 | 先补齐：追加 real/photo 槽位 + 26 页 pages（拿已完成的课题当骨架，只换文案/槽位），再 `--list` 确认槽位与页面 `uses` 完全对得上 |
 | **某一步出图失败，后面几步全错** | 步骤 N 报 `WinError 10054 远程主机强迫关闭`/超时；缺失后步骤 N+1 的 `refs=2` 只剩成品一张参考 | **`--only 步骤N 步骤N+1 步骤N+2` 一起重跑**（`--only` 隐含 force）。只补失败那张会让链条跳级、风格断层 |
 | **`exporter.py` 报 `unrecognized arguments: --no-ui`** | exporter 不走 `ui.add_args` | 只有 `pipeline.py` / `builder.py` 认 `--no-ui`，exporter 直接跑 |
