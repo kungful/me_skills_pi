@@ -45,7 +45,10 @@ const MAX_SCALE = 2;
 const MAX_IMAGE_EDGE = 720;
 const MAX_IMAGE_CHARS = 900_000;
 const STORAGE_KEY = "pi-web-ui:mindmap:graph";
+const LIBRARY_KEY = "pi-web-ui:mindmap:library:v1";
+const AUTO_ID = "__autosave__";
 const SAVE_DEBOUNCE_MS = 250;
+const AUTO_DEBOUNCE_MS = 600;
 
 // 模块被宿主 import 即可用：即使没点开 tab，也能挂上输入框旁的小按钮
 globalThis.__piMindmapLoaded = true;
@@ -57,34 +60,37 @@ const LABELS = { header: S.header, hint: S.hint, cross: S.cross, detail: S.detai
 // 模型：一份共享状态（tab 视图与浮层视图共用），改动落到 localStorage
 // ---------------------------------------------------------------------------
 
+function sanitizeGraph(parsed) {
+	if (!parsed || !Array.isArray(parsed.nodes)) return null;
+	const nodes = parsed.nodes
+		.filter((n) => n && typeof n.id === "string")
+		.map((n) => ({
+			id: n.id,
+			kind: MINDMAP_KINDS.includes(n.kind) ? n.kind : "idea",
+			title: typeof n.title === "string" ? n.title : "",
+			detail: typeof n.detail === "string" ? n.detail : "",
+			x: Number.isFinite(n.x) ? n.x : 0,
+			y: Number.isFinite(n.y) ? n.y : 0,
+			...(typeof n.image === "string" ? { image: n.image } : {}),
+			...(typeof n.imageName === "string" ? { imageName: n.imageName } : {}),
+		}));
+	const ids = new Set(nodes.map((n) => n.id));
+	const edges = (Array.isArray(parsed.edges) ? parsed.edges : [])
+		.filter((e) => e && ids.has(e.from) && ids.has(e.to) && e.from !== e.to)
+		.map((e) => ({
+			id: typeof e.id === "string" ? e.id : `e${e.from}-${e.to}`,
+			from: e.from,
+			to: e.to,
+			label: typeof e.label === "string" ? e.label : "",
+		}));
+	return { nodes, edges };
+}
+
 function loadGraph() {
 	try {
 		const raw = window.localStorage.getItem(STORAGE_KEY);
 		if (!raw) return emptyMindMap();
-		const parsed = JSON.parse(raw);
-		if (!parsed || !Array.isArray(parsed.nodes)) return emptyMindMap();
-		const nodes = parsed.nodes
-			.filter((n) => n && typeof n.id === "string")
-			.map((n) => ({
-				id: n.id,
-				kind: MINDMAP_KINDS.includes(n.kind) ? n.kind : "idea",
-				title: typeof n.title === "string" ? n.title : "",
-				detail: typeof n.detail === "string" ? n.detail : "",
-				x: Number.isFinite(n.x) ? n.x : 0,
-				y: Number.isFinite(n.y) ? n.y : 0,
-				...(typeof n.image === "string" ? { image: n.image } : {}),
-				...(typeof n.imageName === "string" ? { imageName: n.imageName } : {}),
-			}));
-		const ids = new Set(nodes.map((n) => n.id));
-		const edges = (Array.isArray(parsed.edges) ? parsed.edges : [])
-			.filter((e) => e && ids.has(e.from) && ids.has(e.to) && e.from !== e.to)
-			.map((e) => ({
-				id: typeof e.id === "string" ? e.id : `e${e.from}-${e.to}`,
-				from: e.from,
-				to: e.to,
-				label: typeof e.label === "string" ? e.label : "",
-			}));
-		return { nodes, edges };
+		return sanitizeGraph(JSON.parse(raw)) ?? emptyMindMap();
 	} catch {
 		return emptyMindMap();
 	}
@@ -128,6 +134,131 @@ const store = (() => {
 })();
 
 const serializedText = () => serializeMindMap(store.get(), LABELS);
+
+// ---------------------------------------------------------------------------
+// 工作流库：跨会话、跨重启的一份保存列表（手动保存 + 自动保存最近编辑）
+// ---------------------------------------------------------------------------
+
+const cloneGraph = (graph) => ({
+	nodes: (graph?.nodes ?? []).map((n) => ({ ...n })),
+	edges: (graph?.edges ?? []).map((e) => ({ ...e })),
+});
+
+const countNodes = (graph) => (Array.isArray(graph?.nodes) ? graph.nodes.length : 0);
+
+function loadLibrary() {
+	try {
+		const raw = window.localStorage.getItem(LIBRARY_KEY);
+		if (!raw) return [];
+		const parsed = JSON.parse(raw);
+		const items = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.items) ? parsed.items : [];
+		const out = [];
+		for (const item of items) {
+			const graph = sanitizeGraph(item && item.graph);
+			if (!graph) continue;
+			out.push({
+				id: String(item.id || ""),
+				name: String(item.name || "").slice(0, 80),
+				graph,
+				savedAt: Number(item.savedAt) || 0,
+				auto: Boolean(item.auto),
+			});
+		}
+		return out.filter((item) => item.id).sort((a, b) => b.savedAt - a.savedAt);
+	} catch {
+		return [];
+	}
+}
+
+function storeLibrary(items) {
+	try {
+		window.localStorage.setItem(LIBRARY_KEY, JSON.stringify({ version: 1, items }));
+	} catch {
+		// 配额满或被禁：本次仍可用，只是刷新后不保留
+	}
+}
+
+function upsertLibrary(items, entry) {
+	const index = items.findIndex((item) => item.id === entry.id);
+	const next = items.slice();
+	if (index >= 0) next[index] = entry;
+	else next.unshift(entry);
+	return next.sort((a, b) => b.savedAt - a.savedAt);
+}
+
+function formatWhen(timestamp) {
+	const date = new Date(timestamp || Date.now());
+	if (Number.isNaN(date.getTime())) return "";
+	const pad = (value) => String(value).padStart(2, "0");
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// 当前画布对应的已保存工作流名：tab 视图与浮层共用一份
+let currentName = "";
+
+const library = (() => {
+	let items = loadLibrary();
+	let timer = null;
+	const listeners = new Set();
+	const emit = () => {
+		for (const fn of listeners) {
+			try {
+				fn(items);
+			} catch (err) {
+				console.error("[mindmap] library listener failed:", err);
+			}
+		}
+	};
+	const commit = (next) => {
+		items = next;
+		storeLibrary(items);
+		emit();
+	};
+	const snapshot = (graph) => {
+		if (!graph) return;
+		commit(upsertLibrary(items, { id: AUTO_ID, name: "", graph: cloneGraph(graph), savedAt: Date.now(), auto: true }));
+	};
+	// 图一变就排一次自动保存（拖动时频繁触发，防抖到 600ms）
+	store.subscribe((graph) => {
+		if (timer !== null) window.clearTimeout(timer);
+		timer = window.setTimeout(() => {
+			timer = null;
+			snapshot(graph);
+		}, AUTO_DEBOUNCE_MS);
+	});
+	return {
+		get: () => items,
+		subscribe(fn) {
+			listeners.add(fn);
+			return () => listeners.delete(fn);
+		},
+		/** 切换/关闭前立即刷一次自动保存，避开防抖窗口 */
+		flush() {
+			if (timer !== null) {
+				window.clearTimeout(timer);
+				timer = null;
+			}
+			snapshot(store.get());
+		},
+		save(name, graph) {
+			const clean = String(name || "").trim().slice(0, 60) || S.untitled;
+			const existing = items.find((item) => !item.auto && item.name === clean);
+			commit(
+				upsertLibrary(items, {
+					id: existing ? existing.id : `wf-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+					name: clean,
+					graph: cloneGraph(graph),
+					savedAt: Date.now(),
+					auto: false,
+				}),
+			);
+			return { name: clean, overwritten: Boolean(existing) };
+		},
+		remove(id) {
+			commit(items.filter((item) => item.id !== id));
+		},
+	};
+})();
 
 // ---------------------------------------------------------------------------
 // 宿主输入框桥
@@ -265,6 +396,26 @@ const CSS = `
 .mmp-fab { display: inline-flex; align-items: center; gap: 4px; order: -1; margin-right: 2px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font: inherit; font-size: 11px; cursor: pointer; white-space: nowrap; }
 .mmp-fab:hover { color: var(--text); border-color: var(--accent); background: var(--accent-soft, color-mix(in srgb, var(--accent) 14%, transparent)); }
 .mmp-fab.floating { position: fixed; order: 0; z-index: 60; box-shadow: 0 6px 18px rgba(0,0,0,.3); background: var(--bg-elev2, #1b1b22); }
+.mmp-lib-head { display: flex; align-items: center; gap: 8px; }
+.mmp-lib-list { display: flex; flex-direction: column; gap: 6px; min-height: 72px; max-height: 52vh; overflow: auto; }
+.mmp-lib-empty { padding: 18px 8px; text-align: center; font-size: 11.5px; line-height: 1.7; color: var(--text-dim); }
+.mmp-lib-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); }
+.mmp-lib-row:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.mmp-lib-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.mmp-lib-name { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mmp-lib-meta { font-size: 10.5px; color: var(--text-dim); font-family: var(--mono, monospace); }
+.mmp-lib-actions { margin-left: auto; flex: none; display: flex; gap: 6px; }
+.mmp-tag { flex: none; padding: 1px 6px; border-radius: 999px; font-size: 9.5px; line-height: 1.5; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.mmp-tag.current { background: rgba(34,197,94,.16); color: #16a34a; }
+.mmp-mini { height: 24px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font: inherit; font-size: 11px; cursor: pointer; white-space: nowrap; }
+.mmp-mini:hover { color: var(--text); border-color: var(--text-faint, var(--border)); }
+.mmp-mini.primary { background: var(--accent); border-color: transparent; color: #fff; }
+.mmp-mini.primary:hover { filter: brightness(1.08); color: #fff; }
+.mmp-mini.danger { background: var(--red, #ef4444); border-color: transparent; color: #fff; }
+.mmp-input { width: 100%; box-sizing: border-box; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 12px; outline: none; }
+.mmp-input:focus { border-color: var(--accent); }
+.mmp-lib-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mmp-lib-foot .grow { flex: 1 1 auto; font-size: 10.5px; color: var(--text-dim); }
 `;
 
 let styleInjected = false;
@@ -339,11 +490,13 @@ function createEditor(host, opts = {}) {
 	const bImage = btn(`🖼 ${S.addImage}`, "image");
 	const bImport = btn(`⠿ ${S.import}`, "import");
 	const bPrompt = btn(`✨ ${S.prompt}`, "prompt");
+	const bSave = btn(`💾 ${S.save}`, "save");
+	const bLib = btn(`📚 ${S.library}`, "library");
 	const bCopy = btn(`⧉ ${S.copy}`, "copy");
 	const bPreview = btn(`◫ ${S.preview}`, "preview");
 	const bInsert = btn(`↵ ${S.insert}`, "insert", "mmp-btn primary");
 	const bClear = btn(`␡ ${S.clear}`, "clear");
-	actions.append(bAdd, bLayout, bImage, bImport, bPrompt, bCopy, bPreview, bInsert, bClear);
+	actions.append(bAdd, bLayout, bImage, bImport, bPrompt, bSave, bLib, bCopy, bPreview, bInsert, bClear);
 	if (overlay && typeof opts.onClose === "function") actions.append(btn("✕", "close"));
 
 	const body = el("div", "mmp-body");
@@ -600,8 +753,12 @@ function createEditor(host, opts = {}) {
 
 	function refreshButtons() {
 		const text = serializedText();
+		const graph = store.get();
 		bInsert.disabled = !text;
 		bCopy.disabled = !text;
+		bSave.disabled = graph.nodes.length === 0 && graph.edges.length === 0;
+		const named = library.get().filter((item) => !item.auto).length;
+		bLib.textContent = named > 0 ? `📚 ${S.library} ${named}` : `📚 ${S.library}`;
 		bPreview.textContent = previewOpen ? `◫ ${S.previewHide}` : `◫ ${S.preview}`;
 		bClear.textContent = clearArmed ? `⚠ ${S.clearConfirm}` : `␡ ${S.clear}`;
 		bClear.classList.toggle("danger-armed", clearArmed);
@@ -960,6 +1117,8 @@ function createEditor(host, opts = {}) {
 			if (id) pickImageFor(id);
 		} else if (act === "import") openImportModal();
 		else if (act === "prompt") openPromptModal();
+		else if (act === "save") openSaveDialog();
+		else if (act === "library") openLibraryDialog();
 		else if (act === "copy") {
 			void copyText(serializedText()).then((ok) => showToast(ok ? S.copied : S.insertFallback));
 		} else if (act === "preview") {
@@ -1082,6 +1241,176 @@ function createEditor(host, opts = {}) {
 				showToast(format(S.importDone, { nodes: graph.nodes.length, edges: graph.edges.length }));
 			},
 		});
+	}
+
+	// ---- 工作流：保存 / 列表 ----
+	function openModalShell({ title, hint, onClose }) {
+		const modal = el("div", "mmp-modal");
+		const dialog = el("div", "mmp-dialog");
+		dialog.append(el("h3", "", title));
+		if (hint) dialog.append(el("p", "", hint));
+		modal.append(dialog);
+		root.append(modal);
+		function close() {
+			modal.remove();
+			window.removeEventListener("keydown", onKey, true);
+			if (typeof onClose === "function") onClose();
+		}
+		function onKey(event) {
+			if (event.key !== "Escape") return;
+			event.stopPropagation();
+			event.preventDefault();
+			close();
+		}
+		window.addEventListener("keydown", onKey, true);
+		modal.addEventListener("pointerdown", (event) => {
+			if (event.target === modal) close();
+		});
+		return { modal, dialog, close };
+	}
+
+	function openSaveDialog() {
+		const graph = store.get();
+		const suggested =
+			currentName || (graph.nodes[0]?.title || "").trim().slice(0, 40) || S.untitled;
+		const { dialog, close } = openModalShell({ title: S.saveTitle, hint: S.saveHint });
+		dialog.append(el("div", "mmp-lib-meta", S.saveName));
+		const input = el("input", "mmp-input");
+		input.type = "text";
+		input.maxLength = 60;
+		input.value = suggested;
+		input.placeholder = S.savePlaceholder;
+		dialog.append(input);
+		const row = el("div", "mmp-lib-foot");
+		const summary = el("span", "grow", format(S.saveNodeCount, { count: graph.nodes.length }));
+		const cancel = el("button", "mmp-mini", S.cancel);
+		cancel.type = "button";
+		const apply = el("button", "mmp-mini primary", S.saveApply);
+		apply.type = "button";
+		row.append(summary, cancel, apply);
+		dialog.append(row);
+		window.setTimeout(() => {
+			input.focus();
+			input.select();
+		}, 0);
+		const submit = () => {
+			const result = library.save(input.value, store.get());
+			currentName = result.name;
+			close();
+			refreshButtons();
+			showToast(format(result.overwritten ? S.saveOverwritten : S.saveDone, { name: result.name }));
+		};
+		cancel.addEventListener("click", close);
+		apply.addEventListener("click", submit);
+		input.addEventListener("keydown", (event) => {
+			if (event.key !== "Enter") return;
+			event.preventDefault();
+			submit();
+		});
+	}
+
+	/** 打开一条已保存的工作流；返回是否成功。 */
+	function openEntry(entry) {
+		const graph = sanitizeGraph(entry.graph);
+		if (!graph || (graph.nodes.length === 0 && graph.edges.length === 0)) {
+			showToast(S.libraryBroken);
+			return false;
+		}
+		library.flush(); // 先把当前图刷进自动保存，避开防抖窗口
+		selected = null;
+		commitStructural(graph);
+		currentName = entry.auto ? "" : entry.name;
+		showToast(entry.auto ? S.libraryRestored : format(S.libraryOpened, { name: entry.name }));
+		return true;
+	}
+
+	function openLibraryDialog() {
+		let off = () => {};
+		const { dialog, close } = openModalShell({
+			title: S.libraryTitle,
+			onClose: () => off(),
+		});
+		const head = el("div", "mmp-lib-head");
+		const countLabel = el("span", "mmp-counts");
+		head.append(countLabel);
+		dialog.append(head);
+		const list = el("div", "mmp-lib-list");
+		dialog.append(list);
+		const footer = el("div", "mmp-lib-foot");
+		const hint = el("span", "grow", S.libraryFooterHint);
+		const saveCurrent = el("button", "mmp-mini", S.saveCurrent);
+		saveCurrent.type = "button";
+		const closeBtn = el("button", "mmp-mini", S.close);
+		closeBtn.type = "button";
+		footer.append(hint, saveCurrent, closeBtn);
+		dialog.append(footer);
+		closeBtn.addEventListener("click", close);
+		saveCurrent.addEventListener("click", () => {
+			close();
+			openSaveDialog();
+		});
+
+		const renderList = (items) => {
+			list.innerHTML = "";
+			const named = items.filter((item) => !item.auto).length;
+			countLabel.textContent = format(S.libraryCount, { count: named });
+			if (items.length === 0) {
+				const empty = el("div", "mmp-lib-empty");
+				empty.append(el("div", "", S.libraryEmpty), el("div", "", S.libraryEmptyHint));
+				list.append(empty);
+				return;
+			}
+			for (const entry of items) {
+				const row = el("div", "mmp-lib-row");
+				const main = el("div", "mmp-lib-main");
+				const nameRow = el("div", "mmp-lib-name");
+				nameRow.append(el("span", "", entry.auto ? S.autoSaveName : entry.name));
+				if (entry.auto) nameRow.append(el("span", "mmp-tag", S.libraryAuto));
+				else if (currentName && currentName === entry.name) {
+					nameRow.append(el("span", "mmp-tag current", S.libraryCurrent));
+				}
+				main.append(
+					nameRow,
+					el(
+						"div",
+						"mmp-lib-meta",
+						format(S.libraryMeta, {
+							nodes: entry.graph.nodes.length,
+							edges: entry.graph.edges.length,
+							when: formatWhen(entry.savedAt),
+						}),
+					),
+				);
+				const acts = el("div", "mmp-lib-actions");
+				const openBtn = el("button", "mmp-mini primary", S.libraryOpen);
+				openBtn.type = "button";
+				openBtn.addEventListener("click", () => {
+					if (openEntry(entry)) close();
+				});
+				acts.append(openBtn);
+				if (!entry.auto) {
+					const del = el("button", "mmp-mini", S.libraryDelete);
+					del.type = "button";
+					let armed = false;
+					del.addEventListener("click", () => {
+						if (!armed) {
+							armed = true;
+							del.classList.add("danger");
+							del.textContent = S.libraryDeleteConfirm;
+							return;
+						}
+						library.remove(entry.id);
+						showToast(S.libraryDeleted);
+					});
+					acts.append(del);
+				}
+				row.append(main, acts);
+				list.append(row);
+			}
+		};
+
+		renderList(library.get());
+		off = library.subscribe(renderList);
 	}
 
 	/** 把一版草稿落进图：接到选中节点，或整图替换。 */
