@@ -7,7 +7,7 @@ description: 把课件工厂产出的课件一条龙发到小红书（选图 →
 
 把 `courseware-factory` 产出的 `project.json` 变成一条真发出去的小红书图文笔记，并负责发完之后的核实与回评论。
 
-**一句话流程**：`published.py --list`（查台账，已发的课题不能发）→ `prep_post.py`（选图+补封面+裁细节+生成文案草稿）→ **人工/agent 改两处文案** → `publish_post.py`（发布+核实+登记台账）→ `replies.py`（回评论）。
+**一句话流程**：`published.py --list`（查台账，已发的课题不能发）→ **`netdisk_publish.py` 先把交付链接做好**（没链接别发笔记）→ `prep_post.py`（选图+补封面+打水印+生成文案）→ **人工/agent 改两处文案** → `publish_post.py`（发布+核实+登记台账）→ `replies.py`（回评论+成交后发链接）。
 
 ## 发布策略（2026-11 起，改策略先看这段）
 
@@ -16,7 +16,9 @@ description: 把课件工厂产出的课件一条龙发到小红书（选图 →
 3. **必须写明 AI 生成**。画面是模型出的，正文里固定带 `AI_DISCLOSURE` 那段（「画面由 AI 生成，课题设计/教学流程/文字由人工编排校对」）。这段话有两个作用：平台 AIGC 合规，以及挡掉「AI 画的还卖钱」的举报。MCP 的发布接口**没有 AIGC 勾选字段**，所以只能写在正文；发完最好去 App/创作中心看有没有需要补的标识。
 4. **必须有购买引导，但正文里不能写交易词**。正文固定带 `CTA_DECK` / `CTA_CUSTOM` / `CTA_TOOL` 三行，只允许说「主页 / 合集 / 评论区告诉我」，把成交留给私信和主页。**实测「课包 / 打包更划算 / 想要这套 / 私信『工具』」这类词会让发布按钮点下去不跳转**（MCP 只报 `PUBLISH_FAILED`，看不见真实原因）。
 5. 三行 CTA 是常量（`prep_post.py` 顶部），改口播方式改那里，不要每次手改 post.json。
-6. **展示图必须带水印，原图必须留档**（防白嫖）。`prep_post.py` 默认给每张发布图打两层水印：全图平铺「品牌 · 原创课件」+ 右下角品牌条（含小红书号）；同时把本次用到的原图复制到 `项目/<课件>/img_orig/` 并写 `manifest.json`（md5 / 尺寸 / 时间）。同行盗图裁不掉、维权时有原图存证；只有内部预览才用 `--no-watermark`。
+7. **默认只发 1 张成品图（2026-11 起）**。`--cap 1 --details 0`，封面就是成品本身。
+   9 张图会让笔记像"资料包清仓"，而单张美图 + 一段能看懂的文字，点击和私信都更高。
+   展示图必须带水印（防白嫖），原图进 `img_orig/` 留档，交付给买家的 PDF 不过水印。
 
 ## 作用域（先看这条）
 
@@ -60,7 +62,52 @@ python "C:/Users/hua/.pi/agent/skills/xhs-courseware-post/scripts/published.py" 
 - 未发课题为 0 → 说明该出新课件了，用 `courseware-factory` 做新课，别硬重发。
 - 台账第一次用要先从主页初始化：`published.py --sync`（历史笔记没有图片 md5，只能按课题名去重；新发的会自动记 md5）。
 
-### 第 1 步 · 生成草稿
+### 第 0.5 步 · 做交付链接（**卖的是链接，不是笔记**）
+
+**先把「买家付钱后拿到什么」做好，再发笔记。** 顺序反了就会出现"有人问价、你没东西发"。
+
+### 一个课件 = 一个子文件夹 = 一条独立链接
+
+把所有课件塞进同一个分享链接 = 买家买一套能看见全套 = 白送。所以每套单独一条：
+
+```text
+网盘 /课件/<课题>X-Y岁课件/        ← 这个文件夹 = 一条分享链接（带提取码）
+      ├── <课题>X-Y岁课件.pdf
+      └── 原图/01_范画成品.jpg ... 16 张
+```
+
+```bash
+# 0) 先在工厂侧打交付包（PDF + 原图 + manifest）
+python "C:/Users/hua/Documents/备份代码/小红书卖课件/工厂/deliver.py" "项目/<课题>/project.json" --zip
+
+# 1) 看计划（不联网、不花钱、先确认文件清单）
+"C:/Users/hua/Documents/备份代码/baidu-netdisk-xianyu/baidu-netdisk-mcp/.venv/Scripts/python.exe" \
+  "C:/Users/hua/Documents/备份代码/小红书卖课件/工厂/netdisk_publish.py" "项目/<课题>/project.json" --dry
+
+# 2) 真上传 + 建分享（--period 0 永久 / 7 / 30 天）
+... 工厂/netdisk_publish.py "项目/<课题>/project.json" --period 0
+```
+
+产出：
+
+- 屏幕上的 `✅ 交付链接 + 提取码`（**这就是成交后要发的那一句**）
+- `项目/<课件>/交付/<课题>.../分享链接.json`（链接 / 提取码 / 文件清单 / 时间）
+- 仓库根 `交付台账.json`（所有课题 → 链接，别把链接弄丢）
+
+**依赖（必须先配好，否则脚本直接报错退出，不会传一半）：**
+
+```ini
+# C:/Users/hua/Documents/备份代码/baidu-netdisk-xianyu/baidu-netdisk-mcp/.env
+BAIDU_NETDISK_ACCESS_TOKEN=...   # 从 https://pan.baidu.com/union/console/applist 建应用 → OAuth → 回调地址里的 access_token
+```
+
+用它的 `.venv` python 跑（脚本 import 网盘 MCP 的 `server.py` 复用 API 层，不靠常驻 MCP 进程）。
+不要用 MCP 工具逐个传：单文件超过 30 秒会被工具超时切断，大 PDF 必挂。
+
+**上传完先自查**：`file_list /课件` 能看到该文件夹、点开里面是 1 个 PDF + 原图 16 张。
+脚本已做校验：任何一个文件没传成功就**不建分享**，避免发出残缺链接。
+
+## 第 1 步 · 生成草稿
 
 ```bash
 cd "C:/Users/hua/Documents/备份代码/小红书卖课件"
@@ -127,6 +174,8 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 
 ## 红线
 
+1. **没有交付链接就不发笔记**。买家问价时你必须 3 秒内能给出一条只含这套课件的链接；
+   没有链接就发，等于把人骗进主页再让他空手走。用 `工厂/netdisk_publish.py` 先做好。
 1. **同一课题 / 同一张图不能重发**。默认由台账拦截（课题名 + 图片 md5 双重）。不要习惯性用 `--allow-repeat` 重发已经发过的课题——粉丝认出「又是那只大象」比少发一篇伤得多。真要重发同一课题，必须重出图（新 md5）并重写文案。
 2. **发布图不能是裸图**。默认已经打水印（平铺 + 右下角品牌条）；`--no-watermark` 只用于内部预览，正式发出去之前确认 `_prep.watermark.enabled = true`。原图会在 `img_orig/` 留一份带 md5 的存证，别删。
 2. **AIGC 声明不能删、不能弱化**。画面是 AI 出的，正文里必须留 `🤖 说明` 那段。删了既不符合平台对 AI 内容的标注要求，也容易被同行举报「AI 生成还当原创课件卖」。

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06 23:21:32",
+  "generatedAt": "2026-11-06 23:26:42",
   "count": 46,
   "skills": [
     {
@@ -69,7 +69,7 @@
     },
     {
       "name": "grsai-image-2-5",
-      "description": "Generate or restyle images through the grsai API (gpt-image-2 / 2.5 / 2.6 family, default gpt-image-2.6; text-to-image, image-to-image with base64 or URL references, transparent background, animated GIF on 2.6, up to 3840x2160 on sunburst). Use when the user asks to 出图/生成/渲染/换风格 an image, asks for a GIF/动图, turns a photo or 3D view into photoreal architecture or product art, or handles /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.",
+      "description": "Generate or restyle images through the grsai API (gpt-image-2 / 2.5 / 2.6 family, default gpt-image-2.6; text-to-image, image-to-image with base64 or URL references, transparent background, animated GIF on 2.6, 2K/4K on 2.6-sunburst and 2.5-sunburst up to 3840x2160). Use when the user asks to 出图/生成/渲染/换风格 an image, asks for a GIF/动图, turns a photo or 3D view into photoreal architecture or product art, or handles /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

@@ -1,6 +1,6 @@
 ---
 name: grsai-image-2-5
-description: Generate or restyle images through the grsai API (gpt-image-2 / 2.5 / 2.6 family, default gpt-image-2.6; text-to-image, image-to-image with base64 or URL references, transparent background, animated GIF on 2.6, up to 3840x2160 on sunburst). Use when the user asks to 出图/生成/渲染/换风格 an image, asks for a GIF/动图, turns a photo or 3D view into photoreal architecture or product art, or handles /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.
+description: Generate or restyle images through the grsai API (gpt-image-2 / 2.5 / 2.6 family, default gpt-image-2.6; text-to-image, image-to-image with base64 or URL references, transparent background, animated GIF on 2.6, 2K/4K on 2.6-sunburst and 2.5-sunburst up to 3840x2160). Use when the user asks to 出图/生成/渲染/换风格 an image, asks for a GIF/动图, turns a photo or 3D view into photoreal architecture or product art, or handles /v1/draw/completions, /v1/draw/result, or grsai task ids. Read the Hard Rules before any paid call.
 license: MIT
 compatibility: Python 3.8+; outbound HTTPS to grsai.dakka.com.cn (domestic) or grsaiapi.com (overseas); Windows/macOS/Linux.
 metadata:
@@ -28,7 +28,7 @@ Sibling skill `grsai-nano-banana` covers the legacy Nano Banana route (`/v1/draw
 
 ## Hard Rules (read before any paid call)
 
-1. **Every `gen` submit costs credits.** Before the first submit of a session, state model + quality + aspect + how many images and get the user's OK. Default to `gpt-image-2.6` (¥0.03/call, GIF capable); use `gpt-image-2.5-sunburst --quality high/max` when 2K/4K is needed; `3840x2160` only when explicitly requested.
+1. **Every `gen` submit costs credits.** Before the first submit of a session, state model + quality + aspect + how many images and get the user's OK. Default to `gpt-image-2.6` (¥0.03/call, GIF capable); use `gpt-image-2.6-sunburst --quality max` (price unlisted) or `2.5-sunburst` (¥0.12) when 2K/4K is needed; `3840x2160` only when explicitly requested.
 2. **No batch spam.** One task at a time; never generate more images than the user asked for; poll interval >= 5 s; retries on `failure_reason=error` capped at 2 (the CLI default). Never loop "regenerate until it looks good" without the user driving each round.
 3. **Never bypass moderation.** On `failure_reason` of `input_moderation` or `output_moderation`, stop and report. Do not rephrase to sneak content through (max one neutral rewording, only if the user asks). Never request: real identifiable people or their likeness, NSFW, gore, political figures, copyrighted characters, logos or trademarks.
 4. **Key hygiene.** Never print, echo, screenshot, or commit the API key; keep it in `$GRSAI_API_KEY` or a `.grsai_key` file outside version control; never embed it in prompt text, generated images, or logs. If exposed, tell the user to rotate it.
@@ -55,7 +55,7 @@ python "$S" gen -p prompt.txt -r ref_view.png ref_massing.png \
   --model gpt-image-2.5 --quality high --aspect 1536x1024 --out house.png
 
 # 4K (sunburst only)
-python "$S" gen -p prompt.txt -r ref.png --model gpt-image-2.5-sunburst \
+python "$S" gen -p prompt.txt -r ref.png --model gpt-image-2.6-sunburst \
   --quality max --aspect 3840x2160 --out big.png
 
 # transparent cut-out
@@ -74,9 +74,11 @@ Hosts: `--host domestic` (default, `https://grsai.dakka.com.cn`), `--host overse
 
 ## API Facts (verified)
 
-- `POST /v1/draw/completions` with `{model, prompt, aspectRatio, quality, urls[], background?, mask?, webHook}`.
-- The CLI always sends `webHook: "-1"` so the API returns `{"code":0,"data":{"id":"..."}}` immediately, then polls `POST /v1/draw/result` with `{"id": ...}`. Plain streaming (omit webHook) and real callback URLs also exist but are not used here.
-- Poll response: `{id, progress 0-100, status: running|succeeded|failed, results:[{url}], failure_reason, error}`.
+- `POST /v1/draw/completions` with `{model, prompt, aspectRatio, quality, urls[], background?, mask?, webHook, shutProgress?}`.
+- `webHook` has three modes: a real callback URL (results POST to it — the CLI prints the id and does not poll), `"-1"` (return an id immediately so you can poll, what the CLI does by default), or omitted (server holds the HTTP response open and streams progress).
+- `shutProgress: true` skips progress frames and only sends the final result — pair it with a callback URL (`--webhook URL --shut-progress`).
+- The CLI always sends `webHook: "-1"` unless `--webhook` is given, so the API returns `{"code":0,"data":{"id":"..."}}` immediately, then polls `POST /v1/draw/result` with `{"id": ...}`.
+- Poll response: `{id, progress 0-100, status: running|succeeded|failed, results:[{url}], failure_reason, error}` plus a legacy top-level `url` (= results[0].url). `results[].width/height` come back as **0** — never trust them, read the file (Rule 7).
 - `failure_reason`: `output_moderation`, `input_moderation`, `error` (Rule 3 applies to the first two; only `error` auto-retries, and credits are refunded on failure).
 
 ### Models
@@ -85,14 +87,24 @@ Prices are live from grsai's model page (2026-11-06); each call is 1 image.
 
 | model | documented quality | background | size | price | notes |
 |---|---|---|---|---|---|
-| gpt-image-2 | auto | no | 1K | ¥0.03 | cheapest, legacy |
+| gpt-image-2 | auto | no | 1K | ¥0.03 | legacy |
 | gpt-image-2-vip | medium | yes | 1K/2K/4K | ¥0.10 | |
 | gpt-image-2.5 | auto | no | 1K | ¥0.03 | |
-| **gpt-image-2.6** | auto (high verified) | yes | 1K | ¥0.03 | **default**; GIF output; transparent verified |
+| **gpt-image-2.6** | auto (high verified) | yes (verified) | 1K | ¥0.03 | **default**; GIF output |
+| gpt-image-2.6-flare | low/medium/high | yes (verified) | 1K/2K/4K | unlisted | works, but absent from `/v1/models` |
+| gpt-image-2.6-sunburst | low/medium/high/xhigh/max | yes | 1K/2K/4K incl 3840x2160 | unlisted | works, 4K verified |
 | gpt-image-2.5-flare | low/medium/high | yes | 1K/2K/4K | ¥0.10 | good for cut-outs |
-| gpt-image-2.5-sunburst | low/medium/high/xhigh/max | yes | 1K/2K/4K | ¥0.12 | highest detail, 3840x2160 |
+| gpt-image-2.5-sunburst | low/medium/high/xhigh/max | yes | 1K/2K/4K | ¥0.12 | highest detail |
 
 The API **silently accepts undocumented quality values** (verified: `gpt-image-2.5` and `2.6` with `high` return high-detail images). The CLI warns and proceeds; `--strict-quality` hard-fails instead. Omit `--quality` to send the documented default.
+
+`gpt-image-2.6` verified 2026-11-06: `GET /v1/models` lists it; `1536x1024` returns exactly 1536x1024; `1024x1024` returns 1254x1254; `2048x1152` returns 1672x941 (1K-class — a larger `aspectRatio` only changes the **ratio**, not the pixel budget); `quality=high` and `background=transparent` (real RGBA, alpha=0 outside the subject) both work.
+
+### The 2.6 family vs `/v1/models`
+
+`GET /v1/models` returns only `gpt-image-2.6` — it does **not** list `gpt-image-2.6-flare` or `gpt-image-2.6-sunburst`, yet both are documented in the old `/v1/draw/completions` spec and both accept and finish jobs (verified 2026-11-06: flare 1024x1024 + transparent → real RGBA cut-out; sunburst `3840x2160 --quality max` → exactly 3840x2160, 3 MB). So **do not probe `/v1/models` to decide what exists**; use this table, and treat a `code != 0` submit as the real answer. Their prices are not on the model page — if the user cares about spend, say "price unlisted" instead of guessing.
+
+Official `background` list is 2-vip / 2.5-flare / 2.5-sunburst **only**, but `transparent` verified working on 2.6 and 2.6-flare too. Sending it to 2 / 2.5 / 2.6-sunburst is unverified; the CLI warns rather than fails.
 
 `gpt-image-2.6` verified 2026-11-06: `GET /v1/models` lists it; `1536x1024` returns exactly 1536x1024; `1024x1024` returns 1254x1254; `2048x1152` returns 1672x941 (the model is 1K-class — a larger `aspectRatio` only changes the **ratio**, not the pixel budget); `quality=high` and `background=transparent` (real RGBA, alpha=0 outside the subject) both work.
 
@@ -106,7 +118,7 @@ python "$S" gen -p "a red ceramic teapot slowly rotating on white background" --
 
 - The result URL ends in `.gif` (GIF89a, multi-frame loop). Observed: 1024x1024 request → 309x307, 16 frames, ~290 KB; a 1536x1024 request returned a `.gif` too.
 - Two ways to trigger it: `--gif` (appends an English "animated GIF, short looping cycle, roughly 12-16 frames, no text" clause) or just ask for it in the prompt ("生成 gif 动图，循环播放").
-- `--gif` is refused on every non-2.6 model (they return stills); `gif` is never silently downgraded.
+- `--gif` is refused on every non-2.6 model (they return stills); `gif` is never silently downgraded. GIF on `2.6-flare`/`2.6-sunburst` is **unverified** — test one paid call before promising it.
 - **The URL suffix wins on save.** The CLI renames `<out>` to the server's real suffix and prints `[note] server returned .gif, saving as ...`, so a `.png` out-name never hides a GIF. GIFs are small and low-resolution — do not promise 1K GIFs.
 - Chat platforms (微信/小红书/抖音) usually want MP4; convert with `ffmpeg -i in.gif -movflags faststart -pix_fmt yuv420p out.mp4` if the target is a video upload.
 
@@ -114,8 +126,8 @@ python "$S" gen -p "a red ceramic teapot slowly rotating on white background" --
 
 Sets the **ratio**; returned pixels are model-dependent — always verify the actual file (Rule 7).
 
-- Verified accepted: `1024x1024`, `1536x1024`, `1024x1536`, `3840x2160` (4K only on sunburst).
-- Observed: `gpt-image-2` at `1024x1024` returned 1254x1254; `2048x1152` returned 1672x941; `gpt-image-2.5` at `1536x1024` and sunburst at `3840x2160` returned exactly the request; `gpt-image-2.6` at `1536x1024` returned exactly 1536x1024, at `1024x1024` 1254x1254, at `2048x1152` 1672x941.
+- Verified accepted: `1024x1024`, `1536x1024`, `1024x1536`, `3840x2160` (4K only on sunburst models).
+- Observed: `gpt-image-2` at `1024x1024` returned 1254x1254; `2048x1152` returned 1672x941; `gpt-image-2.5` at `1536x1024` and sunburst at `3840x2160` returned exactly the request; `gpt-image-2.6` at `1536x1024` returned exactly 1536x1024, at `1024x1024` 1254x1254, at `2048x1152` 1672x941; `gpt-image-2.6-flare`/`-sunburst` returned exactly 1024x1024 and 3840x2160.
 
 ### References (`urls`)
 
@@ -143,6 +155,6 @@ Labelled blocks, in this order (full templates in `references/prompt-templates.m
 
 ## Reference Files
 
-- `scripts/grsai.py` — CLI: `gen` / `poll` / `models`; base64 or URL references; auto-retry; immediate download; suffix-correcting, non-clobbering save; writes `<out>.url.txt`.
+- `scripts/grsai.py` — CLI: `gen` / `poll` / `models`; base64 or URL references; `--webhook` (callback mode) / `--shut-progress`; auto-retry; immediate download; suffix-correcting, non-clobbering save; writes `<out>.url.txt`.
 - `scripts/blender_capture.py` — paste into `blender_execute_blender_code`; emits the styled render + white massing render for the current camera.
 - `references/prompt-templates.md` — geometry-lock paragraph, camera block, three architecture styles, product cut-out, joint/light blocks, material word bank.

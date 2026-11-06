@@ -42,6 +42,8 @@ MODELS = {
     "gpt-image-2-vip": {"qualities": ["medium"], "background": True, "note": "1K/2K/4K; ~0.10 CNY/call"},
     "gpt-image-2.5": {"qualities": ["auto"], "background": False, "note": "1K only; ~0.03 CNY/call"},
     "gpt-image-2.6": {"qualities": ["auto", "high"], "background": True, "note": "1K only; GIF output; ~0.03 CNY/call (documented quality: auto; verified: auto, high)"},
+    "gpt-image-2.6-flare": {"qualities": ["low", "medium", "high"], "background": True, "note": "1K/2K/4K; price unlisted; not in /v1/models but works (verified)"},
+    "gpt-image-2.6-sunburst": {"qualities": ["low", "medium", "high", "xhigh", "max"], "background": True, "note": "1K/2K/4K incl 3840x2160; price unlisted; not in /v1/models but works (verified)"},
     "gpt-image-2.5-flare": {"qualities": ["low", "medium", "high"], "background": True, "note": "1K/2K/4K; ~0.10 CNY/call"},
     "gpt-image-2.5-sunburst": {"qualities": ["low", "medium", "high", "xhigh", "max"], "background": True, "note": "1K/2K/4K; ~0.12 CNY/call"},
 }
@@ -155,8 +157,10 @@ def cmd_gen(a):
         "prompt": prompt,
         "aspectRatio": a.aspect,
         "quality": quality,
-        "webHook": "-1",  # immediate id, then poll /v1/draw/result
+        "webHook": a.webhook,  # "-1" = return an id immediately, then poll /v1/draw/result
     }
+    if a.shut_progress:
+        payload["shutProgress"] = True
     if a.refs:
         payload["urls"] = [to_ref(r) for r in a.refs]
     if a.background:
@@ -172,6 +176,9 @@ def cmd_gen(a):
             sys.exit(f"submit failed: {json.dumps(r)[:500]}")
         tid = r["data"]["id"]
         print(f"[submit] model={model} quality={quality} aspect={a.aspect} refs={len(a.refs or [])} id={tid}", flush=True)
+        if a.webhook not in ("-1", ""):
+            print(f"[callback] results will POST to {a.webhook}; not polling. Fetch later with: grsai.py poll --id {tid}", flush=True)
+            return 0
         d = poll(host, tid, key, a.interval, a.timeout, quiet=a.quiet)
         status = d.get("status")
         if status == "succeeded" and d.get("results"):
@@ -224,7 +231,7 @@ def cmd_poll(a):
 def cmd_models(_a):
     for m, spec in MODELS.items():
         print(f"{m:24s} quality={','.join(spec['qualities']):22s} background={str(spec['background']):5s} {spec['note']}")
-    print("\nverified aspectRatio:", ", ".join(VERIFIED_ASPECTS), "(sets the ratio; 1K-only models return ~1254-1672 px long edge)")
+    print("\nverified aspectRatio:", ", ".join(VERIFIED_ASPECTS), "(sets the ratio; 1K-only models return ~1254-1672 px long edge; flare/sunburst return the request exactly 1K/2K/4K)")
     print("gif output:", ", ".join(sorted(GIF_MODELS)), "(--gif, or ask for an animated GIF in the prompt)")
     return 0
 
@@ -247,9 +254,11 @@ def main():
     g.add_argument("--model", default="gpt-image-2.6", choices=list(MODELS))
     g.add_argument("--quality", help="default: model's only/first option")
     g.add_argument("--aspect", default="1536x1024")
-    g.add_argument("--background", help="transparent (2-vip / 2.5-flare / 2.5-sunburst / 2.6)")
+    g.add_argument("--background", help="transparent (2-vip / 2.5-flare / 2.5-sunburst / 2.6-family)")
     g.add_argument("--gif", action="store_true", help="ask for an animated GIF (gpt-image-2.6 only)")
     g.add_argument("--mask", help="mask image path or URL")
+    g.add_argument("--webhook", default="-1", help="'-1' (default) = get an id and poll; or a URL to receive progress/results instead")
+    g.add_argument("--shut-progress", action="store_true", help="send shutProgress=true (skip progress frames; pairs with --webhook)")
     g.add_argument("--out", default="result.png")
     g.add_argument("--retries", type=int, default=2, help="retry on failure_reason=error")
     g.add_argument("--strict-quality", action="store_true", help="fail instead of warning on undocumented quality/background")
