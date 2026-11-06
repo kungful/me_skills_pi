@@ -193,6 +193,9 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 | 目的 | 命令 |
 | --- | --- |
 | 查台账（先做） | `python .../scripts/published.py --list` |
+| 打交付包（PDF+原图） | `python "C:/Users/hua/Documents/备份代码/小红书卖课件/工厂/deliver.py" "项目/<课题>/project.json" --zip` |
+| 交付链接（先 dry） | `<网盘venv python> 工厂/netdisk_publish.py "项目/<课题>/project.json" --dry` |
+| 交付链接（真上传） | `... 工厂/netdisk_publish.py "项目/<课题>/project.json" --period 0` |
 | 从主页初始化台账 | `python .../scripts/published.py --sync` |
 | 生成草稿（自动挑未发） | `python .../scripts/prep_post.py --next` |
 | 生成草稿（不打水印，仅预览） | `python .../scripts/prep_post.py 项目/<课件>/project.json --no-watermark` |
@@ -257,9 +260,14 @@ C:/Users/hua/.pi/agent/skills/xhs-courseware-post/
     ├── watermark.py       水印（平铺 + 右下角品牌条）+ 原图备份 + 版权存证 manifest
     ├── prep_post.py       project.json -> post.json（选图/去重/补封面/裁细节/水印/生成文案）
     ├── publish_post.py    发布 + 回主页 diff 核实 + 成功后登记台账
-    └── replies.py         未读/通知/评论/回复/账号数据
+    ├── replies.py         未读/通知/评论/回复/账号数据
+    └── netdisk_publish.py 交付链接脚本的备份副本（实跑工作根里的 工厂/netdisk_publish.py）
 
 C:/Users/hua/Documents/备份代码/小红书卖课件/
+├── 工厂/
+│   ├── deliver.py           交付打包（PDF + 原图 + manifest）
+│   └── netdisk_publish.py   上传网盘 + 每课题一条独立分享链接
+├── 交付台账.json        ← 课题 → 链接 / 提取码，成交后要发的那一条就靠它
 └── 发布台账.json         ← 已发课题 + 已用图片 md5（去重的唯一依据）
 
 项目/<课件>/
