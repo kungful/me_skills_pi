@@ -57,6 +57,7 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 | **做完要卖 → 打交付包（PDF+原图）** | `python 工厂/deliver.py 项目/<课题>/project.json --zip` |
 | **出图后跑自检（必须）** | `python 工厂/preflight.py 项目/<课题>/project.json` |
 | **导出后跑排版自检（必须）** | `python 工厂/layout_check.py 项目/<课题>/project.json` |
+| **PDF 到底怎么生成的** | 「PDF 是怎么造出来的」章节（生产链 + 硬规范 + 故障表） |
 | **先看别人什么在跑量再选题** | 「选题」章节 + `python 挖爆款.py` |
 | 一次改好几套课件 | 「审图台」→ 多课件工作台 + 批量操作 |
 | 报错了 | 「常见坑」（先查 `netstat` 看是不是僵尸服务） |
@@ -294,26 +295,64 @@ python 看爆款.py --imgs 1        # 封面逐张过视觉模型，产结构化
 
 > 数据来源是 `参考/爆款库/index.json`（去重后 180 条）。分析脚本见本 skill 的「选品分析」示例：按 `collects` 排序看头部，再去标题词频看赛道用词。
 
-## 交付打包：一个课件 = 一个文件夹（`工厂/deliver.py`）
+## PDF 是怎么造出来的（**唯一生产链，别绕开**）
 
-```bash
-python 工厂/deliver.py 项目/<课题>/project.json --zip     # 默认长边 1920 / q92
-python 工厂/deliver.py ... --long 2400 --quality 95      # 要更清晰
-```
-
-产出 `项目/<课题>/交付/<课题>X-Y岁课件/`：
+课件不是「画图 + 拼图」，是一条从数据到交付物的固定链。**唯一真源是 `project.json`**，
+PPTX 和 PDF 都是它的派生物，所以改任何文案/版式/换图之后，都必须从第 3 步重跑。
 
 ```text
-<课题>X-Y岁课件.pdf      ← 卖家稿（26 页，无水印）
-原图/01_范画成品.jpg ...  ← 16 张出图原图（按 chain 顺序编号）
-manifest.json            ← 每个文件的 md5 / 尺寸 / 时间 / 品牌（维权存证）
+project.json（内容 + 版式 + 出图参数）
+   │
+   ├─[1] pipeline.py ──────────→ 项目/img/<槽位>.png          ← AI 出图（16 张，¥0.03/张）
+   ├─[2] pipeline.compress() ──→ 项目/img_sell/<槽位>.jpg     ← ≤1600px / q88（PPTX 体积就靠它）
+   │        ↑ builder.py 的 CLI 会自动调它
+   ├─[3] builder.py ───────────→ 项目/out/《课题》.pptx        ← engine 画版式 + renderers 画 18 种页型
+   ├─[4] exporter.py ──────────→ 项目/out/《课题》.pdf         ← PowerPoint COM SaveAs(32) / LibreOffice
+   │                          └→ 项目/out/preview/NN.png     ← 1400px 宽，供审图/排版自检
+   ├─[5] layout_check.py ──────→ 报告 + out/_排版检查/*.jpg    ← 读 pptx 的 shape 几何，不消耗渲染
+   ├─[6] deliver.py ───────────→ 项目/<课件>/交付/<名>/        ← PDF + 原图 JPG + manifest.json
+   └─[7] netdisk_publish.py ───→ 网盘独立子文件夹 + 分享链接    ← 见 xhs-courseware-post
 ```
 
-**为什么要它**：`img/*.png` 是 2.5MB×16=40MB 的 PNG，买家手机下载卡、网盘传得慢；
-交付包统一压成 JPG 后 16 张约 6MB，加 PDF 共约 10MB，一套一发、干净利落。
+| 步 | 命令 | 输入 | 输出 | 依赖 / 退路 |
+|---|---|---|---|---|
+| 1 出图 | `pipeline.py <pj> --batch chain\|real\|photo` | `images[]` 的 prompt | `img/*.png` | grsai CLI + `~/.grsai_key`；单张失败就从日志拿 id `poll` 续拉，别重画 |
+| 2 压缩 | 由 builder 自动调 | `img/*.png` | `img_sell/*.jpg` | PIL；`--no-compress` 可关，但**关掉后 PDF 里会是旧图** |
+| 3 装配 | `builder.py <pj>` | project.json + img_sell | `out/*.pptx` | python-pptx；`--mode hd` 用高清图（体积大，仅内部） |
+| 4 导出 | `exporter.py <pj>` | pptx | `out/*.pdf` + `preview/` | **必须装 PowerPoint**（COM）；没装就自动退 `soffice --convert-to pdf`，预览退 `pdftoppm` |
+| 5 排版自检 | `layout_check.py <pj>` | pptx | 报告 + 印样 | python-pptx 读几何，不需要渲染 |
+| 6 交付打包 | `deliver.py <pj> --zip` | pdf + img | `交付/<名>/` | PIL 转 JPG（长边 1920 / q92） |
+| 7 上链分享 | `netdisk_publish.py <pj>` | 交付包 | 分享链接 | 见 `xhs-courseware-post`（一个课件一条链接） |
 
-**没有 PDF 时脚本会直接拒绝**，并提示先跑 builder + exporter —— 这是刻意的：
-实测 38 套课题里只有 5 套真的导出过 PDF，剩下的「做过图的」并不能卖。
+### 硬规范（改代码前先看，这些是有实测依据的）
+
+1. **画布 13.3333 × 7.5 英寸（16:9），导出的 PDF 是 960×540pt**（`engine.SW/SH`）。
+   改尺寸要同步改 `renderers.py` 里所有硬编码的 0.62/13.333 系布局，不要只改一处。
+2. **字体统一微软雅黑，并且必须注入东亚字体**（`engine._ea()` 往 rPr 里塞 `a:ea`/`a:cs`）。
+   只设 `run.font.name` 的话，中文在没装该字体的机器上会掉回宋体 —— 自己新加 run 时用 `engine.style()` 或 `d.text()`，别手搓。
+3. **图片双份，各管一头**：`img/` 是 PNG 高清（审图 + 交付原图用）、`img_sell/` 是 JPG ≤1600/q88（**只给 PPTX 用**）。
+   PPTX 体积因此稳在 ~4.4MB、PDF ~3.1MB；直接把 2.5MB 的 PNG 塞进 PPTX 会变 40MB。
+4. **页码 = 页序 − 1**：封面 `page(show_bar=False, auto=False)` 不编号，所以第 2 页页脚写「1页」。
+   这是母版设计（封面不占页码），不是 off-by-one，别去"修"。
+5. **PDF 里不能有水印、不能有占位品牌名**。水印只打在**展示图**上（`watermark.py`，发布侧）；
+   交付给买家的 PDF 是干净的。品牌取 `meta.brand`，占位符 `【你的机构名】`/`创享美育` 会被 `published.py`/`publish_post.py` 拦。
+6. **正文文字溢出是版式问题、不是内容问题**：`intro` 卡片文字区固定 1.25\"，每条 ≤16 字；
+   其它页型同理，先压文案，再考虑改卡片高度（改高度会影响所有同页型）。
+7. **装配/导出必须重跑，不会自动更新**。只改了 `project.json` 或 `renderers.py` 而没重跑 3、4 步，
+   PDF 就还是旧的 —— 这是"改了没生效"的第一大原因。
+
+### PDF 相关故障速查
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 重出了图，PDF 里还是老图 | 只跑了 builder，`img_sell/` 没更新（CLI 默认会压缩，但脚本里直接调 `build()` 就不会） | 先 `pipeline.compress(proj)`，再 builder；或直接用 CLI |
+| PDF 页数 ≠ `pages` 页数 | 导的是上一次的 pptx | 先 `builder.py` 再 `exporter.py`；`layout_check` 会较这个 |
+| 页面里出现「【待生成】槽位名」 | 该槽位没图（或路径解析不到） | `pipeline.py <pj> --list` 看哪个槽位是 `--`，补跑 |
+| 中文变宋体 / 排版跑位 | 新增 run 没注入东亚字体 | 用 `d.text()` / `engine.style()`，别直接 `run.font.name=...` |
+| `[export] COM 失败` | 没装 PowerPoint 或 COM 被占 | 自动退 LibreOffice；两者都没有就装一个（PDF 必须有真渲染器） |
+| 预览 PNG 数量不对 | 上次预览没清干净 / 导出中断 | `preview/` 会被 exporter 清空重导，别手动往里塞文件 |
+| 文字跑出卡片、压到下一块 | 文案超长 | `layout_check.py` 会报「需要 x" 只有 y"」，压短文案 |
+| 图片被裁掉主体 | `d.pic()` 是等比居中填充，框比例和图片比例差太多 | 调 `img_h`/框宽比，或换 3:2 以外的图 |
 
 ## 出图自检：`工厂/preflight.py`（**跑完出图第一件事**）
 
@@ -389,6 +428,27 @@ python 工厂/layout_check.py ... --sheet off     # 不要接触印样
 - 遮挡/拥挤/留白是否难看 → 看接触印样，一屏扫完 6 页
 - 配色是否刺眼、图片裁切是否切到主体 → 看原尺寸 PNG
 - **文字溢出只是估算**，边界情况（1.1 倍左右）要人眼确认再决定压不压文案
+
+## 交付打包：一个课件 = 一个文件夹（`工厂/deliver.py`）
+
+```bash
+python 工厂/deliver.py 项目/<课题>/project.json --zip     # 默认长边 1920 / q92
+python 工厂/deliver.py ... --long 2400 --quality 95      # 要更清晰
+```
+
+产出 `项目/<课题>/交付/<课题>X-Y岁课件/`：
+
+```text
+<课题>X-Y岁课件.pdf      ← 卖家稿（26 页，无水印）
+原图/01_范画成品.jpg ...  ← 16 张出图原图（按 chain 顺序编号）
+manifest.json            ← 每个文件的 md5 / 尺寸 / 时间 / 品牌（维权存证）
+```
+
+**为什么要它**：`img/*.png` 是 2.5MB×16=40MB 的 PNG，买家手机下载卡、网盘传得慢；
+交付包统一压成 JPG 后 16 张约 6MB，加 PDF 共约 10MB，一套一发、干净利落。
+
+**没有 PDF 时脚本会直接拒绝**，并提示先跑 builder + exporter —— 这是刻意的：
+实测 38 套课题里只有 5 套真的导出过 PDF，剩下的「做过图的」并不能卖。
 
 ## 审图台（WebUI）闭环
 
