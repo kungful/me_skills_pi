@@ -1598,6 +1598,11 @@ function createEditor(host, opts = {}) {
 
 	// ---- store 订阅 ----
 	offs.push(
+		library.subscribe(() => {
+			if (!destroying) refreshButtons();
+		}),
+	);
+	offs.push(
 		store.subscribe((graph, opts2) => {
 			if (opts2.source === root && !opts2.rebuild) {
 				// 自己发起的增量改动（拖动位置 / 输入标题备注）：DOM 已经就地更新
