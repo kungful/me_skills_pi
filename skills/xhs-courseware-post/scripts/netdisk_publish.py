@@ -60,6 +60,8 @@ def main():
     ap.add_argument("--period", type=int, default=0, choices=[0, 1, 7, 30], help="有效期天数，0=永久")
     ap.add_argument("--pwd", default="", help="4 位提取码，默认随机")
     ap.add_argument("--dry", action="store_true", help="只打印计划，不联网")
+    ap.add_argument("--keep-old", action="store_true",
+                    help="保留网盘上的同名旧文件夹（默认会先移进回收站再重建，避免旧文件残留在链接里）")
     a = ap.parse_args()
 
     sys.path.insert(0, ROOT)
@@ -83,6 +85,27 @@ def main():
             files.append((rel, full, os.path.getsize(full)))
     files.sort(key=lambda x: (0 if x[0].endswith(".pdf") else 1, x[0]))
     total = sum(f[2] for f in files)
+
+    # ★★ 铁律：一个子文件夹只能装**一套**课件。
+    # 混进第二个 PDF，就等于买家付一套的钱拿到一套库 —— 这是这个项目唯一致命的错误。
+    pdfs = [r[0] for r in files if r[0].lower().endswith(".pdf")]
+    if len(pdfs) != 1:
+        print("[x] 拒绝上传：交付包里必须**恰好 1 个** PDF，现在 %d 个：" % len(pdfs))
+        for x in pdfs:
+            print("      -", x)
+        print("    一套课件 = 一个子文件夹 = 一条链接。多套合传 = 买一套拿走全部。")
+        return 2
+    if pdfs[0][:-4] != name:
+        print("[x] 拒绝上传：PDF 名「%s」与课题文件夹名「%s」不一致。" % (pdfs[0][:-4], name))
+        print("    链接里的命名必须能对上商品页，否则卖家发错、买家收错。")
+        return 2
+    bad_words = ("合集", "全套", "打包", "all-", "bundle", "系列")
+    if any(w in name for w in bad_words):
+        print("[x] 拒绝上传：文件夹名「%s」含合集/打包字样。一套一链接，别做合集。" % name)
+        return 2
+    if len(files) > 40:
+        print("[x] 拒绝上传：%d 个文件偏多了（单套应约 17 个）。是不是把两套拼一起了？" % len(files))
+        return 2
 
     remote_deck = "%s/%s" % (a.remote_root.rstrip("/"), name)
     pwd = a.pwd or rand_pwd()
@@ -110,6 +133,16 @@ def main():
     sys.path.insert(0, MCP_DIR)
     import server as nd  # noqa: E402  （复用它的 _api / 上传 / 分享实现）
 
+    # 0) 旧文件夹先整个清掉（进回收站）——不然上版的旧文件会残在链接里，买家看到两份
+    lst0 = json.loads(nd.file_list(a.remote_root, num=500, raw=True))
+    old = [it for it in (lst0.get("list") or []) if it.get("server_filename") == name]
+    if old and not a.keep_old:
+        print("  旧文件夹已存在 → 移进回收站后重建（保证链接里只有这一套的新版）")
+        r = nd.file_del(json.dumps([remote_deck], ensure_ascii=False), async_mode=0)
+        print("  del  %-28s %s" % (remote_deck, str(r)[:80].replace("\n", " ")))
+    elif old:
+        print("  [!] --keep-old：保留旧文件夹，旧版残留文件不会被清掉")
+
     # 1) 建目录（已存在会返回 -7，忽略）
     for d in (a.remote_root, remote_deck, remote_deck + "/原图"):
         r = nd.make_dir(d, rtype=1)
@@ -132,7 +165,16 @@ def main():
               % (len(files) - len(ok_files)))
         return 4
 
-    # 3) 找远端文件夹 fsid → 建分享
+    # 3) 建链接前再核一遍：远端该文件夹里的文件数必须与本地一致
+    lst_chk = json.loads(nd.file_list(remote_deck, num=500, raw=True))
+    n_pdf = sum(1 for it in (lst_chk.get("list") or [])
+                if str(it.get("server_filename", "")).lower().endswith(".pdf"))
+    if n_pdf != 1:
+        print("[x] 远端 %s 里有 %d 个 PDF（应该正好 1 个），不建链接。" % (remote_deck, n_pdf))
+        print("    先人工看一眼网盘，这一套的链接不能把别的课件带出去。")
+        return 4
+
+    # 4) 找远端文件夹 fsid → 建分享
     lst = json.loads(nd.file_list(a.remote_root, num=500, raw=True))
     fsid = None
     for it in (lst.get("list") or []):
