@@ -4,7 +4,7 @@
 	"icon": "🧠",
 	"version": "1.2.0",
 	"apiVersion": 1,
-	"description": "节点逻辑图编辑器：模仿 ComfyUI 的拉线建节点，一句话交给 pi 的模型生成图，再一键序列化成缩进大纲插进输入框。移植自 pi-web-custom 的 MindMapPanel。",
+	"description": "节点逻辑图编辑器：模仿 ComfyUI 的拉线建节点，一句话交给 pi 的模型生成图，再一键序列化成缩进大纲插进输入框。带工作流保存列表（手动保存 + 自动保存，换会话/刷新后可选一条打开）。移植自 pi-web-custom 的 MindMapPanel。",
 	"permissions": [
 		"http"
 	],
