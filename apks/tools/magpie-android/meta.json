@@ -1,0 +1,19 @@
+{
+  "slug": "magpie-android",
+  "title": "Magpie 手机版",
+  "category": "tools",
+  "categoryTitle": "工具",
+  "package": "com.hua.magpie",
+  "version": "1.7",
+  "notes": "把 magpie（本地 LLM 网关）装进 Android：Go 网关跑在前台服务独立进程 :gw，WebView 承载官方 PWA 控制台；cgo+NDK 交叉编译（官方 Android 二进制是 CGO_ENABLED=0，Android 上 DNS 不通）",
+  "apk": "magpie-android.apk",
+  "apkName": "Magpie.apk",
+  "apkSize": 25252717,
+  "apkSha256": "73dba9ce1e61eb6efb5cbf9926fec9c2e4fd433e68efe99be548de8b9405ca4a",
+  "srcSha": "635cdbcde9251649dd59da07dfacf0b1325f9892",
+  "hasSource": true,
+  "sourcePath": "C:/Users/hua/Documents/备份代码/Magpie-Android",
+  "builtAt": "2026-11-05 12:23:14",
+  "syncedAt": "2026-11-06 18:40:29",
+  "auto": false
+}

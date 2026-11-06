@@ -1,7 +1,7 @@
 # Pi 开发的 APK 软件包
 
 本目录由 [`apk-github-sync`](../skills/apk-github-sync/) 自动从本机镜像同步。
-最后同步：**2026-10-31 11:35:59**　|　共 **16** 个应用　|　APK 合计 **81.1 MB**
+最后同步：**2026-11-06 18:40:29**　|　共 **17** 个应用　|　APK 合计 **105.2 MB**
 
 每个应用一个子目录，里面有编译好的 APK 和对应的源代码：
 
@@ -38,6 +38,7 @@ apks/<分类>/<应用>/
 |---|---|---|---|---|---|
 | **CPE140 控制台 (PC)** | 1.4.0 | - | [`src/`](tools/cpe140-ctrl/src/) | 0 B | 逆向 CPE140/BHU BXO2000n-2S-Lite 中继器的完全控制台：免认证 Web API 读配置 + timectrl root 命令注入 RCE；CLI + tkinter GUI（六标签）；断网取证诊断 diagnose（逐层盘点 + 判定假断网/上行/宽带/DNS）+ 分级软修复 fix（六级阶梯从轻到重，一通就停）+ 断网看门狗（重启前先软修；30 分钟冷却 + 单次断网最多重启 3 次，超限转 6 小时长退避，不会无限重启）；新机器一键部署 provision（验注入通道 + 备份整片 flash + 装软修/看门狗 + 回读核对 + 可选挂 cron）；修回显通道丢失（/tmp/.cpeout 被清而 /www/.cpeout 符号链接还在 -> GET 回 404 网页，旧版会把 HTML 当命令输出；注意本工具 close() 退出时自己也会拆这条通道，手机 App 那头会因此撞上 404）；命令手册 howto；含脱敏报告 |
 | **CPE140 控制台 (安卓)** | 1.4.2 | [`cpe140-ctrl-android.apk`](tools/cpe140-ctrl-android/cpe140-ctrl-android.apk) | [`src/`](tools/cpe140-ctrl-android/src/) | 5.3 MB | 手机版完全控制台：概览/客户端/配置/root 终端/维护（换新机器一键部署 + 一键断网诊断 + 分级软修救网 + 整片 flash 备份 + 断网看门狗自动重启 + 命令手册）；v1.4.2 修一个布局坑（BtnWide 的 0dp+weight 放进竖向卡片会被量成 0 宽 -> 有 4 个按钮一直看不见：「DHCP 客户端列表」「扫描周边 WiFi」「写入」「恢复出厂设置」；新增 BtnLine 样式修正）；v1.4.1 加「一键部署」（验型号/验注入通道/验 uid=0 → 装不加 flash 自分级软修+看门狗 → ls -l 回读核对 → 看连通性，默认落到只记录模式）；v1.4.0 修回显通道丢失（设备重启后 /tmp 被清、或 PC 工具退出时 rm -f /www/.cpeout，断链后 GET /.cpeout 回 404 网页而旧版当成命令输出显示）—— 现在认得出来并自动重铺通道、重读、必要时重跑命令，另加「重铺连接通道」与「看请求日志」两个手动按钮；看门狗重启前先软修、带重启上限防无限重启；纯 Java + SAF 零存储权限；深色自绘 UI |
+| **Magpie 手机版** | 1.7 | [`magpie-android.apk`](tools/magpie-android/magpie-android.apk) | [`src/`](tools/magpie-android/src/) | 24.1 MB | 把 magpie（本地 LLM 网关）装进 Android：Go 网关跑在前台服务独立进程 :gw，WebView 承载官方 PWA 控制台；cgo+NDK 交叉编译（官方 Android 二进制是 CGO_ENABLED=0，Android 上 DNS 不通） |
 | **Pi 通知 (piLink)** | 0.7.0 | [`pilink.apk`](tools/pilink/pilink.apk) | [`src/`](tools/pilink/src/) | 1.9 MB | 把 pi / pi-web 的通知与派发链路接到安卓手机 |
 | **三角力学计算器** | 1.0 | [`trig-mech.apk`](tools/trig-mech/trig-mech.apk) | [`src/`](tools/trig-mech/src/) | 77.1 KB | 三角函数边长可视化求解 + 7 个建筑力学计算器（坡度/荷载/梁/截面/应力/斜杆/斜面），纯离线 |
 | **太阳网控制器** | 1.0 | [`sunnet.apk`](tools/sunnet/sunnet.apk) | [`src/`](tools/sunnet/src/) | 777.6 KB | 风光雨自动控制：BLE / WiFi 控制 ESP32 太阳网节点 |
