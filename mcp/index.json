@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-06",
+  "about": "Pi MCP 服务注册表：任何机器 clone 本仓库后，python mcp/install.py 即可还原同一套 MCP 服务。localOnly=true 的服务依赖本机源码/可执行文件，安装器只做体检不写配置。",
+  "count": 9,
+  "servers": [
+    {
+      "name": "playwright",
+      "title": "Playwright 浏览器自动化",
+      "description": "真实 Chrome：打开网页、点击、填表、多标签、滚动、上传、弹窗处理、截图、无障碍快照、执行页面 JS、看 console 与 XHR 接口。适合后台无 API 的站点自动化、渲染后数据抓取、前端 bug 复现、网页截图做素材。",
+      "tags": ["browser", "automation", "scraping", "scraper", "web", "screenshot", "浏览器", "自动化", "抓数据", "截图"],
+      "tools": 25,
+      "transport": "stdio",
+      "portable": true,
+      "localOnly": false,
+      "launch": {
+        "type": "npm-global-bin",
+        "pkg": "@playwright/mcp",
+        "bin": "playwright-mcp",
+        "args": ["--browser", "chrome"],
+        "timeout": 300
+      },
+      "requires": {
+        "bins": ["node", "npm"],
+        "browsers": ["chrome", "msedge", "firefox", "webkit"],
+        "paths": []
+      },
+      "notes": [
+        "默认 --browser chrome 复用系统已装 Chrome/Edge，无需 playwright install 下 Chromium（省 200MB+）。",
+        "playwright install chromium 后也可改成 --browser chromium。",
+        "截图与快照默认落在启动目录的 .playwright-mcp/，要换位置加 --output-dir。",
+        "常用开关：--headless 无头 / --isolated 用完即忘 / --cdp-endpoint 接管正在用的 Chrome（带全部登录态）/ --extension 连已开浏览器 / --mobile 移动端页省 token / --snapshot-mode none 大页面省 token / --proxy-server socks5://... / --secrets 保护 token 不进上下文。",
+        "和 web-browse 技能分工：只读文章用 web-browse（省 10 倍 token），要交互再走它。"
+      ]
+    },
+    {
+      "name": "kicad",
+      "title": "KiCad PCB 设计助手",
+      "description": "本地 stdio 服务：建工程、放器件、布局布线、DRC/ERC、扇出、导出 Gerber/钻孔/BOM/STEP/IPC-2581、查 JLCPCB 元件库。",
+      "tags": ["pcb", "kicad", "eda", "schematic", "gerber", "bom"],
+      "tools": 233,
+      "transport": "stdio",
+      "portable": false,
+      "localOnly": true,
+      "launch": {
+        "type": "static",
+        "command": "node",
+        "args": ["{KICAD_MCP_SERVER}/dist/index.js"],
+        "timeout": 60,
+        "env": {
+          "NODE_ENV": "production",
+          "LOG_LEVEL": "info",
+          "KICAD_AUTO_LAUNCH": "false",
+          "KICAD_INTERACTIVE_SCHEMATIC": "false",
+          "KICAD_MCP_DEV": "0",
+          "KICAD_PYTHON": "{KICAD_PYTHON}",
+          "PYTHONPATH": "{KICAD_PYTHONPATH}"
+        }
+      },
+      "requires": {
+        "bins": ["node"],
+        "paths": ["{KICAD_MCP_SERVER}/dist/index.js", "{KICAD_PYTHON}"],
+        "placeholders": {
+          "KICAD_MCP_SERVER": "KiCAD-MCP-Server 仓库根目录",
+          "KICAD_PYTHON": "KiCad 自带 Python 解释器（含 pcbnew 模块）",
+          "KICAD_PYTHONPATH": "该解释器的 site-packages"
+        }
+      },
+      "notes": [
+        "本机实测值：KICAD_MCP_SERVER=C:/Users/hua/Documents/备份代码/KiCAD-MCP-Server，KICAD_PYTHON=D:/app/kicad/bin/python.exe，PYTHONPATH=D:/app/kicad/bin/Lib/site-packages。",
+        "换机需先克隆 KiCAD-MCP-Server 并 npm i && npm run build，再改占位符。"
+      ]
+    },
+    {
+      "name": "freecad",
+      "title": "FreeCAD 参数化建模",
+      "description": "经本地 RPC 插件驱动 FreeCAD：建文档/对象、执行代码、FEM 分析、取视图。",
+      "tags": ["cad", "freecad", "3d", "fea", "fem"],
+      "tools": 17,
+      "transport": "stdio",
+      "portable": false,
+      "localOnly": true,
+      "launch": {
+        "type": "uvx",
+        "pkg": "freecad-mcp",
+        "args": ["--freecadcmd", "{FREECAD_CMD}"],
+        "timeout": 60
+      },
+      "requires": {
+        "bins": ["uvx"],
+        "paths": ["{FREECAD_CMD}"],
+        "placeholders": {
+          "FREECAD_CMD": "FreeCAD 的 FreeCADCmd.exe 绝对路径（本机 D:/app/freeCAD/bin/FreeCADCmd.exe）"
+        }
+      },
+      "notes": ["还需在 FreeCAD 里装对应的 RPC addon（默认 127.0.0.1:9875）。"]
+    },
+    {
+      "name": "blender",
+      "title": "Blender 场景控制",
+      "description": "经 addon socket 控制正在运行的 Blender：读场景、跑 Python、生成/导入资产、轨迹反馈。",
+      "tags": ["blender", "3d", "render", "animation"],
+      "tools": 9,
+      "transport": "stdio",
+      "portable": true,
+      "localOnly": false,
+      "launch": {
+        "type": "uvx",
+        "pkg": "mcp-for-blender",
+        "args": ["--host", "127.0.0.1", "--port", "9876"],
+        "timeout": 60
+      },
+      "requires": {
+        "bins": ["uvx"],
+        "paths": []
+      },
+      "notes": ["需在 Blender 里启用 mcp addon 并监听 127.0.0.1:9876。"]
+    },
+    {
+      "name": "solidcraft",
+      "title": "SolidCraft 参数化 3D CAD",
+      "description": "Fusion 风格参数化 CAD（mm/Z-up）：建模、改设计、参数驱动、测量、截图、导出 STEP/3MF/STL/URDF。headless 本地引擎。",
+      "tags": ["cad", "3d", "parametric", "step", "mechanical"],
+      "tools": 15,
+      "transport": "stdio",
+      "portable": false,
+      "localOnly": true,
+      "launch": {
+        "type": "static",
+        "command": "{SOLIDCRAFT_EXE}",
+        "args": ["mcp", "--allow-path", "{SOLIDCRAFT_WORKSPACE}"],
+        "timeout": 600
+      },
+      "requires": {
+        "paths": ["{SOLIDCRAFT_EXE}"],
+        "placeholders": {
+          "SOLIDCRAFT_EXE": "solidcraft-cli 可执行文件（本机 D:/app/solidcraft-cli.exe）",
+          "SOLIDCRAFT_WORKSPACE": "设计文件目录（本机 C:/Users/hua/Documents/SolidCraft）"
+        }
+      },
+      "notes": []
+    },
+    {
+      "name": "videostudio",
+      "title": "自动剪辑（VideoStudio）",
+      "description": "Concat 引擎(JSON-RPC) + edge-tts 配音 + 配乐 + 本地 Whisper 字幕 + ffmpeg 混音的剪辑栈。",
+      "tags": ["video", "editing", "tts", "subtitle", "ffmpeg"],
+      "tools": 28,
+      "transport": "stdio",
+      "portable": false,
+      "localOnly": true,
+      "launch": {
+        "type": "static",
+        "command": "{PYTHON}",
+        "args": ["{VIDEOSTUDIO_SERVER}"],
+        "timeout": 1800
+      },
+      "requires": {
+        "paths": ["{VIDEOSTUDIO_SERVER}"],
+        "placeholders": {
+          "PYTHON": "带依赖的 Python 解释器（本机 hermes venv）",
+          "VIDEOSTUDIO_SERVER": "VideoStudio-MCP/mcp_server.py 绝对路径"
+        }
+      },
+      "notes": ["还需要 Concat 二进制、ffmpeg、Whisper 模型与 Python 依赖，见仓库 mcp/README.md。"]
+    },
+    {
+      "name": "douyin",
+      "title": "抖音运营（本地浏览器）",
+      "description": "分享链接解析/无水印下载、ASR 转文案、热榜选题、浏览器自动化发布（视频/图文/定时）、作品与账号数据、评论互动。",
+      "tags": ["douyin", "social", "publish", "asr", "抖音"],
+      "tools": 29,
+      "transport": "stdio",
+      "portable": false,
+      "localOnly": true,
+      "launch": {
+        "type": "static",
+        "command": "node",
+        "args": ["{DOUYIN_MCP}/src/server.js"],
+        "timeout": 1800
+      },
+      "requires": {
+        "bins": ["node"],
+        "paths": ["{DOUYIN_MCP}/src/server.js"],
+        "placeholders": {
+          "DOUYIN_MCP": "douyin-mcp-fusion 仓库根目录（本机 C:/Users/hua/Documents/备份代码/douyin-mcp-fusion）"
+        }
+      },
+      "notes": ["首次用需扫码登录，登录态持久化在本地 Chrome profile。"]
+    },
+    {
+      "name": "xiaohongshu",
+      "title": "小红书（本地 HTTP 服务）",
+      "description": "发布图文/视频、搜索、看详情、评论、点赞收藏、看通知。浏览器自动化跑在 127.0.0.1:18060。",
+      "tags": ["xiaohongshu", "redbook", "social", "publish", "小红书"],
+      "tools": 18,
+      "transport": "http",
+      "portable": true,
+      "localOnly": false,
+      "launch": {
+        "type": "http",
+        "url": "http://127.0.0.1:18060/mcp",
+        "timeout": 600
+      },
+      "requires": {
+        "endpoints": ["http://127.0.0.1:18060/mcp"]
+      },
+      "notes": ["需先在本机把小红书 MCP 服务（浏览器自动化侧）跑起来，端口 18060。"]
+    },
+    {
+      "name": "aihot",
+      "title": "AI 资讯（aihot.news 远程）",
+      "description": "AI 领域最新/搜索/热榜/日报周报月报。远程 streamable HTTP，无需本地依赖。",
+      "tags": ["news", "ai", "rss", "资讯"],
+      "tools": 8,
+      "transport": "http",
+      "portable": true,
+      "localOnly": false,
+      "launch": {
+        "type": "http",
+        "url": "https://aihot.news/api/mcp",
+        "timeout": 60
+      },
+      "requires": {},
+      "notes": [
+        "想要阅读记录归到自己名下，在 URL 后面接 ?aihot_actor=<你的 actor UUID>；不接也能正常用。"
+      ]
+    }
+  ]
+}
