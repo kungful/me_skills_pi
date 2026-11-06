@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-05 14:28:36",
-  "count": 45,
+  "generatedAt": "2026-11-06 20:29:12",
+  "count": 46,
   "skills": [
     {
       "name": "apk-autoinstall",
@@ -105,6 +105,11 @@
     {
       "name": "manage-pcba-program",
       "description": "Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package through a reviewed order. Use for end-to-end requests, multi-stage hardware projects, workflow recovery, gate tracking, change invalidation, or deciding which specialist skill is required next.",
+      "source": "C:/Users/hua/.pi/agent/skills"
+    },
+    {
+      "name": "mcp-registry",
+      "description": "从本机 Pi 的 skills 仓库还原/补齐整套 MCP 服务（playwright 浏览器自动化、blender、kicad、freecad、solidcraft、videostudio、douyin、xiaohongshu、aihot）。当用户说\"装 MCP / 装 playwright MCP / 还原 MCP 配置 / mcp.json 备份到仓库 / 换机器把 MCP 一起部署 / 有哪些 MCP 服务能用 / 这个仓库里的 MCP 怎么装\"时使用。",
       "source": "C:/Users/hua/.pi/agent/skills"
     },
     {

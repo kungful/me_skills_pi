@@ -50,7 +50,6 @@ LOG_TAG = "[mcp-install]"
 
 RESULT = "no-change"
 
-
 # --------------------------------------------------------------------------- 工具
 
 def log(msg: str = "", quiet: bool = False) -> None:
@@ -141,20 +140,14 @@ def resolve_launch(srv: dict, values: dict[str, str], deps_wanted: bool) -> tupl
             if not which("npm"):
                 missing.append("缺 npm（先装 Node.js）")
             return None, missing, notes
-        cfg = {
-            "command": command,
-            "args": [f"-y", pkg] if not command else list(launch.get("args") or []),
-        }
-        # 直接调全局 bin 时不需要把包名塞进 args
-        cfg["args"] = list(launch.get("args") or [])
+        # 直接调全局 bin，包名不进 args
+        cfg = {"command": command, "args": list(launch.get("args") or [])}
         if launch.get("timeout"):
             cfg["timeout"] = launch["timeout"]
         if launch.get("env"):
             cfg["env"] = substitute(launch["env"], values)
         if srv.get("description"):
             cfg["description"] = srv["description"]
-        if not command and deps_wanted:
-            pass
         return cfg, missing, notes
 
     if ltype == "uvx":
@@ -449,7 +442,7 @@ def main() -> None:
         RESULT = "no-change"
     if blocked:
         RESULT = "applied" if written else ("dry-run" if not args.apply else "failed")
-    print(f"{LOG_TAG} RESULT {RESULT}", flush=True)
+    print(f"{LOG_TAG} RESULT {RESULT}", file=sys.stderr if args.json else sys.stdout, flush=True)
     raise SystemExit(0 if not blocked or written else 1)
 
 

@@ -1,9 +1,9 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-11-05 14:28:36**
+最后同步：**2026-11-06 20:29:12**
 
-共 **45** 个 skill。
+共 **46** 个 skill。
 
 ## 安装
 
@@ -38,6 +38,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`kicad`](skills/kicad/) | Analyze KiCad projects and PDF schematics: schematics, PCB layouts, Gerbers, footprints, symbols, netlists, and design rules. Reviews designs for bugs, trace... | pi |
 | [`leantoken`](skills/leantoken/) | 用 LeanToken 做代码检索与结构理解，省 token 省上下文——找相关文件/代码、按符号大纲看结构、精确读某个函数或行段、跨 git 版本追踪符号、查询大 JSON。当任务是在大型或不熟的代码库里"找到该看的那段代码""别把整个文件读进来""追一下这个函数的历史""仓库太大上下文塞不下"时使用，优先替代... | pi |
 | [`manage-pcba-program`](skills/manage-pcba-program/) | Coordinate an evidence-gated electronic product and PCBA workflow from an idea, circuit description, schematic, netlist, PCB, BOM, or fabrication package thr... | pi |
+| [`mcp-registry`](skills/mcp-registry/) | 从本机 Pi 的 skills 仓库还原/补齐整套 MCP 服务（playwright 浏览器自动化、blender、kicad、freecad、solidcraft、videostudio、douyin、xiaohongshu、aihot）。当用户说"装 MCP / 装 playwright MCP / 还原 ... | pi |
 | [`morluto-reversing-index`](skills/morluto-reversing-index/) | morluto（REA 作者）整个逆向工具与知识库生态的导航索引——要装/要连什么、有哪些配套技能、以及 80+ 个逆向与安全资源清单在哪个仓库。当用户说"morluto 还有别的逆向工具吗 / REA 生态 / 装 REA / 有哪些逆向 MCP / 找个逆向知识库 / 这套逆向工具配套都有啥"时使用，或当 `... | pi |
 | [`open-source-reseller`](skills/open-source-reseller/) | 把有用的开源项目审计、封装成可卖的商品，再分发到闲鱼/小红书/抖音/B站/QQ群/X 的一条龙方法。当用户说"找开源项目封装去卖/选品/这项目能不能商用/能不能拿去卖/License 怎么查/给闲鱼上架写文案/多平台分发/做部署包/卖部署服务/怕被平台封号"时使用。★两条硬线：①License 不合格（无 LIC... | pi |
 | [`operate-jlcpcb-order`](skills/operate-jlcpcb-order/) | Operate and review a JLCPCB PCB/PCBA quote, optional physical-stencil request, or order using a frozen Gerber/drill, BOM, CPL, sourcing lock, constraints, an... | pi |
@@ -65,4 +66,15 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 
 ## APK 备份
 
-Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 16 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
+Pi 开发的安卓 APK + 源码备份在 [`apks/`](apks/)，共 17 个应用，由 [`apk-github-sync`](skills/apk-github-sync/) 自动同步。
+
+## MCP 服务
+
+Pi 用的 MCP 服务全集（共 9 个，其中 4 个可直接移植）在 [`mcp/`](mcp/)，注册表见 [`mcp/index.json`](mcp/index.json)。
+
+```bash
+python mcp/install.py           # 预演：能装哪些、缺什么
+python mcp/install.py --apply   # 写进 ~/.pi/agent/mcp.json（自动备份，不覆盖已有）
+```
+
+可直接移植：`playwright`、`blender`、`xiaohongshu`、`aihot`

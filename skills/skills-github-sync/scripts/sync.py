@@ -485,6 +485,30 @@ def write_readme(repo_dir: Path, skills: dict, warnings: list[str]) -> None:
         except (OSError, ValueError):
             pass
 
+    # 仓库里如果已经有 mcp 注册表（mcp/），顺手做个入口
+    mcp_index = repo_dir / "mcp" / INDEX_NAME
+    if mcp_index.is_file():
+        try:
+            mcp = json.loads(mcp_index.read_text(encoding="utf-8"))
+            servers = mcp.get("servers") or []
+            portable = [s["name"] for s in servers if s.get("portable")]
+            lines += [
+                "## MCP 服务",
+                "",
+                f"Pi 用的 MCP 服务全集（共 {len(servers)} 个，其中 {len(portable)} 个可直接移植）"
+                f"在 [`mcp/`](mcp/)，注册表见 [`mcp/index.json`](mcp/index.json)。",
+                "",
+                "```bash",
+                "python mcp/install.py           # 预演：能装哪些、缺什么",
+                "python mcp/install.py --apply   # 写进 ~/.pi/agent/mcp.json（自动备份，不覆盖已有）",
+                "```",
+                "",
+            ]
+            if portable:
+                lines += ["可直接移植：" + "、".join(f"`{n}`" for n in portable) + "", ""]
+        except (OSError, ValueError, KeyError):
+            pass
+
     if warnings:
         lines += ["## 警告", ""]
         lines += [f"- {w}" for w in warnings]
