@@ -135,20 +135,35 @@ public final class Mcp {
         stop();
         this.token = token == null ? "" : token.trim();
         this.bindHost = bindHost == null || bindHost.isEmpty() ? "127.0.0.1" : bindHost;
-        ServerSocket s = new ServerSocket();
-        s.setReuseAddress(true);
-        try {
-            s.bind(new InetSocketAddress(InetAddress.getByName(this.bindHost), port), 16);
-        } catch (IOException e) {
+        ServerSocket s = null;
+        IOException last = null;
+        // 端口偶尔还在 TIME_WAIT / 上一个 socket 刚关：重试三次再认失败
+        for (int attempt = 0; attempt < 3; attempt++) {
+            ServerSocket cand = new ServerSocket();
+            cand.setReuseAddress(true);
             try {
-                s.close();
-            } catch (IOException ignored) {
+                cand.bind(new InetSocketAddress(InetAddress.getByName(this.bindHost), port), 16);
+                s = cand;
+                break;
+            } catch (IOException e) {
+                last = e;
+                try {
+                    cand.close();
+                } catch (IOException ignored) {
+                }
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
-            throw e;
         }
+        if (s == null) throw last == null ? new IOException("bind failed") : last;
         server = s;
         running = true;
-        acceptThread = new Thread(() -> acceptLoop(s), "mcp-accept");
+        final ServerSocket listen = s;
+        acceptThread = new Thread(() -> acceptLoop(listen), "mcp-accept");
         acceptThread.setDaemon(true);
         acceptThread.start();
         log.log("MCP 已监听 " + this.bindHost + ":" + s.getLocalPort() + "/mcp");

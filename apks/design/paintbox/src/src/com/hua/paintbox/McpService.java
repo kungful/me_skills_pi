@@ -33,6 +33,7 @@ public class McpService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent == null ? null : intent.getAction();
+        android.util.Log.i("PaintBoxMcp", "onStartCommand action=" + action + " enabled=" + host().enabled());
         McpHost h = host();
         if (ACTION_STOP.equals(action)) {
             h.setEnabled(false);
@@ -60,14 +61,45 @@ public class McpService extends Service {
             h.log("进前台失败: " + t);
         }
         String err = h.apply();
+        startWatchdog();
         if (err != null) {
             android.widget.Toast.makeText(this, "MCP 启动失败：" + err, android.widget.Toast.LENGTH_LONG).show();
         }
         return START_STICKY;
     }
 
+    /**
+     * 看门狗：进程被系统重建、端口一时占不到之类的情况下，自己把端口重新开起来。
+     * MCP 是给别的 App 用的接口，不能「开着开关但其实没在听」，所以每 15 秒确认一次。
+     */
+    private static final long WATCH_MS = 15_000L;
+    private final android.os.Handler watchdog = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                McpHost h = host();
+                if (h.enabled() && !h.running()) {
+                    String err = h.apply();
+                    android.util.Log.i("PaintBoxMcp", "watchdog re-apply err=" + err);
+                }
+            } catch (Throwable t) {
+                android.util.Log.w("PaintBoxMcp", "watchdog failed", t);
+            } finally {
+                watchdog.postDelayed(this, WATCH_MS);
+            }
+        }
+    };
+
+    private void startWatchdog() {
+        watchdog.removeCallbacks(tick);
+        watchdog.postDelayed(tick, WATCH_MS);
+    }
+
     @Override
     public void onDestroy() {
+        watchdog.removeCallbacks(tick);
+        android.util.Log.i("PaintBoxMcp", "McpService.onDestroy");
         McpHost h = host();
         Mcp server = h.server();
         if (server != null) {

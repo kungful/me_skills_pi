@@ -9,11 +9,11 @@
   "apk": "paintbox.apk",
   "apkName": "PaintBox.apk",
   "apkSize": 119667,
-  "apkSha256": "dcbc7578c63afc7b1ebb5d4d968a1a107a331422e21656ffcc91b13759073441",
-  "srcSha": "ff4e522f27d2edebeb94c52fb000ec4a24fc272b",
+  "apkSha256": "eddb390a7be2978aae7cf79c915c99f444027ad30aacf979e739254bf803d533",
+  "srcSha": "f238ab88d28325a6fd3e7df58da3fe200bbe4070",
   "hasSource": true,
   "sourcePath": "C:/Users/hua/Documents/备份代码/PaintBox-Android",
-  "builtAt": "2026-11-07 06:36:09",
-  "syncedAt": "2026-11-07 07:02:08",
+  "builtAt": "2026-11-07 07:28:48",
+  "syncedAt": "2026-11-07 07:31:46",
   "auto": false
 }

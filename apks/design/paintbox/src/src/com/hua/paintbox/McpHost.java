@@ -112,6 +112,10 @@ public final class McpHost {
         return s != null && s.running();
     }
 
+    private int lastPort = -1;
+    private String lastBind = "";
+    private String lastToken = "";
+
     /** 启停服务器；返回 null 表示成功，否则是失败原因。 */
     public synchronized String apply() {
         boolean want = enabled();
@@ -124,6 +128,10 @@ public final class McpHost {
             return null;
         }
         String token = token();
+        if (server != null && server.running() && lastPort == port()
+                && lastBind.equals(bindHost()) && lastToken.equals(token == null ? "" : token)) {
+            return null;   // 配置没变、还在监听，别重复 bind
+        }
         if (BIND_LAN.equals(bindMode()) && (token == null || token.isEmpty())) {
             // 开到局域网就把令牌补上，别让同网段的人随便调
             token = newToken();
@@ -138,6 +146,9 @@ public final class McpHost {
                         this::log);
             }
             server.start(port(), bindHost(), token);
+            lastPort = server.port();
+            lastBind = bindHost();
+            lastToken = token == null ? "" : token;
             log("监听 " + bindHost() + ":" + server.port() + "  工具 " + server.defs().size() + " 个"
                     + (token == null || token.isEmpty() ? "（无令牌）" : "（需 Bearer 令牌）"));
             notifyChanged();
@@ -155,12 +166,16 @@ public final class McpHost {
             server.stop();
             server = null;
         }
+        lastPort = -1;
+        lastBind = "";
+        lastToken = "";
         apply();
     }
 
     // ------------------------------------------------------------------ 日志 / 监听
 
     public void log(String line) {
+        android.util.Log.i("PaintBoxMcp", line);
         List<Mcp.LogSink> copy;
         synchronized (sinks) {
             copy = new ArrayList<>(sinks);
