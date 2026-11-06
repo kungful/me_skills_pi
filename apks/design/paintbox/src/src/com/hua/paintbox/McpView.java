@@ -86,8 +86,7 @@ public class McpView extends android.widget.ScrollView implements McpHost.Listen
 
         on.addView(Theme.label(act, "端口"));
         portEd = Theme.input(act, "8766", false, 1);
-        if (!portEd.hasFocus()) portEd.setText(String.valueOf(host.port()));
-        bindChips.select(McpHost.BIND_LAN.equals(host.bindMode()) ? "局域网 0.0.0.0" : "只本机 127.0.0.1");
+        portEd.setText(String.valueOf(host.port()));
         on.addView(portEd);
 
         on.addView(Theme.label(act, "监听范围"));
