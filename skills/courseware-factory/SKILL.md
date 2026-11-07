@@ -395,7 +395,7 @@ project.json（内容 + 版式 + 出图参数）
 | 4 导出 | `exporter.py <pj>` | pptx | `out/*.pdf` + `preview/` | **必须装 PowerPoint**（COM）；没装就自动退 `soffice --convert-to pdf`，预览退 `pdftoppm` |
 | 5 排版自检 | `layout_check.py <pj>` | pptx | 报告 + 印样 | python-pptx 读几何，不需要渲染 |
 | 6 交付打包 | `deliver.py <pj> --zip` | pdf + img | `交付/<名>/` | PIL 转 JPG（长边 1920 / q92） |
-| 7 上链分享 | `netdisk_publish.py <pj>` | 交付包 | 分享链接 | 见 `xhs-courseware-post`（一个课件一条链接） |
+| 7 上链分享 | `netdisk_publish.py <pj>` | 交付包 | 分享链接 | 见 `xhs-courseware-post`（一个课件一条链接，上传到 `/课件/小红书销售/`） |
 
 ### 硬规范（改代码前先看，这些是有实测依据的）
 
@@ -623,6 +623,7 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 - [ ] `out/《课题》X-Y岁课件.pptx` ← 可编辑源文件
 - [ ] `项目/<课题>/交付/<课题>.../` 已用 `工厂/deliver.py` 打出来（PDF + 原图 + manifest）
 - [ ] 网盘已上传成**独立子文件夹**并拿到**单独分享链接**（`工厂/netdisk_publish.py`，见 `xhs-courseware-post`）
+- [ ] **上传位置 = `/课件/小红书销售/<课题>X-Y岁课件/`**（2026-11-07 定版：交付根目录固定 `/课件/小红书销售`，文件夹名 = `<课题>X-Y岁课件`，PDF 名与文件夹名一致）
 - [ ] **一个子文件夹里只有 1 个 PDF**（网盘是售卖专用，一套一链接；脚本会拦多 PDF/合集名/超 40 文件）
 - [ ] `meta.brand` 已换成用户品牌名（**不是「创享美育」**）
 - [ ] PDF 里无缺图占位框（`/api/status` 报"无缺图"）
