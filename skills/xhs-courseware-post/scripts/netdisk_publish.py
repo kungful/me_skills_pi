@@ -60,6 +60,9 @@ def main():
     ap.add_argument("--period", type=int, default=0, choices=[0, 1, 7, 30], help="有效期天数，0=永久")
     ap.add_argument("--pwd", default="", help="4 位提取码，默认随机")
     ap.add_argument("--dry", action="store_true", help="只打印计划，不联网")
+    ap.add_argument("--record", default="",
+                    help="手动兜底：网盘里已手工上传并分享好，把链接传进来只做记账（不联网）")
+    ap.add_argument("--link-pwd", default="", help="配合 --record：4 位提取码")
     ap.add_argument("--keep-old", action="store_true",
                     help="保留网盘上的同名旧文件夹（默认会先移进回收站再重建，避免旧文件残留在链接里）")
     a = ap.parse_args()
@@ -116,6 +119,31 @@ def main():
     print("有效期    : %s   提取码: %s" % ("永久" if a.period == 0 else "%d 天" % a.period, pwd))
     for rel, _full, size in files:
         print("   %-42s %6.2f MB" % (rel, size / 1e6))
+    # ---- 手动兜底路径：链接已在网盘网页版手工建好，这里只记账（仍校验"一套只有1个PDF"）----
+    if a.record:
+        link = a.record.strip()
+        if not (link.startswith("https://pan.baidu.com/s/") or link.startswith("https://pan.baidu.com/share/")):
+            print("[x] 不像百度网盘分享链接：%s" % link)
+            return 2
+        pwd = a.link_pwd or a.pwd
+        rec = dict(deck=name, link=link, pwd=pwd, period=a.period, remote=remote_deck,
+                   shareid=None, fsid=None, source="manual",
+                   files=[f[0] for f in files], total_mb=round(total / 1e6, 2),
+                   at=time.strftime("%Y-%m-%d %H:%M:%S"))
+        json.dump(rec, open(os.path.join(pack, "分享链接.json"), "w", encoding="utf-8"),
+                  ensure_ascii=False, indent=2)
+        led = os.path.join(ROOT, "交付台账.json")
+        allrec = json.load(open(led, encoding="utf-8")) if os.path.exists(led) else {}
+        allrec[name] = rec
+        json.dump(allrec, open(led, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        print("✅ 已记账（手动上传）")
+        print("   课题：%s" % name)
+        print("   链接：%s" % link)
+        print("   提取码：%s" % (pwd or "（无）"))
+        print("   记录：%s" % os.path.join(pack, "分享链接.json"))
+        print("   提醒：确认网盘上该文件夹里**只有这 1 个 PDF**（一套一链接）。")
+        return 0
+
     if a.dry:
         print("\n[dry] 未联网。去掉 --dry 才会真的上传 + 建分享。")
         return 0

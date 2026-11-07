@@ -95,6 +95,19 @@ python "C:/Users/hua/.pi/agent/skills/xhs-courseware-post/scripts/published.py" 
   上一版多出来的文件（比如 18 个 → 17 个）会**残留在链接里**，买家会看到两份不同版本的 PDF/图。
 - **链接永久有效**（`--period 0`），有效期只给内测/临时用。买一次应该永远能下。
 
+### 三条落地路径（选一条，规则都一样：一套一文件夹一链接）
+
+| 路径 | 前提 | 命令 |
+|---|---|---|
+`A 开放平台 API`（推荐，全自动） | 百度账号**实名认证** → 控制台建应用 → 拿 `access_token` | `netdisk_publish.py <pj> --period 0` |
+`B 网页版手动 + 记账`（今天就能用） | 已登录 pan.baidu.com | 手动拖文件夹上传 + 点分享，然后 `netdisk_publish.py <pj> --record "<链接>" --link-pwd 提取码` |
+`C 网页版 DOM 自动化` | — | ❌ **别做**：虚拟列表 + 引导浮层 + 动态 DOM，逐点会一直失败 |
+
+**实测卡点（2026-11）**：控制台「创建应用」返回 `errno 45018 user not auth, not allow create`
+—— 百度网盘开放平台**要求账号实名认证**，没实名连应用都建不了，所以 A 路必须先让用户去实名。
+在实名/审核完成之前，用 B 路：链接谁建的都行，`--record` 只做**记账**（仍会校验交付包里只有 1 个 PDF、
+链接格式是网盘分享链接），把链接写进 `交付台账.json` + `分享链接.json`，后续发货/对账都读它。
+
 ```bash
 # 0) 先在工厂侧打交付包（PDF + 原图 + manifest）
 python "C:/Users/hua/Documents/备份代码/小红书卖课件/工厂/deliver.py" "项目/<课题>/project.json" --zip
