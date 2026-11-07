@@ -97,11 +97,92 @@ C:\Users\hua\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe
 
 **任何花钱的操作前，先把参数报给用户确认**：模型 / 质量 / 比例 / 张数 / 预估花费。
 
-- 默认：`gpt-image-2.5` / quality `high` / aspect `1536x1024`（横版）
+- 默认：`gpt-image-2.5` / quality `high` / aspect `1536x1024`（横版）；省钱档 `gpt-image-2.6`（见下「模型与成本」）
 - 封面方形：`1024x1024`
 - 整套约 16 图 ≈ **¥0.5**；跑整条链 6 张 ≈ **¥0.15**
 - **全部槽位都是 AI 生成，没有免费槽位**（曾试过网搜真照片，已废弃，见下节）
 - `python 工厂/pipeline.py --models` 列全部 15 个模型与价格
+
+## 出图前的两件免费事（**2026-11-07 血泪教训，别跳**）
+
+做一套课件前，先花 10 分钟做这两件事，能省掉整套推翻重做：
+
+### ① 先去小红书实抓数据，别凭审美定表现手法
+
+`选题.py` 只覆盖「4-6 岁 + 6 个风格配方」。**换年龄段 / 换媒介时它给不出依据**，必须自己抓：
+
+```python
+# 用 xiaohongshu MCP：search_feeds（sort_by=最多收藏）→ get_feed_detail → 下载 imageList 看图
+# 关键词按「赛道词 + 学段词」组合，例如：初中美术课件 / 高年级美术 / 12-15岁美术 / 藻井 纹样 / 团花剪纸课件
+```
+
+用 mcpScript 循环多个关键词，按 `collectedCount` 排序去重，产出证据表。**核心是看收藏数，不是点赞**（收藏 = 想学着做 = 会买课件）。
+
+**真实反例**（2026-11-07《对称的美》）：我按审美做了「黑白线描 + 朱红单色底」，用户一句「黑白的？」把我问住，
+实抓 341 条去重数据后发现：黑白赛道已经饱和且明显偏弱（黑白画 2789 藏），而**藻井/敦煌纹样**是同题材里的绝对头部
+（8401 / 5246 / 4105 / 2977 / 2662 藏），且「岭南版初中美术《穹顶漫藻井》」是真教材课题（875 藏，标签直挂 #初中美术老师）。
+→ 直接推翻重做，落点从抽象图案改成**层叠立体藻井**。这一步省下的不是钱，是整条产线的方向。
+
+### ② 先出免费 mock，让用户看效果再花钱
+
+`_mock_xxx.py`（纯 PIL 画示意）能在一分钱不花的情况下把配色/构图/四角衬底演给用户看。
+本项目根目录留了 `_mock_对称的美.py` 可参考。**别一上来就调付费模型**——参数报完、方向确认完再出图。
+
+## 去 AI 感：prompt 配方（卖课件必须过这一关）
+
+买家是老师，图一看就是 AI 出的会直接掉转化。光写「photorealistic」没用，要**写具体的手作瑕疵 + 明确的禁止清单**：
+
+| 组件 | 写法（抄这段改） |
+|---|---|
+| 拍摄语言 | `handheld phone photo, natural daylight from a window on the LEFT, mild sensor noise, slight vignetting, highlights slightly blown, focus softer toward the far corner` |
+| 真实材料 | `matte 300gsm black card with visible fibre, a few dust specks, faint fingerprints, one corner curled` |
+| 工具痕迹 | `gold metallic gel pen: reflective, uneven pressure, thicker where the hand slowed, SKIPS for a few millimetres where it ran dry` |
+| 手作瑕疵 | `the eight repeats are close but NOT identical (one petal a millimetre wider), the star rotated about one degree, layers NOT concentric (top layer 2 mm off-centre), a few pencil guide lines left un-erased` |
+| 禁止清单 | `ABSOLUTELY NOT: not an AI render, not an illustration, not vector art, not a 3D mockup, not a flat-lay stock photo; no machine-identical symmetry, no plastic sheen, no even studio lighting, no floating object, no gradient mesh` |
+| 背景 | `real school art room, out of focus: pale grey curtains, wooden desks`（**别写 no other objects**，那会变成产品图） |
+
+写进 `project.json` 的 `common.style`（或每张图的 `style`），不要一次写完就算了——**出完图要逐张人眼看**，
+AI 最常犯的错是把对称画歪、把你明令禁止的东西画上去（金线被画成印刷级均匀、额外卡纸被盖上）。
+
+## 黑卡 / 深色媒介：必须开 `meta.preflight.dark_paper`
+
+`preflight.py` 的彩色占比阈值是按「白纸 + 木桌」标定的。黑卡课件会被判 FAIL（起形页 10.4% 彩色）：
+
+```json
+"meta": { "preflight": { "dark_paper": true } }
+```
+
+开了走 `EXPECT_DARK`（宽阈值），并在报告里写明「黑卡媒介」。**别为了过自检去调 `EXPECT`**，
+那会把所有 4-6 岁课件一起校准坏。
+
+## 非绘画媒介：用 `common.ref_extra` 补一致性条款
+
+`pipeline.py` 的 `REF_BLOCK` 是**画画话术**（里面写着 fur 毛发、your drawing）。做手工/摄影/版画时补一段：
+
+```json
+"common": { "ref_extra": "CONSISTENCY FOR A HAND-MADE OBJECT - the reference is a photograph of the FINISHED physical object. Your image must look like another photograph of THAT SAME object, same session, same desk, same window light, same camera angle. ... The ONLY thing that may differ is HOW MUCH OF THE WORK IS FINISHED." }
+```
+
+## 三个已修的真 bug（别再踩）
+
+| 坑 | 现象 | 现状 |
+|---|---|---|
+| `--force` 不覆盖 | `grsai.py` 为了「绝不覆盖」把新图存成 `xxx-1.png`，旧图不动、管线仍报 `[ok]` | 已改成 `--force` 先删旧图；但**看到文件大小/时间没变就是没覆盖**，去 `img/` 里查有没有 `-1` 文件 |
+| 步骤图把成品细节提前画上 | 步骤 3 本来该是空白星，模型硬把步骤 4 的金卷草画上（参考图里有成品，它就抄） | 给该槽位加 `"anchor": false`，断掉「成品锚点」参考，只留上一步 → 立刻正确 |
+| 步骤 5 要等于成品 | 指望模型画两次一模一样不现实 | 用 `"alias": "范画成品"` 直接复制（架构保证像素级一致，`preflight` 会核 md5） |
+
+## 模型与成本（2026-11 实测）
+
+| 模型 | 价 | 分辨率 | 适合 |
+|---|---|---|---|
+| `gpt-image-2.6` | ~¥0.03 | **只有 1K**（长边 ~1600px） | 省钱首选；当整页大图略软，素材图够用 |
+| `gpt-image-2.6-flare` | 未公示（按 2.5-flare ≈¥0.1） | 1K/2K/4K | 要 2K 细节（黑卡纤维、金笔反光）时用 |
+| `nano-banana-pro` | ¥0.09 | 2K | 一致性最好，链长、参考图多时首选 |
+| `nano-banana-2-lite` | ¥0.022 | 1K | 最便宜，只做素材照片 |
+
+- 一套 17 槽位（1 张 alias）= **16 张**。全线 `gpt-image-2.6` ≈ ¥0.5；`nano-banana-pro` ≈ ¥1.4。
+- 重跑一张 ≈ 单价，**几何/对称类题材预计要重跑 3-5 张**（对称画歪、跳步），预算按 ×1.4 报。
+- 余额不足报 `insufficient credits`，**换模型没用**（同一家 grsai），只能充值。
 
 ## 标准流程（做一套新课件）
 
@@ -287,6 +368,15 @@ ok, seen = photos.vcheck(open('x.png','rb').read(), '真实的竹子（竹竿和
 **但：要卖钱的课件，一张都不要用。**
 
 ## 第 0 步：选题 + 自检（`工厂/选题.py`）
+
+**年龄段（2026-11-07 起）**：`AGGS = 3-6 / 4-6 / 5-7 / 6-8 / 7-9 / 9-12 / 12-15岁`。
+`HIGH_AGES = (9-12岁, 12-15岁)` 单独一条分支——**简单题撑不起高年龄段**，只有复杂度 ≥2 的题材才会被派到那边。
+所以 `--age 12-15岁` 出来的候选如果还是「胡萝卜去旅行」这种低龄题，说明爆款库里没有对应的复杂题材，
+**这时候别硬做，去小红书实抓一轮再定题**（见「出图前的两件免费事」）。
+
+> 注意：`选题.py` 的 88 个题材词是 4-6 岁口径（小兔子/西兰花/蛋糕…）。做初中段（对称、纹样、透视、名画）
+> 时它基本派不上用场，直接跳到实抓 + 手动写 `project.json`。已有 37 套全是 4-6 岁，高年龄段是空白的增量市场。
+
 
 **做新课件之前先选题，不要想到什么做什么。** 这一环把「小红书爆款证据」变成候选，
 自检过了才进生产流程 —— 对应「选择主题然后自检」这个目标。
@@ -522,6 +612,18 @@ manifest.json            ← 每个文件的 md5 / 尺寸 / 时间 / 品牌（�
 
 **没有 PDF 时脚本会直接拒绝**，并提示先跑 builder + exporter —— 这是刻意的：
 实测 38 套课题里只有 5 套真的导出过 PDF，剩下的「做过图的」并不能卖。
+
+## 做完 → 卖出去（和 `xhs-courseware-post` 的接缝）
+
+```bash
+python 工厂/deliver.py 项目/<课题>/project.json --zip     # 一个课件 = 一个文件夹 + zip
+# 然后交给 xhs-courseware-post：
+#   netdisk_publish / playwright 上传 → 分享链接 → 记 交付台账.json
+#   prep_post.py → 改文案 → publish_post.py
+```
+
+`deliver.py` 产出的 PDF 文件名必须**和课题文件夹名完全一致**（`对称的美12-15岁课件/对称的美12-15岁课件.pdf`），
+否则发布脚本的前置闸门会拒。详见 `xhs-courseware-post` 的「第 0.5 步」。
 
 ## 审图台（WebUI）闭环
 

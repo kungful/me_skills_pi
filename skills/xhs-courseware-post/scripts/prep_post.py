@@ -7,7 +7,7 @@
      **默认不发步骤图**（步骤图暴露模板、画面也最差），要发加 --with-steps
   2. 把图复制到纯 ASCII 暂存目录（中文路径是已知翻车点）
   3. 封面补成 3:4（首页瀑布流按 3:4 裁切，3:2 横图会被切掉两边）
-  4. 从课件数据生成标题/正文/标签草稿（含 AIGC 声明 + 购买引导，两处【】待人工改）
+  4. 从课件数据生成标题/正文/标签草稿（含购买引导，三处【】待人工改）
 
 用法：
     python prep_post.py 项目/小象洗澡-4-6岁/project.json
@@ -38,17 +38,19 @@ STAGE_ROOT = os.environ.get("XHS_POST_STAGE", r"C:\Users\hua\tools\xiaohongshu-m
 JUNK = ("-", "—", "·", " ", "\u3000")
 
 # ---------------- 文案策略（2026-11）----------------
-# 1) 必须写明 AI 生成：小红书对 AIGC 内容要求声明，且能挡掉「AI 画的还卖钱」的举报
+# 1) 正文**不写**「AI 生成」声明（用户 2026-11-07 定版）。留空即可，append 时会跳过。
+#    合规改走平台侧：发完去 App/创作中心看有没有「内容由 AI 生成」标识开关要勾，
+#    那是平台级标注，比正文一句话更规范，也不影响转化文案。
 # 2) 必须留购买引导：先卖课件（低客单），再卖做课件的工具（高客单）
 # 3) CTA 只能引导「评论区 / 私信 / 主页」，绝对不能出现微信、QQ、电话、外链
-AI_DISCLOSURE = ("🤖 说明：本套课件画面由 AI 生成，课题设计、教学流程与文字由人工编排校对，"
-                 "介意的老师慎拍。")
+AI_DISCLOSURE = ""
 # ⚠️ 别写「课包 / 打包更划算 / 想要这套 / 私信『工具』」—— 实测这些交易词会让
 # 小红书「点击发布后不跳转」，整条笔记发不出去（MCP 只报 PUBLISH_FAILED）。
 # 站内安全的说法只有：主页、合集、评论区。转化留给私信和主页，不写在正文里。
 CTA_DECK = "· 完整课件和系列都在主页，点进去就能看到"
 CTA_CUSTOM = "· 想上的课题没有？评论区告诉我，我按你的主题做"
-CTA_TOOL = ("· 想自己批量做这种课件（AI 出图 + 自动排版 + 一键导 PPTX/PDF）的老师，"
+# 卖工具那条也不带「AI 出图」字样（用户 2026-11-07：文案里不写入 AI 制作）
+CTA_TOOL = ("· 想自己批量做这种课件（出图 + 自动排版 + 一键导 PPTX/PDF）的老师，"
             "主页有介绍")
 
 
@@ -77,6 +79,38 @@ def resolve_slot(pdir, slot):
                 if stem == slot and ext.lower() in (".jpg", ".jpeg", ".png", ".webp"):
                     return os.path.join(base, f)
     return None
+
+
+def _age_floor(age):
+    """从「12-15岁」这种串里取最小年龄；取不到就给 0（按低龄处理，安全）。"""
+    import re as _re
+    m = _re.search(r"(\d+)\s*[-–~]\s*(\d+)", str(age or ""))
+    if m:
+        return int(m.group(1))
+    m = _re.search(r"(\d+)", str(age or ""))
+    return int(m.group(1)) if m else 0
+
+
+def stage_hint(age):
+    """适用学段话术：12 岁以上是初中，不能写「幼儿园」。"""
+    if _age_floor(age) >= 12:
+        return "初中课堂 / 机构 / 家庭都能上"
+    if _age_floor(age) >= 9:
+        return "小学高年级 / 机构 / 家庭都能上"
+    return "幼儿园 / 机构 / 家庭都能上"
+
+
+def material_hint(by):
+    """从 materials 页读真实画材，别硬编码「马克笔」（高年龄课件多半不是马克笔）。"""
+    pgs = by.get("materials") or []
+    if pgs:
+        schemes = pgs[0].get("schemes") or []
+        if schemes:
+            items = [clean(i) for i in (schemes[0].get("items") or [])]
+            items = [i for i in items if i]
+            if items:
+                return "、".join(items[:3]).replace("（推荐）", "")
+    return "常规画材，不用准备稀罕材料"
 
 
 def clean(s):
@@ -263,7 +297,7 @@ def build_copy(data, n_pages, brand, with_steps=False):
     L.append("【钩子：一句话写《%s》成品画面的细节，再加一句“一节课孩子能画成这样” —— 别写“这是一套课件”】" % short)
     L.append("")
     L.append("🖼 图上就是成品：%s孩子一节课能画出来的样子。" % age)
-    L.append("· 画材：马克笔为主，不用准备稀罕材料")
+    L.append("· 画材：%s" % material_hint(by))
     L.append("· 上课：%d页全部排好版，投屏就能讲，不用自己再排版" % n_pages)
     L.append("")
     L.append("📚 这套里有什么（共%d页）" % n_pages)
@@ -308,10 +342,11 @@ def build_copy(data, n_pages, brand, with_steps=False):
     L.append("🎨 这个课题好上的地方")
     L.append("【写 2-3 条：形体好不好抓形 / 实物观察是不是真东西 / 颜色挑不挑笔 —— 家长最关心孩子能不能画出来】")
     L.append("")
-    L.append("👩‍🏫 适合 %s，幼儿园 / 机构 / 家庭都能上，一节课的完整流程。" % age)
+    L.append("👩‍🏫 适合 %s，%s，一节课的完整流程。" % (age, stage_hint(age)))
     L.append("")
-    L.append(AI_DISCLOSURE)
-    L.append("")
+    if AI_DISCLOSURE:
+        L.append(AI_DISCLOSURE)
+        L.append("")
     L.append("🛒 想要这套（或者别的课题）")
     L.append(CTA_DECK)
     L.append(CTA_CUSTOM)
@@ -319,10 +354,15 @@ def build_copy(data, n_pages, brand, with_steps=False):
     L.append("")
     L.append("📎 %s" % brand)
 
-    tags = ["少儿美术", "创意美术", "美术课件", "美术老师", "AI绘画"]
+    older = _age_floor(age) >= 12
+    tags = ["创意美术", "美术课件", "美术老师"]
+    if older:
+        tags += ["初中美术", "中学美术", "设计课", "传统纹样"]
+    else:
+        tags += ["少儿美术", "幼儿美术", "马克笔", "美术机构", "美术教案"]
     if age:
         tags.append(age.replace("-", "到"))
-    tags += ["幼儿美术", "马克笔", "课件分享", "美术机构", "美术教案"]
+    tags += ["课件分享"]
     out = []
     for t in tags:
         if t and t not in out:
@@ -541,7 +581,7 @@ def main():
                             "sub": wm_sub, "opacity": a.wm_opacity},
             "orig_manifest": man,
             "need_edit": ["开头钩子（【钩子…】那行）", "好上的地方（【写 2-3 条…】那一段）"],
-            "must_keep": ["AIGC 声明（AI_DISCLOSURE 那段，删了容易被举报/限流）",
+            "must_keep": ["购买引导（CTA_DECK / CTA_CUSTOM / CTA_TOOL）",
                           "购买引导（CTA_DECK / CTA_CUSTOM / CTA_TOOL）"],
         },
     }
@@ -562,7 +602,7 @@ def main():
     print("⚠️ 发布前必须改两处（正文里带【】的占位）：")
     for x in post["_prep"]["need_edit"]:
         print("   -", x)
-    print("   这两段别删：AIGC 声明、购买引导（见 post.json 的 _prep.must_keep）")
+    print("   购买引导别删（见 post.json 的 _prep.must_keep）")
     print("   改完可以直接发：python publish_post.py", outp)
     un = published.unused_decks()
     if un:

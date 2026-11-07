@@ -1,7 +1,7 @@
 # Pi Skills
 
 本仓库由 [`skills-github-sync`](skills/skills-github-sync/) 自动从本机 Pi 镜像同步。
-最后同步：**2026-11-07 18:32:17**
+最后同步：**2026-11-07 22:38:27**
 
 共 **46** 个 skill。
 
@@ -62,7 +62,7 @@ cp -r /tmp/pi-skills/skills/* ~/.pi/agent/skills/
 | [`wifi-wireless`](skills/wifi-wireless/) | Wi-Fi / 无线安全评估与取证（仅授权）：监听模式抓包、WPA/WPA2/WPA3 握手与 PMKID 采集、离线口令强度评估、流氓 AP / 钓鱼热点检测、企业无线隔离与 Captive Portal 绕过测试、去认证（deauth）实验室验证。当用户说 "wifi 渗透 / 无线渗透 / 抓握手 / 破解... | pi |
 | [`xgc-api`](skills/xgc-api/) | Manage 仙宫云 / XGC cloud GPU instances through its Open API - check identity and balance, list instances, deploy a GPU container, get its public URL, shut down... | pi |
 | [`xgc-image-run`](skills/xgc-image-run/) | 仙宫云 GPU 跑图一条龙 —— 自动开机 → 自动连进容器 → 跑 ComfyUI 出图 → 把图拉回本地 → 立刻销毁实例。当用户说"跑图/出图/生图/生成一张图/用仙宫云跑/用 ComfyUI 出图/用 Krea2 跑/拿我的 4090 跑一张/跑完就销毁/省钱的跑图方式"，或者要用**本地部署的模型**（... | pi |
-| [`xhs-courseware-post`](skills/xhs-courseware-post/) | 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 默认「成品流」：只发成品+成品细节，不发步骤图；文案固定带 AIGC 声明与购买引导（课件 / 做课件的工具）。用于：把课件发小红书/发笔记... | pi |
+| [`xhs-courseware-post`](skills/xhs-courseware-post/) | 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 默认「成品流」：只发成品+成品细节，不发步骤图；文案固定带购买引导（课件 / 做课件的工具），正文不写 AI 生成声明。用于：把课件发小红书... | pi |
 
 ## APK 备份
 
