@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07 07:31:47",
+  "generatedAt": "2026-11-07 08:01:47",
   "count": 17,
   "totalApkBytes": 110316000,
   "categories": [
@@ -14,8 +14,8 @@
           "apk": "design/paintbox/paintbox.apk",
           "source": "design/paintbox/src/",
           "size": 119667,
-          "sha256": "eddb390a7be2978aae7cf79c915c99f444027ad30aacf979e739254bf803d533",
-          "builtAt": "2026-11-07 07:28:48",
+          "sha256": "7b759f2b6a2acc45775c16217a03e4e167015800a8bd3404293030331a9cec62",
+          "builtAt": "2026-11-07 07:45:54",
           "notes": "连本机 ComfyUI / 跑图服务看图与下载"
         },
         {

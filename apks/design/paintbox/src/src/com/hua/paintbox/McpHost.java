@@ -109,7 +109,7 @@ public final class McpHost {
 
     public boolean running() {
         Mcp s = server;
-        return s != null && s.running();
+        return s != null && s.alive();
     }
 
     private int lastPort = -1;
@@ -128,7 +128,7 @@ public final class McpHost {
             return null;
         }
         String token = token();
-        if (server != null && server.running() && lastPort == port()
+        if (server != null && server.alive() && lastPort == port()
                 && lastBind.equals(bindHost()) && lastToken.equals(token == null ? "" : token)) {
             return null;   // 配置没变、还在监听，别重复 bind
         }

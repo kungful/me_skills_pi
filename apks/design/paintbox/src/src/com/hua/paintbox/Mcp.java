@@ -163,7 +163,14 @@ public final class Mcp {
         server = s;
         running = true;
         final ServerSocket listen = s;
-        acceptThread = new Thread(() -> acceptLoop(listen), "mcp-accept");
+        acceptThread = new Thread(() -> {
+            try {
+                acceptLoop(listen);
+            } catch (Throwable t) {
+                android.util.Log.e("McpWatch", "accept loop died", t);
+                throw t;
+            }
+        }, "mcp-accept");
         acceptThread.setDaemon(true);
         acceptThread.start();
         log.log("MCP 已监听 " + this.bindHost + ":" + s.getLocalPort() + "/mcp");
@@ -192,6 +199,12 @@ public final class Mcp {
         return running;
     }
 
+    /** 线程还活着、端口也还开着才算真的在服务（看门狗用）。 */
+    public boolean alive() {
+        Thread t = acceptThread;
+        return running && server != null && (t == null || t.isAlive());
+    }
+
     public int port() {
         ServerSocket s = server;
         return s == null ? -1 : s.getLocalPort();
@@ -213,8 +226,16 @@ public final class Mcp {
             try {
                 socket = s.accept();
             } catch (IOException e) {
-                if (running) log.log("accept 出错: " + e);
-                break;
+                if (!running) break;
+                // 单次 accept 出错（连接被重置、fd 暂时不够）不该把整个监听线程带走
+                log.log("accept 出错（继续监听）: " + e);
+                try {
+                    Thread.sleep(120);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                continue;
             }
             if (!slots.tryAcquire()) {
                 closeQuietly(socket);
@@ -237,6 +258,7 @@ public final class Mcp {
     }
 
     private void serve(Socket socket) {
+        android.util.Log.d("McpWatch", "serve " + socket.getRemoteSocketAddress());
         try {
             socket.setSoTimeout(30_000);
             socket.setTcpNoDelay(true);
