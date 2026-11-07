@@ -648,3 +648,6 @@ gpt-image 系和 nano-banana 系是**两套不同 CLI/参数**，由 `pipeline.b
 ## 相关技能
 - 发布与运营：`xhs-courseware-post`（读 `project.json` 一条龙发小红书：选图、补 3:4 封面、裁成品细节、**打水印 + 原图存证**、出文案、发布、核实、回评论）
 - 出图底层：`grsai-image-2-5`（gpt-image 系）、`grsai-nano-banana`（nano 系）
+- **代码备份**：本工程源码镜像在 GitHub `kungful/me_skills_pi` 的 `projects/courseware-factory/`
+  （只含代码/文档/小数据，课件图片与母版 pptx 按规则排除；`_mirror.json` 记录源路径与跳过统计）。
+  同步：`python ~/.pi/agent/skills/skills-github-sync/scripts/projects_sync.py`
