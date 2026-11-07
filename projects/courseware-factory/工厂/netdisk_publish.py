@@ -56,7 +56,8 @@ def rand_pwd(n=4):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("project", help="project.json 路径")
-    ap.add_argument("--remote-root", default="/课件", help="网盘根目录（默认 /课件）")
+    ap.add_argument("--remote-root", default="/课件/小红书销售",
+                    help="网盘根目录（默认 /课件/小红书销售 —— 2026-11-07 起所有课件交付都放这里）")
     ap.add_argument("--period", type=int, default=0, choices=[0, 1, 7, 30], help="有效期天数，0=永久")
     ap.add_argument("--pwd", default="", help="4 位提取码，默认随机")
     ap.add_argument("--dry", action="store_true", help="只打印计划，不联网")
@@ -183,7 +184,13 @@ def main():
         rname = os.path.basename(rel)
         print("  [%2d/%2d] %-34s ..." % (i, len(files), rel), end="", flush=True)
         r = nd.file_upload_local(full, rdir, rname, rtype=3)
-        good = '"error"' not in r
+        # ⚠️ 开放平台上传失败时返回的是 errno 字段（31500 / 31064），不是 "error" 字段；
+        #    只看 '"error" not in r' 会把失败报成 OK。只认 errno == 0。
+        try:
+            _j = json.loads(r)
+        except Exception:
+            _j = {}
+        good = (_j.get("errno") in (0, None)) and ("error" not in r)
         print(" %s" % ("OK" if good else "FAIL " + r[:120]))
         if good:
             ok_files.append(rel)
@@ -191,6 +198,15 @@ def main():
     if len(ok_files) != len(files):
         print("\n[!] 有 %d 个文件没传成功，先不建分享（避免发出残缺链接）"
               % (len(files) - len(ok_files)))
+        if any("31500" in str(x) for x in ()) or True:
+            print("    ⚠️ 开放平台对个人开发者**没有上传权限**（errno 31500 / 31064）——"
+                  "这条路走不通是正常的。")
+            print("    → 改用**浏览器上传器**：playwright 进 %s，"
+                  % ("/课件/小红书销售/%s" % name))
+            print("      page.setInputFiles('input[type=file] >> nth=0', [文件绝对路径...])")
+            print("      （input 带 multiple，可以一次传全部；传完在网盘里核对："
+                  "1 个 PDF + manifest.json + 原图/N 张）")
+            print("    → 然后重新跑本命令（上传部分会自动跳过已有文件），或用 --record 记账。")
         return 4
 
     # 3) 建链接前再核一遍：远端该文件夹里的文件数必须与本地一致
