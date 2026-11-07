@@ -108,10 +108,86 @@ python "C:/Users/hua/.pi/agent/skills/xhs-courseware-post/scripts/published.py" 
 在实名/审核完成之前，用 B 路：链接谁建的都行，`--record` 只做**记账**（仍会校验交付包里只有 1 个 PDF、
 链接格式是网盘分享链接），把链接写进 `交付台账.json` + `分享链接.json`，后续发货/对账都读它。
 
+#### ✅ 2026-11-07 已打通（实名 → 个人认证 → 应用 → token → 上传 → 链接）
+
+**完整链路（照着抄）**：
+
+| 步 | 动作 | 关键点 |
+| --- | --- | --- |
+| 1 | 账号实名（百度个人中心） | 只做完这步**没用**，控制台仍显示「未申请认证」 |
+| 2 | **开放平台个人开发者认证** | 入口 `https://pan.baidu.com/union/apply` → 选「个人」→ 同意协议 → 填表 |
+| 3 | 表单 | 姓名/身份证/手机号**从账号自动带出**；**密保邮箱必须先绑定**（去 `passport.baidu.com/v2/accountsecurity` 绑，短信验证） |
+| 4 | 分类 | 一级「教育」→ 二级「在线教育」；提交后**立刻通过**（个人认证即时审核） |
+| 5 | 控制台建应用 | `https://pan.baidu.com/union/console/applist` → 创建应用 → 分类「工具效率」 |
+| 6 | **描述只能填汉字/字母/数字/空格** | 全角冒号括号会报「仅支持输入汉字、字母、数字、空格及常见标点符号」 |
+| 7 | 拿 AppKey/SecretKey | 应用详情页是掩码，**直接调 API 取明文**：见下方命令 |
+| 8 | 拿 access_token | **设备码模式**，不需要回调地址：`工厂/baidu_token_device.py`（浏览器里打开 verification_url → 输 user_code → 点「授权」） |
+| 9 | 上传 | ⚠️ **开放平台没上传权限**，见下节 → 走网页版 API |
+| 10 | 建分享 | 开放平台 `share?method=set` **正常可用**，period=0 = 永久 |
+
+**取明文密钥（不用在页面上点「显示」）**：
+
+```bash
+# 应用详情页 URL 形如 /union/console/app/<appid>?data=...
+# 打开详情页时浏览器会发这个请求，直接在浏览器里复现：
+https://pan.baidu.com/rest/2.0/xpan/console/v1/appdetail?appid=<appid>&sign=<页面请求里的sign>&clienttype=0&app_id=250528&web=1
+# 返回 JSON 里就有 appkey / secretkey / sign_key 明文
+```
+
+**拿 token（设备码模式，已写成脚本）**：
+
+```bash
+python 工厂/baidu_token_device.py
+# → 打�� device_code + user_code + verification_url
+#   在已登录百度的浏览器里打开 verification_url，输 user_code，点「授 权」
+# → 脚本轮询换 token，自动写进 baidu-netdisk-mcp/.env
+```
+
+#### ⚠️ 开放平台「没有上传权限」（errno 31500 / 31064）
+
+个人开发者的 token **能列目录、能建分享，但传不了文件**：
+
+- `xpan/file?method=create` → `errno 31500`（precreate 成功、create 被拒）
+- 老 PCS `pcs/file?method=upload` → `error_code 31064 file is not authorized`
+- 但 `xpan/share?method=set` → **正常返回链接**
+
+→ **上传改走网页版 API**（用 BDUSS cookie，不看应用权限），分享继续用开放平台接口。
+
+**网页版上传（已跑通）**：直接用浏览器自己的上传器最省事，playwright 里：
+
+```js
+// 先进目标目录（双击进入，面包屑确认），再塞文件
+await page.setInputFiles('input[type=file] >> nth=0', [绝对路径1, 绝对路径2, ...]);
+// input 带 multiple，一次可以传 19 个
+```
+
+网页版接口与开放平台的差异（自己写 Python 版时必须补齐）：
+
+```
+precreate: POST https://pan.baidu.com/api/precreate
+    ?rtype=1&bdstoken=<bdstoken>&app_id=250528&channel=chunlei&web=1&clienttype=0
+    form: path=<远端完整路径>&autoinit=1&block_list=[md5...]&target_path=<目标目录>&local_mtime=<ts>
+  → 少了 bdstoken / target_path 会返回 errno 404
+
+create:    POST https://pan.baidu.com/api/create
+    ?isdir=0&rtype=1&bdstoken=<bdstoken>&app_id=250528&channel=chunlei&web=1&clienttype=0
+    form: path=&size=&uploadid=&block_list=&target_path=&local_mtime=
+
+分片上传:  POST https://c5.pcs.baidu.com/rest/2.0/pcs/superfile2
+    ?method=upload&app_id=250528&channel=chunlei&web=1&clienttype=0&path=<完整路径>&uploadid=<短id>
+```
+
+- `bdstoken`：从网盘页面 HTML 里正则抓（`bdstoken["\s:=]+([A-Za-z0-9]+)`），
+  **不是** `window.locals.userInfo.bdstoken`（两个值不一样，页面实际用的是 HTML 里那个）。
+- 返回 `return_type: 1` = 秒传，直接 create；`0` 才需要真传分片。
+- 分享用开放平台 `xpan/share?method=set`（`fsid_list`、`period=0` 永久、`pwd` 4 位提取码）。
+
 ```bash
 # 0) 先在工厂侧打交付包（PDF + 原图 + manifest）
 python "C:/Users/hua/Documents/备份代码/小红书卖课件/工厂/deliver.py" "项目/<课题>/project.json" --zip
 
+# 0.5) ⚠️ 上传：开放平台没有上传权限（31500）→ 用浏览器上传器（见上面「已打通」一节）
+#       上传完在网盘里核对：一个 PDF + manifest.json + 原图/N 张
 # 1) 看计划（不联网、不花钱、先确认文件清单）
 "C:/Users/hua/Documents/备份代码/baidu-netdisk-xianyu/baidu-netdisk-mcp/.venv/Scripts/python.exe" \
   "C:/Users/hua/Documents/备份代码/小红书卖课件/工厂/netdisk_publish.py" "项目/<课题>/project.json" --dry
@@ -287,6 +363,11 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 - 课件名字里带年龄（`《小象洗澡》4-6岁课件`），剥名字拼标题时**必须先把年龄去掉**，否则会拼出《小象洗澡46岁》。
 - 没有"删除笔记"的接口/工具 —— 发错了只能去 App 里手动删。
 - **`PUBLISH_FAILED / 创作者中心登录失效，请重新扫码登录` 大概率是瞬时故障**，不是真的掉登录：`stop-mcp.ps1` → 起服务 → 重发一次即可（实测第二次 162s 发布成功，笔记数 +1）。**先重试，别急着换 cookie**。
+- **百度网盘开放平台「上传」接口对个人开发者不放权**：create 报 `errno 31500`、老 PCS 报 `31064 file is not authorized`，
+  但 share 接口正常。**上传必须走网页版 API（BDUSS cookie）+ 浏览器上传器**，分享才能用开放平台接口。细节见上面「已打通」一节。
+- **git-bash 会把以 `/` 开头的命令行参数转成 Windows 路径**：`python 工厂/baidu_web_upload.py <本地> "/课件/xxx"`
+  → 远端目录变成 `C:/Program Files/Git/课件/xxx`。传网盘路径要加 `MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*"`。
+- **后台任务日志文件名用 ASCII**：中文名 `> logs/西兰花_chain.log` 在 bash 里会报 `No such file or directory`。
   - 真掉登录的判断方法：`cookies.json` 里 17 条 cookie 且 `is_logged_in:true` 就是好的；cookie 里只有 `.xiaohongshu.com / edith.xiaohongshu.com / www.xiaohongshu.com` 三个域，**没有** `creator.xiaohongshu.com`，创作者中心靠的就是 web_session，所以别指望按域判断。
   - 真需要重新扫码时：`xiaohongshu-login.exe` 若已“登录状态: true”会**直接退出、不刷新 cookie**；把 `cookies.json` 挪走再跑，才会进扫码流程（注意：这样会换一个 fingerprint seed）。
   - 反过来，如果浏览器 profile 还登录着（窗口停在 `xiaohongshu.com/explore`），登录工具会**死等一个永远不出现的扫码事件**、`cookies.json` 只有 99 字节且 `cookies: []`。判断办法：`powershell "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\""` 找到带 `remote-debugging-port` 的进程，`netstat -ano | grep <PID>` 拿端口，再 `GET http://127.0.0.1:<port>/json/list` 看当前 URL；是 explore 就说明 profile 已登录，别等二维码。
