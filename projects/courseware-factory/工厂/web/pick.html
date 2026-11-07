@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>选题台 · 选一个课题</title>
+<style>
+:root{--g:#77A65A;--gd:#578B18;--gl:#BED0B5;--ac:#F9A605;--dk:#354253;--bg:#F4F2EC;
+      --w:#fff;--gy:#8A8A8A;--ln:#E3E0D8;--red:#D9534F;--blue:#4A90D9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.6 -apple-system,"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--dk);
+     min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--w);border-bottom:1px solid var(--ln);padding:12px 20px;display:flex;
+       align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{font-size:17px;color:var(--gd)}
+header .sub{font-size:12px;color:var(--gy)}
+header .sp{flex:1}
+button{font:inherit;font-size:13px;padding:7px 13px;border:1px solid var(--ln);background:var(--w);
+       border-radius:7px;cursor:pointer;color:var(--dk);transition:.15s;white-space:nowrap}
+button:hover{border-color:var(--g);color:var(--gd)}
+button.p{background:var(--g);border-color:var(--g);color:#fff}
+button.p:hover{background:var(--gd);color:#fff}
+.hint{background:#FFF8E6;border-bottom:1px solid #F0E2BC;padding:8px 20px;font-size:12.5px;color:#8A6D1B}
+.hint b{color:#6B5209}
+main{padding:18px 20px 130px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.card{background:var(--w);border:1px solid var(--ln);border-radius:12px;padding:14px 15px;display:flex;
+      flex-direction:column;gap:8px;transition:.15s;position:relative;cursor:pointer}
+.card:hover{border-color:var(--g);box-shadow:0 4px 16px rgba(87,139,24,.10);transform:translateY(-1px)}
+.card.warn{background:#FFFCF5}
+.card.warn:hover{border-color:var(--ac);box-shadow:0 4px 16px rgba(249,166,5,.12)}
+.card.fail{background:#FFFBFB;opacity:.92}
+.card.fail:hover{border-color:var(--red);box-shadow:0 4px 16px rgba(217,83,79,.12)}
+.card .top{display:flex;align-items:flex-start;gap:8px}
+.card .no{flex:none;width:24px;height:24px;border-radius:50%;background:var(--gl);color:var(--gd);
+          font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.card h2{font-size:16.5px;line-height:1.35;flex:1;color:var(--dk)}
+.card .score{flex:none;font-size:12px;font-weight:700;color:#fff;background:var(--g);border-radius:6px;
+             padding:2px 8px;margin-top:2px}
+.card .tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11.5px;padding:2px 8px;border-radius:20px;background:#F0F5EA;color:var(--gd);border:1px solid #DCE8D2}
+.tag.age{background:#FDF3E0;color:#B37A0B;border-color:#F2DFB8}
+.tag.mat{background:#EFF4FB;color:#3C6FA8;border-color:#D9E4F3}
+.row{font-size:12.5px;color:#5A6572;display:flex;gap:6px}
+.row b{color:var(--dk);flex:none;font-weight:600}
+.ev{font-size:12px;color:var(--gy);background:#FAF9F5;border:1px dashed var(--ln);border-radius:8px;padding:7px 9px;line-height:1.5}
+.ev i{color:var(--gd);font-style:normal;font-weight:600}
+.badges{display:grid;grid-template-columns:repeat(4,max-content);gap:4px 5px;margin-top:auto;padding-top:4px}
+.ok,.warn,.fail{font-size:11px;padding:1px 7px;border-radius:4px}
+.ok{background:#EAF4E2;color:#4C7A1A}
+.warn{background:#FFF6E0;color:#9A6B0A}
+.fail{background:#FCEBE9;color:#A63A35}
+footer{position:fixed;left:0;right:0;bottom:0;background:var(--w);border-top:1px solid var(--ln);
+       padding:10px 20px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--gy)}
+footer .sp{flex:1}
+#done{position:fixed;inset:0;background:rgba(244,242,236,.97);display:none;align-items:center;
+      justify-content:center;flex-direction:column;gap:14px;z-index:50;text-align:center;padding:30px}
+#done .big{font-size:26px;color:var(--gd);font-weight:700}
+#done .name{font-size:20px;color:var(--dk)}
+#done .sm{font-size:13px;color:var(--gy)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎯 选题台</h1>
+  <span class="sub" id="meta">正在载入候选…</span>
+  <span class="sp"></span>
+  <button id="btnauto">🎲 全自动（用排序第 1）</button>
+</header>
+<div class="hint">
+  <b>这是「选题 + 自检」环节，不是做图。</b>候选来自小红书爆款库（共 <b id="libn">–</b> 条同赛道笔记）的题材证据 +
+  6 个爆款配方 + 已做课题去重，评分与依据都写在卡上。<b>点一张卡即定稿</b>（也可按键盘 1–9）；
+  定稿后本窗口自动消失，接着进课件生产流程。
+</div>
+<main id="grid"></main>
+<footer>
+  <span>证据不足 / 重复 / 年龄段冲突的候选已在自检阶段处理，卡片底部徽章是自检结果。</span>
+  <span class="sp"></span>
+  <span id="tip">按 1–9 快速选择</span>
+</footer>
+<div id="done">
+  <div class="big">✅ 已确定课题</div>
+  <div class="name" id="doneName"></div>
+  <div class="sm">正在关闭窗口并进入下一步…</div>
+  <div class="sm" id="doneAlt" style="display:none">若窗口没自动关闭，请手动关掉它（结果已保存）。</div>
+</div>
+
+<script>
+let CAND = [], PICKED = false, DUP = 0;
+
+function el(t, c, x){ const e=document.createElement(t); if(c)e.className=c; if(x!==undefined)e.textContent=x; return e; }
+
+function card(c, i){
+  const d = el('div','card' + (c.verdict === 'FAIL' ? ' fail' : (c.verdict === 'WARN' ? ' warn' : '')));
+  d.onclick = () => pick(c.id);
+  const top = el('div','top');
+  top.appendChild(el('div','no', String(i+1)));
+  top.appendChild(el('h2', null, c.name));
+  top.appendChild(el('div','score', Math.round(c.score) + '分'));
+  d.appendChild(top);
+
+  const tags = el('div','tags');
+  tags.appendChild(el('span','tag age', c.age));
+  tags.appendChild(el('span','tag', c.preset_cn));
+  if (c.material) tags.appendChild(el('span','tag mat', c.material));
+  d.appendChild(tags);
+
+  const r1 = el('div','row'); r1.innerHTML = '<b>为什么能卖</b><span>' + c.why + '</span>'; d.appendChild(r1);
+  const r2 = el('div','row'); r2.innerHTML = '<b>画面公式</b><span>' + c.formula + '</span>'; d.appendChild(r2);
+
+  const ev = el('div','ev');
+  ev.innerHTML = '爆款依据：' + c.evidence.map(e =>
+     '《' + e.title + '》<i>' + e.likes + '赞/' + e.collects + '藏</i>').join('　·　');
+  d.appendChild(ev);
+
+  const b = el('div','badges');
+  (c.checks || []).forEach(k => {
+    b.appendChild(el('span', k.level === 'FAIL' ? 'fail' : (k.level === 'WARN' ? 'warn' : 'ok'),
+      (k.level === 'FAIL' ? '✕ ' : k.level === 'WARN' ? '! ' : '✓ ') + k.name));
+  });
+  d.appendChild(b);
+  return d;
+}
+
+function render(){
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  CAND.forEach((c,i) => g.appendChild(card(c,i)));
+  document.getElementById('meta').textContent =
+    CAND.length + ' 个候选 · 年龄段不设限 · 已去重 ' + DUP + ' 个';
+}
+
+async function boot(){
+  const r = await fetch('/api/candidates');
+  const d = await r.json();
+  CAND = d.candidates || [];
+  DUP = d.dup_filtered || 0;
+  document.getElementById('libn').textContent = d.library_n || '–';
+  document.getElementById('done').setAttribute('data-total', CAND.length);
+  render();
+}
+
+async function pick(id, auto){
+  if (PICKED) return;
+  PICKED = true;
+  const c = CAND.find(x => x.id === id) || CAND[0];
+  document.getElementById('doneName').textContent = c.name + '　' + c.age;
+  document.getElementById('done').style.display = 'flex';
+  try{
+    await fetch('/api/pick', {method:'POST', headers:{'Content-Type':'application/json'},
+                              body: JSON.stringify({id: c.id, auto: !!auto})});
+  }catch(e){}
+  setTimeout(() => { window.close(); }, 350);
+  setTimeout(() => { document.getElementById('doneAlt').style.display = 'block'; }, 1400);
+}
+
+document.getElementById('btnauto').onclick = () => {
+  if (!CAND.length) return;
+  pick(CAND[0].id, true);
+};
+
+document.addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '9') {
+    const i = parseInt(e.key, 10) - 1;
+    if (CAND[i]) pick(CAND[i].id);
+  }
+});
+
+boot();
+</script>
+</body>
+</html>

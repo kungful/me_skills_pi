@@ -1,0 +1,43 @@
+{
+  "project": "C:\\Users\\hua\\Documents\\备份代码\\小红书卖课件\\项目\\会变形的云.json",
+  "name": "会变形的云",
+  "age": "4-6岁",
+  "brand": "绘课工坊",
+  "title": "4-6岁创意美术｜会变形的云",
+  "title_alt": [],
+  "content": "这节课不教画得像，教孩子\"敢想\"。\n\n一朵云，可以变成什么？小兔子？小船？冰淇淋？\n\n6 步画《会变形的云》：\n\n① 起形——先画一朵大大的云，就画在画面中间\n② 勾线——给云加两只长耳朵和一条小尾巴，它就成了兔子\n③ 涂色——草地铺绿色，云留白（云本来就是白的）\n④ 加深——云的下面压一层浅灰蓝，云就\"胖\"起来了\n⑤ 背景——天空铺天蓝色，加上太阳和两朵小云\n\n老师提示：\n· 先让孩子说\"这朵云像什么\"，再动笔。想象画最怕直接给答案\n· 云不要画成一条线，要用一圈一圈的弧线堆出来，才有蓬松感\n\n4-6岁最好上的一节想象力课。\n\n#少儿美术 #创意美术 #美术课件 #美术老师 #幼儿美术 #想象力",
+  "tags": [
+    "少儿美术",
+    "创意美术",
+    "美术课件",
+    "美术老师",
+    "幼儿美术",
+    "4到6岁",
+    "备课素材",
+    "美术教案",
+    "美术机构",
+    "课件分享"
+  ],
+  "images": [
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\01_cover.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\02.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\03.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\04.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\05.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\06.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_f71cb20a\\07.jpg"
+  ],
+  "visibility": "仅自己可见",
+  "_prep": {
+    "kind": "创意/会变形的云",
+    "slots": [
+      "01_cover.jpg",
+      "02.jpg",
+      "03.jpg",
+      "04.jpg",
+      "05.jpg",
+      "06.jpg",
+      "07.jpg"
+    ]
+  }
+}

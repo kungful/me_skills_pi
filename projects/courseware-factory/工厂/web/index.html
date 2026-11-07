@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>课件工厂 · 审图台</title>
+<style>
+:root{--g:#77A65A;--gd:#578B18;--gl:#BED0B5;--ac:#F9A605;--dk:#354253;--bg:#F4F2EC;
+      --w:#fff;--gy:#8A8A8A;--ln:#E3E0D8;--red:#D9534F;--blue:#4A90D9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.6 -apple-system,"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--dk);
+     height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:var(--w);border-bottom:1px solid var(--ln);padding:10px 18px;display:flex;
+       align-items:center;gap:10px;flex:none;flex-wrap:wrap}
+header h1{font-size:16px;color:var(--gd)}
+header .sub{font-size:12px;color:var(--gy)}
+header .sp{flex:1}
+#outpath{cursor:pointer;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+         background:#F7F5EF;padding:5px 9px;border-radius:7px;border:1px solid var(--ln)}
+#outpath:hover{border-color:var(--g);color:var(--gd)}
+button{font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--ln);background:var(--w);
+       border-radius:7px;cursor:pointer;color:var(--dk);transition:.15s;white-space:nowrap}
+button:hover{border-color:var(--g);color:var(--gd)}
+button.p{background:var(--g);border-color:var(--g);color:#fff}
+button.p:hover{background:var(--gd);color:#fff}
+button.a{background:var(--ac);border-color:var(--ac);color:#fff}
+button.a:hover{filter:brightness(.93);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+main{flex:1;display:flex;min-height:0}
+#side{width:196px;flex:none;background:var(--w);border-right:1px solid var(--ln);overflow-y:auto;padding:8px}
+.pg{display:flex;gap:8px;padding:6px;border-radius:8px;cursor:pointer;align-items:center;margin-bottom:3px}
+.pg:hover{background:#F0F5EA}
+.pg.on{background:var(--gl)}
+.pg img{width:78px;height:44px;object-fit:cover;border-radius:4px;border:1px solid var(--ln);flex:none;background:#eee}
+.pg .t{font-size:11px;color:var(--gy);line-height:1.3;overflow:hidden}
+.pg .no{font-size:11px;font-weight:700;color:var(--gd)}
+.badge{display:inline-block;min-width:15px;text-align:center;background:var(--red);color:#fff;
+       border-radius:8px;font-size:10px;padding:0 4px;margin-left:3px}
+#mid{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#stage{flex:none;background:#2B2B2B;display:flex;align-items:center;justify-content:center;
+       padding:10px;min-height:230px;max-height:52vh}
+#stage img{max-width:100%;max-height:calc(52vh - 20px);box-shadow:0 3px 18px rgba(0,0,0,.5);border-radius:3px}
+#slots{flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;gap:12px;align-content:flex-start}
+.slot{width:230px;background:var(--w);border:2px solid var(--ln);border-radius:10px;overflow:hidden;cursor:pointer;
+      position:relative}
+.slot .dl{position:absolute;top:6px;right:6px;width:28px;height:28px;padding:0;border-radius:7px;
+     background:rgba(53,66,83,.82);color:#fff;border:none;font-size:14px;line-height:1;cursor:pointer;
+     opacity:0;transition:.15s;z-index:2}
+.slot .dl2{right:38px;background:rgba(87,139,24,.9)}
+.slot:hover .dl{opacity:1}
+.slot .dl:hover{background:var(--ac);transform:scale(1.08)}
+.slot:hover{border-color:var(--g)}
+.slot.on{border-color:var(--ac);box-shadow:0 0 0 3px rgba(249,166,5,.2)}
+.slot img{width:100%;height:130px;object-fit:cover;display:block;background:#eee}
+.slot .b{padding:7px 9px}
+.slot .n{font-size:12px;font-weight:700}
+.slot .s{font-size:11px;color:var(--gy);margin-top:2px;display:flex;gap:5px;align-items:center}
+.st{font-size:10px;padding:1px 6px;border-radius:6px;color:#fff;background:#C9C9C9;flex:none}
+.st.ok{background:var(--g)}.st.fix{background:var(--ac)}.st.redo{background:var(--red)}
+/* 实物照片备选图 */
+.alts{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px;margin:8px 0}
+.alt{margin:0;cursor:pointer;border:2px solid #DDE5D5;border-radius:8px;overflow:hidden;
+  background:#fff;transition:.12s}
+.alt:hover{border-color:var(--g);transform:translateY(-2px)}
+.alt img{width:100%;height:62px;object-fit:cover;display:block}
+.alt figcaption{font-size:10px;text-align:center;color:var(--gy);padding:2px 0}
+#photo{margin-top:14px;padding-top:12px;border-top:1px dashed #DDE5D5}
+#right{width:352px;flex:none;background:var(--w);border-left:1px solid var(--ln);overflow-y:auto;padding:14px}
+#right h3{font-size:13px;color:var(--gd);margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--ln)}
+#right h3:first-child{margin-top:0}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sbtn{flex:1;padding:7px 4px;font-size:12px;border-radius:7px;border:1px solid var(--ln);background:var(--w);cursor:pointer}
+.sbtn.ok.on{background:var(--g);color:#fff;border-color:var(--g)}
+.sbtn.fix.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sbtn.redo.on{background:var(--red);color:#fff;border-color:var(--red)}
+.tg{font-size:11px;padding:3px 9px;border-radius:11px;border:1px solid var(--ln);background:var(--w);cursor:pointer;color:var(--gy)}
+.tg.on{background:var(--dk);color:#fff;border-color:var(--dk)}
+textarea{width:100%;font:12px/1.55 Consolas,"Microsoft YaHei",monospace;padding:8px;border:1px solid var(--ln);
+         border-radius:8px;resize:vertical;color:var(--dk);background:#FCFCFA}
+textarea:focus{outline:none;border-color:var(--g)}
+select{font:inherit;font-size:12px;padding:5px;border:1px solid var(--ln);border-radius:7px;width:100%}
+#log{flex:none;height:132px;overflow-y:auto;background:#1E1E1E;color:#C8E6A0;
+     font:11px/1.5 Consolas,monospace;padding:8px 12px;white-space:pre-wrap;border-top:1px solid #000}
+#log.busy{color:#FFD479}
+.mini{font-size:11px;color:var(--gy);margin:4px 0}
+.hint{font-size:11px;color:var(--gy);background:#F7F5EF;padding:7px 9px;border-radius:7px;
+      border-left:3px solid var(--gl);margin-bottom:8px}
+pre.full{font:12px/1.6 Consolas,monospace;white-space:pre-wrap;word-break:break-all;background:#F7F5EF;
+     border:1px solid var(--ln);border-radius:8px;padding:10px;max-height:340px;overflow:auto;color:#4A4A4A}
+button.mini{font-size:11px;padding:4px 9px}
+/* ===== 多课件工作台（课件列表浮层） ===== */
+#lib{position:fixed;inset:0;z-index:50;background:rgba(244,242,236,.985);display:flex;flex-direction:column}
+#lib[hidden]{display:none}
+.lhead{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--w);
+       border-bottom:1px solid var(--ln);flex:none;flex-wrap:wrap}
+.lhead h2{font-size:16px;color:var(--gd)}
+.lhead .sp{flex:1}
+#libgrid{flex:1;overflow-y:auto;display:flex;flex-wrap:wrap;gap:14px;padding:16px 18px;
+         align-content:flex-start;min-height:0}
+.pcard{width:252px;background:var(--w);border:2px solid var(--ln);border-radius:12px;overflow:hidden;
+       cursor:pointer;position:relative;transition:.15s}
+.pcard:hover{border-color:var(--g);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.pcard.sel{border-color:var(--ac);box-shadow:0 0 0 3px rgba(249,166,5,.25)}
+.pcard.cur{border-color:var(--g);border-width:3px}
+.pcard>img{width:100%;height:142px;object-fit:cover;display:block;background:#eee}
+.pcard .pb{padding:8px 10px 10px}
+.pcard .pn{font-size:13px;font-weight:700;line-height:1.4}
+.pcard .pr{font-size:11px;color:var(--gy);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.pcard .ck{position:absolute;top:9px;left:9px;width:19px;height:19px;z-index:2;cursor:pointer;accent-color:var(--ac)}
+.pcard .tag{position:absolute;top:9px;right:9px;z-index:2;font-size:10px;padding:2px 8px;border-radius:9px;
+            background:var(--g);color:#fff;font-weight:700}
+.pcard .tag.warn{background:var(--red)}
+.pcard .tag.none{background:var(--gy)}
+.ptag{font-size:10px;padding:1px 7px;border-radius:7px;background:#F0F5EA;color:var(--gd)}
+.ptag.bad{background:#FDECEA;color:var(--red)}
+.ptag.gray{background:#F0F0F0;color:var(--gy)}
+.lbar{flex:none;display:flex;align-items:center;gap:10px;padding:11px 18px;background:var(--w);
+      border-top:1px solid var(--ln);flex-wrap:wrap}
+.lbar input[type=text],.lbar input:not([type]){font:inherit;font-size:13px;padding:7px 10px;
+      border:1px solid var(--ln);border-radius:7px;width:190px}
+.lbar textarea{width:210px;font-size:12px;padding:6px 8px;border:1px solid var(--ln);border-radius:7px;
+      resize:vertical;color:var(--dk)}
+.lbar select{width:auto;min-width:150px}
+#libcount{font-size:13px;color:var(--gd);font-weight:700;white-space:nowrap}
+.libempty{color:var(--gy);font-size:13px;padding:30px 4px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="pname">…</h1>
+  <span class="sub" id="pmeta"></span>
+  <button class="p" onclick="openLib()">📚 课件列表</button>
+  <span class="sp"></span>
+  <span class="sub" id="outpath"></span>
+  <span class="sub" id="dirty"></span>
+  <button onclick="openFolder()">📂 打开输出文件夹</button>
+  <a href="/zip_images" style="text-decoration:none"><button>🖼 打包下载全部图片</button></a>
+  <a href="/download?f=pdf" style="text-decoration:none"><button>⬇ 下载 PDF</button></a>
+  <a href="/download?f=pptx" style="text-decoration:none"><button>⬇ 下载 PPTX</button></a>
+  <button onclick="saveReview()">💾 保存审图</button>
+  <a href="/api/report" style="text-decoration:none"><button>📄 导出报告</button></a>
+  <button class="a" onclick="post('/api/build',{},'重新装配 + 导出')">🏗 重新装配 + 导出</button>
+</header>
+<main>
+  <div id="side"></div>
+  <div id="mid">
+    <div id="stage"><span style="color:#888">选择左侧页面</span></div>
+    <div id="slots"></div>
+  </div>
+  <div id="right">
+    <h3>图片槽位 <span id="slname" style="color:var(--gy);font-weight:400"></span></h3>
+    <div id="panel">
+      <div class="hint">点击中间任意图片卡片，在这里标记问题、改 prompt、重跑。</div>
+    </div>
+    <div id="photo" hidden></div>
+  </div>
+</main>
+<div id="log">就绪。</div>
+
+<div id="lib" hidden>
+  <div class="lhead">
+    <h2>📚 课件列表</h2>
+    <span class="sub" id="libsub"></span>
+    <span class="sp"></span>
+    <button onclick="selAll(true)">☑ 全选</button>
+    <button onclick="selAll(false)">☐ 清空选择</button>
+    <button onclick="reloadLib()">↻ 刷新</button>
+    <button class="p" onclick="closeLib()">✕ 返回审图</button>
+  </div>
+  <div id="libgrid"></div>
+  <div class="lbar">
+    <b id="libcount">已选 0 套</b>
+    <span class="sub">批量操作</span>
+    <select id="bop" onchange="renderBatchForm()">
+      <option value="set_brand">① 统一品牌名</option>
+      <option value="set_model">② 统一出图模型</option>
+      <option value="set_stroke">③ 统一线条规范</option>
+      <option value="replace">④ 批量查找替换文案</option>
+      <option value="build">⑤ 批量重新装配 + 导出</option>
+      <option value="export">⑥ 批量仅重导 PDF</option>
+      <option value="reset_review">⑦ 批量清空审图标记</option>
+    </select>
+    <span id="bfields"></span>
+    <label class="mini" id="brw"><input type="checkbox" id="brebuild" checked> 改完自动重装配+导出</label>
+    <span class="sp" style="flex:1"></span>
+    <button class="a" onclick="runBatch()">▶ 批量执行</button>
+  </div>
+</div>
+<script>
+const TAGS = ['构图','比例','风格不符','颜色','连贯性','细节','背景','清晰度','文字错'];
+let ST = null, CAT = {}, curPage = 0, curSlot = null, busy = false;
+const $ = s => document.querySelector(s);
+const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const bust = p => p + '?t=' + Date.now();
+
+function log(m){ const l=$('#log'); l.textContent += (l.textContent?'\n':'') + m; l.scrollTop = 1e9; }
+
+function openFolder(){ post('/api/openfolder', {}, null); }
+
+async function post(url, body, name){
+  if (busy) return alert('有任务在执行');
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await r.json();
+  if (j.job){ poll(j.job, name); } else if (j.error) { alert(j.error); }
+  return j;
+}
+
+async function poll(id, name){
+  busy = true; $('#log').classList.add('busy');
+  $('#log').textContent = '▶ ' + name;
+  let last = 0;
+  while (true){
+    await new Promise(r => setTimeout(r, 1500));
+    const j = await (await fetch('/api/job?id='+id)).json();
+    (j.log||[]).slice(last).forEach(m => log(m));
+    last = (j.log||[]).length;
+    if (j.state === 'done' || j.state === 'error'){
+      log(j.state === 'done' ? '✔ 完成，用时 ' + ((j.t1-j.t0)|0) + 's' : '✘ 失败');
+      busy = false; $('#log').classList.remove('busy');
+      await load(true);
+      if (!$('#lib').hidden) await reloadLib();
+      return;
+    }
+  }
+}
+
+async function load(bustCache){
+  ST = await (await fetch('/api/status')).json();
+  if (!Object.keys(CAT).length) CAT = await (await fetch('/api/models')).json();
+  const outs = await (await fetch('/api/outputs')).json();
+  $('#pname').textContent = ST.name;
+  $('#pmeta').textContent = '共 ' + ST.pages.length + ' 页 / ' + ST.slots.length + ' 张图' +
+    (ST.missing.length ? ' · 缺图 ' + ST.missing.length : '');
+  $('#outpath').textContent = '📁 ' + outs.dir;
+  $('#outpath').title = '导出文件都在这里：\n' +
+    (outs.files||[]).map(f => '  ' + f.name + '  (' + (f.size/1e6).toFixed(1) + 'MB)').join('\n');
+  $('#outpath').onclick = openFolder;
+  const side = $('#side'); side.innerHTML = '';
+  ST.pages.forEach(p => {
+    const n = p.uses.filter(s => needWork(s)).length;
+    const d = document.createElement('div');
+    d.className = 'pg' + (p.index === curPage ? ' on' : '');
+    d.innerHTML = '<img src="/preview/' + String(p.index).padStart(2,'0') + '.png?t=' +
+        (bustCache ? Date.now() : 1) + '" onerror="this.style.opacity=.15">' +
+      '<div><div class="no">P' + p.index + (n ? '<span class="badge">' + n + '</span>' : '') +
+      '</div><div class="t">' + esc(p.title) + '</div></div>';
+    d.onclick = () => showPage(p.index);
+    side.appendChild(d);
+  });
+  if (!curPage) showPage(1);
+  else renderSlots();
+}
+
+function downloadOne(slot, mode){
+  mode = mode || 'hd';
+  const a = document.createElement('a');
+  a.href = '/img?slot=' + encodeURIComponent(slot) + '&mode=' + mode + '&dl=1&t=' + Date.now();
+  a.download = '';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function needWork(slot){
+  const r = (ST.review||{})[slot] || {};
+  return r.status === 'redo' || r.status === 'fix';
+}
+
+/* ================= 多课件工作台 ================= */
+let LIB = [], SEL = new Set();
+
+async function openLib(){
+  await reloadLib();
+  renderBatchForm();
+  $('#lib').hidden = false;
+}
+function closeLib(){ $('#lib').hidden = true; }
+
+async function reloadLib(){
+  const j = await (await fetch('/api/projects')).json();
+  LIB = j.projects || [];
+  SEL = new Set([...SEL].filter(d => LIB.some(p => p.dirname === d)));
+  $('#libsub').textContent = '共 ' + LIB.length + ' 套' +
+    '　当前：' + (j.current || '-');
+  renderLib();
+}
+
+function renderLib(){
+  const g = $('#libgrid');
+  if (!LIB.length){
+    g.innerHTML = '<div class="libempty">还没有课件。用 <code>python 工厂/new_project.py "课题名" --age 4-6岁</code> 新建一套。</div>';
+    return;
+  }
+  g.innerHTML = LIB.map(p => {
+    if (p.error) return '<div class="pcard"><div class="pb"><div class="pn">' +
+      esc(p.dirname) + '</div><div class="pr"><span class="ptag bad">读取失败</span>' +
+      esc(p.error) + '</div></div></div>';
+    const badges = [];
+    if (p.missing) badges.push('<span class="ptag bad">缺图 ' + p.missing + '</span>');
+    if (p.redo)    badges.push('<span class="ptag bad">重跑 ' + p.redo + '</span>');
+    if (p.fix)     badges.push('<span class="ptag">小改 ' + p.fix + '</span>');
+    if (!p.missing && !p.redo && !p.fix) badges.push('<span class="ptag">✓ 无问题</span>');
+    badges.push('<span class="ptag gray">' + p.pages + '页 / ' + p.images + '图</span>');
+    if (p.has_pdf) badges.push('<span class="ptag">PDF ' + (p.pdf_size/1e6).toFixed(1) + 'MB</span>');
+    else badges.push('<span class="ptag bad">无 PDF</span>');
+    const d = new Date(p.mtime*1000);
+    const stamp = (d.getMonth()+1) + '-' + d.getDate() + ' ' +
+      String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    let tag = '<span class="tag none">未导出</span>';
+    if (p.current) tag = '<span class="tag">正在看</span>';
+    else if (p.has_pdf) tag = '<span class="tag none" style="background:#578B18">可交付</span>';
+    return '<div class="pcard' + (SEL.has(p.dirname)?' sel':'') + (p.current?' cur':'') + '" onclick="switchTo(\'' + p.dirname + '\')">' +
+      '<input class="ck" type="checkbox" ' + (SEL.has(p.dirname)?'checked':'') +
+        ' onclick="event.stopPropagation();toggleSel(\'' + p.dirname + '\',this.checked)">' +
+      tag +
+      '<img src="/api/thumb?p=' + encodeURIComponent(p.dirname) + '&t=' + Date.now() +
+        '" onerror="this.style.opacity=.1">' +
+      '<div class="pb"><div class="pn">' + esc(p.name) + '</div>' +
+      '<div class="pr"><span class="ptag">' + esc(p.brand || '未设品牌') + '</span>' +
+        (p.age ? '<span class="ptag gray">' + esc(p.age) + '</span>' : '') + '</div>' +
+      '<div class="pr">' + badges.join('') + '</div>' +
+      '<div class="pr" style="color:#aaa">' + p.dirname + ' · ' + stamp + '</div>' +
+      '</div></div>';
+  }).join('');
+  updateCount();
+}
+
+function updateCount(){ $('#libcount').textContent = '已选 ' + SEL.size + ' 套'; }
+
+function toggleSel(d, on){ on ? SEL.add(d) : SEL.delete(d); renderLib(); }
+function selAll(v){ SEL = v ? new Set(LIB.filter(p => !p.error).map(p => p.dirname)) : new Set(); renderLib(); }
+
+async function switchTo(d){
+  if (busy) return alert('有任务在执行，稍等');
+  const j = await (await fetch('/api/switch', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({project:d})})).json();
+  if (j.error) return alert(j.error);
+  curPage = 0; curSlot = null;
+  $('#log').textContent = '已切换到：' + j.name + '（' + j.pages + ' 页 / ' + j.images + ' 张图）';
+  closeLib();
+  await load(true);
+}
+
+/* ---- 批量表单（随操作变化） ---- */
+function renderBatchForm(){
+  const op = $('#bop').value;
+  const F = $('#bfields');
+  $('#brw').style.display = (op === 'build' || op === 'export' || op === 'reset_review') ? 'none' : '';
+  if (op === 'set_brand')
+    F.innerHTML = '<input id="bv" placeholder="例如：小星星美育">';
+  else if (op === 'set_model')
+    F.innerHTML = '<select id="bv" style="min-width:230px">' + Object.keys(CAT).map(m =>
+      '<option value="' + m + '">' + m + (CAT[m].price != null ? '  ¥' + CAT[m].price : '') + '</option>').join('') + '</select>';
+  else if (op === 'set_stroke')
+    F.innerHTML = '<textarea id="bv" rows="1" placeholder="粘贴新的线条规范（common.stroke）"></textarea>';
+  else if (op === 'replace')
+    F.innerHTML = '<input id="bv1" placeholder="查找"> <input id="bv2" placeholder="替换为">';
+  else
+    F.innerHTML = '<span class="mini">' + {build:'对选中的课件重新装配 pptx 并导出 PDF',
+      export:'仅重新导出 PDF（不重新装配）', reset_review:'清空审图标记（重新开始审图）'}[op] + '</span>';
+}
+
+async function runBatch(){
+  const op = $('#bop').value, dirs = [...SEL];
+  if (!dirs.length) return alert('先在列表里勾选要批量处理的课件（点卡片左上角复选框）');
+  let value = null;
+  if (op === 'replace'){
+    value = {find: ($('#bv1')||{}).value || '', repl: ($('#bv2')||{}).value || ''};
+    if (!value.find) return alert('“查找”不能为空');
+  } else if (['set_brand','set_model','set_stroke'].includes(op)){
+    value = ($('#bv')||{}).value || '';
+    if (!value.trim()) return alert('先填要设置的值');
+  }
+  const rebuild = $('#brebuild').checked;
+  const COSTY = ['set_model'];
+  const warn = '将对 ' + dirs.length + ' 套课件执行：【' + $('#bop').selectedOptions[0].textContent + '】\n\n' +
+    dirs.join('\n') + '\n\n' +
+    (rebuild && !['build','export','reset_review'].includes(op) ? '并自动重新装配 + 导出 PDF\n\n' : '') +
+    (COSTY.includes(op) ? '⚠️ 这只改参数，不会立即出图。\n' : '') +
+    '继续？';
+  if (!confirm(warn)) return;
+  const j = await (await fetch('/api/batch', {method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({projects:dirs, op:op, value:value, rebuild:rebuild})})).json();
+  if (j.error) return alert(j.error);
+  $('#lib').hidden = true;          // 回审图界面看日志
+  poll(j.job, '批量' + $('#bop').selectedOptions[0].textContent + ' × ' + dirs.length);
+}
+
+function showPage(i){
+  curPage = i;
+  document.querySelectorAll('.pg').forEach((e, k) => e.classList.toggle('on', k + 1 === i));
+  const p = ST.pages[i-1];
+  $('#stage').innerHTML = '<img src="/preview/' + String(i).padStart(2,'0') + '.png?t=' + Date.now() + '">';
+  renderSlots();
+}
+
+function renderSlots(){
+  const p = ST.pages[curPage-1];
+  const box = $('#slots'); box.innerHTML = '';
+  const uses = p.uses.length ? p.uses : [];
+  if (!uses.length){ box.innerHTML = '<div class="hint">本页没有图片（纯版式页）</div>'; return; }
+  uses.forEach(s => {
+    const meta = ST.slots.find(x => x.slot === s) || {};
+    const r = (ST.review||{})[s] || {};
+    const d = document.createElement('div');
+    d.className = 'slot' + (s === curSlot ? ' on' : '');
+    const lb = {ok:'已通过', fix:'需小改', redo:'需重跑'}[r.status] || '未审';
+    d.innerHTML = '<img src="/img?slot=' + encodeURIComponent(s) + '&mode=hd&t=' + Date.now() + '">' +
+      '<button class="dl" title="导出高清原图 PNG" onclick="event.stopPropagation();downloadOne(\'' + s + '\')">⬇</button>' +
+      '<button class="dl dl2" title="导出供货版压缩图 JPG" onclick="event.stopPropagation();downloadOne(\'' + s + '\',\'sell\')">▣</button>' +
+      '<div class="b"><div class="n">' + esc(s) + '</div><div class="s">' +
+      '<span class="st ' + (r.status||'') + '">' + lb + '</span>' +
+      '<span>' + esc(meta.batch||'') + '</span>' +
+      (meta.source === 'search' ? '<span class="st" style="background:#E8F1FB;color:#2A6FB0">📷 网搜实拍</span>' : '') + '</div>' +
+      (r.note ? '<div class="mini">📝 ' + esc(r.note) + '</div>' : '') + '</div>';
+    d.onclick = () => { curSlot = s; renderSlots(); renderPanel(); };
+    box.appendChild(d);
+  });
+}
+
+function renderPanel(){
+  const s = curSlot, meta = ST.slots.find(x => x.slot === s) || {};
+  const r = (ST.review||{})[s] || {};
+  const inchain = (ST.chain_order || []).indexOf(s) >= 0;
+  $('#slname').textContent = s;
+  $('#panel').innerHTML =
+    '<div class="mini">批次 <b>' + esc(meta.batch||'-') + '</b> · 模型 ' + esc(meta.model||'-') +
+      (meta.alias ? ' · <b style="color:#8A5">= ' + esc(meta.alias) + '（直接复用，不重画，0 成本）</b>' : '') + '</div>' +
+    '<div class="mini">参考图链：' +
+      ((meta.eff_refs||[]).length
+        ? (meta.eff_refs||[]).map((x,i) => '<b>' + (i+1) + '</b>.' + esc(x) +
+            (x === (ST.anchor||'') ? ' <span class="st ok">成品锚点</span>' : '')).join(' + ')
+        : '<i>无</i>') + '</div>' +
+    '<div class="row">' +
+      ['ok','fix','redo'].map(k => '<button class="sbtn ' + k + (r.status===k?' on':'') +
+        '" onclick="setStatus(\'' + k + '\')">' + {ok:'✅ 通过',fix:'⚠️ 需小改',redo:'❌ 重跑'}[k] + '</button>').join('') +
+    '</div>' +
+    '<div class="row">' + TAGS.map(t => '<span class="tg' +
+        ((r.tags||[]).includes(t)?' on':'') + '" onclick="toggleTag(\'' + t + '\')">' + t + '</span>').join('') + '</div>' +
+    '<h3>问题说明</h3><textarea id="note" rows="3" oninput="setField(\'note\',this.value)">' + esc(r.note||'') + '</textarea>' +
+    '<h3>出图 prompt</h3><div class="hint">改完点「重跑这张」，只重出这一张，然后自动压缩 + 重装 PDF + 刷新预览。' +
+    '换便宜模型跑素材图（如 nano-banana-2-lite ¥0.022）能省钱，但<b>过程链必须用同一个模型</b>才能保持画风统一。</div>' +
+    '<textarea id="prompt" rows="11">' + esc(meta.prompt||'') + '</textarea>' +
+    '<div class="row" style="margin-top:4px"><button class="mini" onclick="showFull()">🔍 预览发给模型的完整 prompt</button>' +
+      '<span class="mini" id="fullsz"></span></div>' +
+    '<pre id="full" class="full" hidden></pre>' +
+    '<h3>模型 <span class="mini" id="price"></span></h3>' +
+    '<select id="mdl" onchange="showPrice()">' +
+      Object.keys(CAT).map(m => '<option value="' + m + '"' +
+        (m === (meta.model||'gpt-image-2.5') ? ' selected' : '') + '>' + m +
+        (CAT[m].price != null ? '  ¥' + CAT[m].price : '') + '</option>').join('') +
+    '</select>' +
+    '<div class="mini" id="mdlnote"></div>' +
+    '<div class="row" style="margin-top:8px"><button class="p" style="flex:1" onclick="regen()">🔁 重跑这张</button>' +
+      '<button onclick="saveReview()">💾 存审图</button></div>' +
+    (inchain ? '<div class="hint" style="margin-top:10px;background:#FFF7E6;border-color:#F3D79B">' +
+      '⚠️ <b>这张在画过程链里。</b>参考图 = 【成品】+【上一步】，所以单张重跑确实会往成品靠；' +
+      '但如果成品自身就不对，改多少张都没用——<b>要重跑整条链</b>。' +
+      '<div style="margin-top:6px"><button class="p" onclick="regenChain()">🔗 重跑整条链（锚点先行）</button></div>' +
+      '</div>' : '') +
+    (meta.alias ? '<div class="hint" style="margin-top:10px;background:#EAF4EA;border-color:#B7D4B7">' +
+      '🔗 <b>这张是 <span style="color:#578B18">' + esc(meta.alias) + '</span> 的别名。</b>' +
+      '它们<b>必须像素级一致</b>（所以才这样设计），因此不会重画、0 成本。' +
+      '想改它，就去改 <b>' + esc(meta.alias) + '</b> 那张，然后重跑整条链。</div>' : '');
+  showPrice();
+  renderPhoto(meta);
+}
+
+/* ---------- 实物照片：来源/授权 + 备选图一键换 ---------- */
+function renderPhoto(meta){
+  const box = $('#photo');
+  if (!meta || meta.source !== 'search'){ box.innerHTML = ''; box.hidden = true; return; }
+  box.hidden = false;
+  const q = meta.query;
+  const qs = Array.isArray(q) ? q.join(' / ') : (q || '(未设关键词)');
+  const alts = meta.alts || [];
+  box.innerHTML =
+    '<h3>📷 实物照片（联网搜的真实照片，没搜到才回退 AI 生成）</h3>' +
+    '<div class="hint">搜索关键词：<b>' + esc(qs) + '</b><br>' +
+    '点了「换图」会自动压缩 + 重装 PDF + 刷新预览。' +
+    '⚠️ <b>「Bing筛选 / 授权未知」的照片请自行核对能否商用</b>，' +
+    '「免费图库·可商用」的（pixnio 等 CC0）可直接用。</div>' +
+    '<div class="row" style="margin:6px 0">' +
+      '<input id="pq" style="flex:1;min-width:120px" placeholder="改搜索关键词（/ 分隔多个）" value="' +
+        esc(Array.isArray(q) ? q.join(' / ') : (q||'')) + '">' +
+      '<button onclick="researchPhoto()">🔎 重新联网搜图</button></div>' +
+    (alts.length
+      ? '<div class="alts">' + alts.map((f,i) =>
+          '<figure class="alt" onclick="pickAlt(\'' + f + '\')" title="点一下换成这张">' +
+          '<img src="/api/altimg?slot=' + encodeURIComponent(meta.slot) +
+            '&f=' + encodeURIComponent(f) + '&t=' + Date.now() + '">' +
+          '<figcaption>换 #' + (i+1) + '</figcaption></figure>').join('') + '</div>' +
+        '<div class="mini">↑ 点缩略图直接换成主图（和当前主图交换位置）</div>'
+      : '<div class="mini">（没有备选图。可以点「重新联网搜图」重搜一次）</div>');
+}
+
+async function pickAlt(f){
+  if (!confirm('把这张备选图换成当前主图？\n\n换完会自动压缩 + 重装 PDF + 刷新预览。')) return;
+  await post('/api/pick_alt', {slot:curSlot, f:f}, '换图');
+}
+
+async function researchPhoto(){
+  const txt = $('#pq').value.trim();
+  if (!txt) return alert('先填搜索关键词，例如：竹笋 新鲜 / bamboo shoot');
+  const qs = txt.split('/').map(x => x.trim()).filter(Boolean);
+  if (!confirm('重新联网搜图：\n  ' + qs.join('\n  ') +
+      '\n\n会下载一批候选图（免费图源优先），搜不到会回退 AI 生成。继续？')) return;
+  await post('/api/search_photo', {slot:curSlot, queries:qs}, '联网搜图');
+}
+
+function regenChain(){
+  const order = ST.chain_order || [];
+  const c = CAT[$('#mdl').value] || {};
+  const slots = ST.slots || [];
+  const aliasSlots = order.filter(s => (slots.find(x=>x.slot===s)||{}).alias);
+  const real = order.filter(s => !aliasSlots.includes(s));
+  const cost = (c.price||0) * real.length;
+  if (!confirm('按顺序重跑整条链：\n\n  ' + order.join('\n  ') +
+      '\n\n其中 ' + aliasSlots.length + ' 张是【别名复制】（0 成本、不重画）' +
+      (aliasSlots.length?': ' + aliasSlots.join(', ') : '') +
+      '\n实际出图 ' + real.length + ' 张 ≈ ¥' + cost.toFixed(2) + '（' + $('#mdl').value + '）' +
+      '\n\n成品必须最先出新图，因为后面每一步都拿它当参考。\n\n继续？')) return;
+  post('/api/regen_chain', {model:$('#mdl').value, force:true}, '重跑整条链');
+}
+
+async function showFull(){
+  const s = curSlot, p = $('#prompt').value;
+  const r = await fetch('/api/full_prompt?slot=' + encodeURIComponent(s) +
+                        '&p=' + encodeURIComponent(p));
+  const j = await r.json();
+  const box = $('#full');
+  if (j.error) return alert(j.error);
+  box.textContent = j.text;
+  box.hidden = !box.hidden;
+  $('#fullsz').textContent = j.text.length + ' 字符';
+}
+
+function showPrice(){
+  const m = $('#mdl').value, c = CAT[m] || {};
+  $('#price').textContent = c.price != null ? '≈ ¥' + c.price + ' / 张' : '';
+  $('#mdlnote').textContent = (c.note || '') + (c.cli === 'nano' ? ' · nano-banana 通道' : ' · gpt-image 通道');
+}
+
+function R(){ const s = curSlot; if (!ST.review) ST.review = {}; return ST.review[s] ||= {}; }
+function setStatus(k){ const r = R(); r.status = (r.status === k ? '' : k); renderSlots(); renderPanel(); dirty(); }
+function toggleTag(t){ const r = R(); r.tags ||= []; const i = r.tags.indexOf(t);
+  i >= 0 ? r.tags.splice(i,1) : r.tags.push(t); renderPanel(); }
+function setField(k, v){ R()[k] = v; dirty(); }
+function dirty(){ $('#dirty').textContent = '● 有未保存的审图标记'; }
+
+async function saveReview(){
+  await fetch('/api/review', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(ST.review)});
+  $('#dirty').textContent = '✔ 已保存 ' + new Date().toLocaleTimeString();
+  renderSlots();
+}
+
+function regen(){
+  const s = curSlot;
+  const p = $('#prompt').value, m = $('#mdl').value;
+  const prompts = {}; prompts[s] = p;
+  const st = (ST.review[s] ||= {}); st.prompt = p;
+  saveReview();
+  post('/api/regen', {slots:[s], prompts:prompts, model:m, force:true}, '重跑 ' + s + '  (' + m + ')');
+}
+
+load(false);document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowDown') { if (curPage < ST.pages.length) showPage(curPage+1); e.preventDefault(); }
+  if (e.key === 'ArrowUp')   { if (curPage > 1) showPage(curPage-1); e.preventDefault(); }
+  if (e.key === '1') setStatus('ok');
+  if (e.key === '2') setStatus('fix');
+  if (e.key === '3') setStatus('redo');
+});
+</script>
+</body>
+</html>

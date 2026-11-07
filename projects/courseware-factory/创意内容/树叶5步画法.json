@@ -1,0 +1,43 @@
+{
+  "project": "C:\\Users\\hua\\Documents\\备份代码\\小红书卖课件\\项目\\树叶逃跑啦.json",
+  "name": "树叶5步画法",
+  "age": "4-6岁",
+  "brand": "绘课工坊",
+  "title": "5步画出逃跑的树叶｜4-6岁",
+  "title_alt": [],
+  "content": "一片叶子，怎么会\"逃跑\"？这是《树叶逃跑啦》这节创意美术课的题眼。\n\n5 步拆给你看：\n\n① 起形——先定一片大叶子，别画正，稍微倾斜才像在飞\n② 勾线——主脉要粗、支脉要细，叶子的\"骨头\"立起来\n③ 铺色——从深到浅，秋天的颜色不要调匀，越\"脏\"越像真叶子\n④ 装饰——叶尖点一点橘黄，边缘留一圈亮线\n⑤ 背景——用打圈的方式画风，叶子就\"跑\"起来了\n\n老师提示：孩子最容易把叶子画成对称的\"船\"，提醒他\"叶子是被风吹歪的\"，一下就活了。\n\n4-6岁都能画出来，投屏就能上。\n\n#少儿美术 #创意美术 #美术课件 #美术老师 #幼儿美术",
+  "tags": [
+    "少儿美术",
+    "创意美术",
+    "美术课件",
+    "美术老师",
+    "幼儿美术",
+    "4到6岁",
+    "备课素材",
+    "美术教案",
+    "美术机构",
+    "课件分享"
+  ],
+  "images": [
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\01_cover.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\02.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\03.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\04.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\05.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\06.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_6ac0a178\\07.jpg"
+  ],
+  "visibility": "仅自己可见",
+  "_prep": {
+    "kind": "创意/树叶5步画法",
+    "slots": [
+      "01_cover.jpg",
+      "02.jpg",
+      "03.jpg",
+      "04.jpg",
+      "05.jpg",
+      "06.jpg",
+      "07.jpg"
+    ]
+  }
+}

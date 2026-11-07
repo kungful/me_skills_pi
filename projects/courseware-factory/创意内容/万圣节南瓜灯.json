@@ -1,0 +1,43 @@
+{
+  "project": "C:\\Users\\hua\\Documents\\备份代码\\小红书卖课件\\项目\\万圣节南瓜灯.json",
+  "name": "万圣节南瓜灯",
+  "age": "4-6岁",
+  "brand": "绘课工坊",
+  "title": "4-6岁创意美术｜万圣节南瓜灯",
+  "title_alt": [],
+  "content": "万圣节这节课，孩子一进教室就兴奋——因为南瓜灯会\"发光\"。\n\n6 步拆给你看：\n\n① 起形——一个大圆定南瓜，别画圆，压扁一点更像真南瓜\n② 勾线——加上南瓜棱和顶上的藤，眼睛两个三角形，嘴巴画锯齿\n③ 涂色——南瓜铺橘色，草地铺绿色，天空先留白\n④ 加深——南瓜右侧压一层深橘，体积感立刻出来\n⑤ 背景——深蓝夜空 + 弯月 + 星星 + 两只小幽灵\n\n老师提示：眼睛和嘴巴里的暖黄色一定要\"亮\"，跟深蓝夜空一比，发光的感觉马上就对了。孩子最爱画的就是这一步。\n\n4-6岁都能独立完成，一节课出作品。万圣节前上正合适。\n\n#少儿美术 #创意美术 #美术课件 #美术老师 #幼儿美术 #万圣节",
+  "tags": [
+    "少儿美术",
+    "创意美术",
+    "美术课件",
+    "美术老师",
+    "幼儿美术",
+    "4到6岁",
+    "备课素材",
+    "美术教案",
+    "美术机构",
+    "课件分享"
+  ],
+  "images": [
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\01_cover.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\02.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\03.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\04.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\05.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\06.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_cd375d50\\07.jpg"
+  ],
+  "visibility": "仅自己可见",
+  "_prep": {
+    "kind": "创意/万圣节南瓜灯",
+    "slots": [
+      "01_cover.jpg",
+      "02.jpg",
+      "03.jpg",
+      "04.jpg",
+      "05.jpg",
+      "06.jpg",
+      "07.jpg"
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "project": "C:\\Users\\hua\\Documents\\备份代码\\小红书卖课件\\项目\\小刺猬背果子.json",
+  "name": "小刺猬背果子",
+  "age": "4-6岁",
+  "brand": "绘课工坊",
+  "title": "4-6岁创意美术｜小刺猬背果子",
+  "title_alt": [],
+  "content": "秋天的课，孩子最喜欢这只\"背着果子的小刺猬\"。\n\n6 步拆给你看：\n\n① 起形——一个大半圆是身体，左边加个尖尖的鼻子\n② 勾线——背上画一排排小三角当刺，果子先画成圆\n③ 涂色——脸涂奶油色，刺涂棕色，苹果涂红色\n④ 加深——刺的下面压深棕，苹果右侧压深红\n⑤ 背景——草地、落叶、一朵红蘑菇\n\n老师提示：\n· 刺不要画成\"板栗\"，要一排一排往斜后方倒，才有那种毛扎扎的感觉\n· 先画刺再放果子，果子是\"插\"上去的，顺序反了会乱\n\n4-6岁都能画出来，材料只要马克笔和纸。\n\n#少儿美术 #创意美术 #美术课件 #美术老师 #幼儿美术 #秋天主题",
+  "tags": [
+    "少儿美术",
+    "创意美术",
+    "美术课件",
+    "美术老师",
+    "幼儿美术",
+    "4到6岁",
+    "备课素材",
+    "美术教案",
+    "美术机构",
+    "课件分享"
+  ],
+  "images": [
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\01_cover.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\02.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\03.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\04.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\05.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\06.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_94398361\\07.jpg"
+  ],
+  "visibility": "仅自己可见",
+  "_prep": {
+    "kind": "创意/小刺猬背果子",
+    "slots": [
+      "01_cover.jpg",
+      "02.jpg",
+      "03.jpg",
+      "04.jpg",
+      "05.jpg",
+      "06.jpg",
+      "07.jpg"
+    ]
+  }
+}

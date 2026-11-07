@@ -1,0 +1,43 @@
+{
+  "project": "C:\\Users\\hua\\Documents\\备份代码\\小红书卖课件\\项目\\合集.json",
+  "name": "秋冬6节课课单",
+  "age": "4-6岁",
+  "brand": "绘课工坊",
+  "title": "4-6岁｜秋冬6节课主题课单",
+  "title_alt": [],
+  "content": "幼儿园秋冬这一季，用这 6 节课刚好排满——从落叶到初雪，材料一次备齐。\n\n🍂 树叶逃跑啦 —— 借形想象，一片叶子怎么\"跑\"\n🍂 把秋天装进罐子 —— 前后遮挡，练习\"装\"的空间感\n🍂 棉签点彩大树 —— 点彩法，练耐心和色彩的深浅\n🍂 落叶小画布 —— 落叶拼贴 + 添画，材料最省的一节\n🍂 冬日黄昏 —— 冷暖对比，橙红天空配蓝紫雪地\n❄️ 撒盐画雪花 —— 撒盐肌理，孩子最兴奋的一节\n\n每节都是 4-6 岁可以独立完成、一节课出作品的难度。\n材料以水粉、油画棒、落叶、盐、棉签为主，家里和画室都能做。\n\n#少儿美术 #创意美术 #美术课件 #美术老师 #幼儿美术 #秋冬主题",
+  "tags": [
+    "少儿美术",
+    "创意美术",
+    "美术课件",
+    "美术老师",
+    "幼儿美术",
+    "4到6岁",
+    "备课素材",
+    "美术教案",
+    "美术机构",
+    "课件分享"
+  ],
+  "images": [
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\01_cover.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\02.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\03.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\04.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\05.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\06.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_c0062953\\07.jpg"
+  ],
+  "visibility": "仅自己可见",
+  "_prep": {
+    "kind": "创意/秋冬6节课课单",
+    "slots": [
+      "01_cover.jpg",
+      "02.jpg",
+      "03.jpg",
+      "04.jpg",
+      "05.jpg",
+      "06.jpg",
+      "07.jpg"
+    ]
+  }
+}

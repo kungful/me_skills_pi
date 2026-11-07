@@ -1,0 +1,43 @@
+{
+  "project": "C:\\Users\\hua\\Documents\\备份代码\\小红书卖课件\\项目\\堆雪人.json",
+  "name": "堆雪人",
+  "age": "4-6岁",
+  "brand": "绘课工坊",
+  "title": "4-6岁创意美术｜堆雪人",
+  "title_alt": [],
+  "content": "冬天第一节美术课，就上《堆雪人》——孩子对雪人有天然的亲切感。\n\n6 步拆给你看：\n\n① 起形——两个圆定雪人，下面大上面小，先把大小定下来再画细节\n② 勾线——围巾、帽子、树枝手臂、三颗小纽扣，一次勾完\n③ 涂色——帽子围巾涂红，胡萝卜鼻子涂橙，小松树涂绿，雪人留白\n④ 加深——雪球左侧压一层浅蓝灰，雪人立刻\"鼓\"起来了（这步最关键）\n⑤ 背景——天空铺淡蓝，雪地留白，撒上小雪花点点\n\n老师提示：\n· 雪人是白的，孩子会不知道往哪涂色——告诉他\"白的地方不涂，只涂影子\"，一下就懂\n· 雪花不要画太大，小点点撒开才像下雪\n\n4-6岁都能独立完成，材料只要马克笔和纸。\n\n#少儿美术 #创意美术 #美术课件 #美术老师 #幼儿美术 #冬天主题",
+  "tags": [
+    "少儿美术",
+    "创意美术",
+    "美术课件",
+    "美术老师",
+    "幼儿美术",
+    "4到6岁",
+    "备课素材",
+    "美术教案",
+    "美术机构",
+    "课件分享"
+  ],
+  "images": [
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\01_cover.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\02.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\03.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\04.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\05.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\06.jpg",
+    "C:\\Users\\hua\\tools\\xiaohongshu-mcp\\upload\\deck_1e66bbc5\\07.jpg"
+  ],
+  "visibility": "仅自己可见",
+  "_prep": {
+    "kind": "创意/堆雪人",
+    "slots": [
+      "01_cover.jpg",
+      "02.jpg",
+      "03.jpg",
+      "04.jpg",
+      "05.jpg",
+      "06.jpg",
+      "07.jpg"
+    ]
+  }
+}
