@@ -58,6 +58,7 @@ C:/Users/hua/Documents/备份代码/小红书卖课件
 | **出图后跑自检（必须）** | `python 工厂/preflight.py 项目/<课题>/project.json` |
 | **导出后跑排版自检（必须）** | `python 工厂/layout_check.py 项目/<课题>/project.json` |
 | **PDF 到底怎么生成的** | 「PDF 是怎么造出来的」章节（生产链 + 硬规范 + 故障表） |
+| **要改 `工厂/*.py` / 加页型 / 查某页要哪些字段** | `references/pdf-pipeline.md`（五个文件的职责、`Deck` API、18 页型字段契约、导出细节） |
 | **先看别人什么在跑量再选题** | 「选题」章节 + `python 挖爆款.py` |
 | 一次改好几套课件 | 「审图台」→ 多课件工作台 + 批量操作 |
 | 报错了 | 「常见坑」（先查 `netstat` 看是不是僵尸服务） |
@@ -231,6 +232,8 @@ python run_ui.py 项目/小兔子吃萝卜-4-6岁/project.json
 
 `cover` 封面 / `intro` 课程介绍 / `knowing` 今天可以知道 / `quiz` 考一考 / `knowledge` 主题知识 / `real_object` 实物观察 / `materials` 材料 / `observe_tags` 外形观察 / `parts_diagram` 形体拆解（矢量绘制，不耗出图额度）/ `poses` 姿态观察 / `idea_list` 联想创想 / `color_swatches` 同类色 / `contrast_blank` 黑白对比与留白 / `refs` 参考素材 / `tools_dual` 工具介绍 / `step` 绘画步骤 / `final_dual` 范画成品 / `share_summary` 分享表达+课后总结 / `text_page` 兜底
 
+每种页型**必须给哪些字段**、坐标和行距公式见 `references/pdf-pipeline.md` §4.1（改 project.json 或加页型前查这张表）。
+
 **26 页标准链条**：P1 封面 / P2 课程介绍 / P3 我们今天可以知道 / P4 考一考 / P5-7 主题知识 / P8 实物观察(真竹子+竹笋) / P9 实物观察(材料工具) / P10 外形观察 / P11 形体拆解 / P12 姿态观察 / P13 联想创想 / P14 同类色 / P15 黑白对比与留白 / P16-18 参考素材 / P19 工具介绍 / P20-24 步骤1-5 / P25 范画成品 / P26 分享表达+课后总结
 
 **实物观察页（P8/P9）是差异化卖点**——真东西的照片，别的模板没有，别砍。
@@ -299,6 +302,10 @@ python 看爆款.py --imgs 1        # 封面逐张过视觉模型，产结构化
 
 课件不是「画图 + 拼图」，是一条从数据到交付物的固定链。**唯一真源是 `project.json`**，
 PPTX 和 PDF 都是它的派生物，所以改任何文案/版式/换图之后，都必须从第 3 步重跑。
+
+> **代码级实现说明**在 [`references/pdf-pipeline.md`](references/pdf-pipeline.md)：
+> 五个文件各管什么、`Deck` 的全部原语与常量、18 种页型的必填字段、
+> PPTX→PDF 的 COM 细节与预览规格、改哪层要重跑哪步。**动 `工厂/*.py` 之前先读它。**
 
 ```text
 project.json（内容 + 版式 + 出图参数）
