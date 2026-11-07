@@ -37,7 +37,9 @@ python run_ui.py 项目/大熊猫吃竹子-4-6岁/project.json            # 指�
 │  ├─ exporter.py              pptx→pdf + 逐页 PNG 预览
 │  ├─ server.py                ★ WebUI 审图台后端
 │  ├─ web/index.html           ★ 审图台前端
+│  ├─ web/pick.html            ★ 选题台前端（人工选题弹窗，选完自动关闭）
 │  ├─ new_project.py           新建课件脚手架
+│  ├─ 选题.py                  ★ 第 0 步：爆款选题 + 自检（默认全自动 / --mode pick 人工）
 │  └─ migrate_大熊猫.py          （一次性迁移脚本，已完成使命）
 ├─ 项目/
 │  └─ 大熊猫吃竹子-4-6岁/
@@ -127,6 +129,11 @@ python run_ui.py 项目/大熊猫吃竹子-4-6岁/project.json            # 指�
 > 不想让它弹（脚本/批量调用）就加 `--no-ui`，或设环境变量 `DECKUI_NO_UI=1`。
 
 ```bash
+# 0. 选题 + 自检（先看爆款库里什么题材在跑量，别闭门造车）
+python 工厂/选题.py --list                 # 只列候选 + 自检报告，不花钱
+python 工厂/选题.py --mode pick --go       # 弹小窗由你挑 → 选完自动建脚手架
+python 工厂/选题.py --go                   # 或者全自动（默认 --mode auto）
+
 # 1. 复制结构（26页 + 16槽位全带过来，页面文案和 prompt 已标注【改我】）
 python 工厂/new_project.py "小兔子吃萝卜" --age 4-6岁
 
