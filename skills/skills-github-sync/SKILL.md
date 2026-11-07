@@ -13,10 +13,12 @@ description: 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 
 | 位置 | 作用 |
 |---|---|
 | `~/.pi/agent/skills-sync.json` | 唯一配置：远端地址、分支、源目录、repoDir、token |
+| `~/.pi/agent/projects-sync.json` | 项目源码镜像配置（旧 `projects/`，见「项目源码也一起上云」） |
 | `~/.pi/skills-repo/` | 本地 git 仓库（镜像目标），可随时删掉重来 |
 | `~/.pi/agent/skills-sync.log` | 同步日志 |
 | `~/.pi/agent/extensions/skills-autosync.ts` | Pi / pi-web 扩展：监听 skills 目录，变了就自动同步 |
 | `scripts/sync.py` | 同步引擎（本技能的核心） |
+| `scripts/projects_sync.py` | 项目源码镜像引擎（把 `小红书卖课件` 这类工程传到 `projects/`） |
 | `scripts/install-autostart.ps1` | 可选：注册 Windows 计划任务，Pi 没开也定时同步 |
 
 ## 当前已配置状态（本机）
@@ -28,6 +30,7 @@ description: 把本机 Pi skills 镜像同步到 GitHub 仓库（自动提交 + 
 | 源 | `~/.pi/agent/skills` + `~/.agents/skills`（当前 10 个 skill） |
 | 鉴权 | 走 Git Credential Manager（已存 GitHub 凭据），无需 token |
 | 仓库文件 | `skills/<名字>/...` + `README.md` + `index.json` |
+| 项目镜像 | ✓ `projects/courseware-factory`（源码 1.6MB / 104 文件，排除课件图片与母版 pptx） |
 | 实时自动上传 | ✓ 扩展 `skills-autosync.ts` 已生效 |
 | 定时自动上传 | ✓ 计划任务 `PiSkillsGitHubSync`（每 30 分钟 + 登录时） |
 | 静默（不弹窗口） | ✓ 子进程全部 `CREATE_NO_WINDOW`，推送不再弹终端窗口 |
@@ -191,6 +194,65 @@ powershell -ExecutionPolicy Bypass -File `
 也可用 `-PythonExe` 手动指定。
 
 > 注意：`New-ScheduledTaskTrigger -AtLogOn` 必须带 `-User`，否则需要管理员权限（Access denied）。
+
+## 项目源码也一起上云（projects/）
+
+`skills/` 放技能、`apks/` 放安卓包，**完整工程的源码 + 文档 + 小数据放 `projects/`**。
+目前登记了：`courseware-factory`（小红书卖课件工程，含 `工厂/选题.py`、`工厂/web/pick.html`）。
+
+```bash
+P=~/.pi/agent/skills/skills-github-sync/scripts/projects_sync.py
+
+python $P                # 镜像 + 提交 + 推送（最常用）
+python $P --status       # 看登记了哪些项目、源目录在不在
+python $P --dry-run      # 只算不写（看会 +哪些 / -哪些）
+python $P --no-push      # 只提交本地仓库
+python $P --only <slug>  # 只同步一个项目
+```
+
+结果行同样是 `[projects-sync] RESULT <state>`，state ∈ `pushed` / `committed` / `no-change` /
+`busy` / `dry-run` / `no-projects` / `unconfigured` / `failed`。
+
+### 配置（`~/.pi/agent/projects-sync.json`）
+
+`remote` / `branch` / `repoDir` **留空就自动继承 `skills-sync.json`**，两套共用一个仓库、一把锁。
+
+```json
+{
+  "projects": [{
+    "slug": "courseware-factory",
+    "title": "课件工厂 · 小红书少儿美术课件生产线",
+    "source": "C:/Users/hua/Documents/备份代码/小红书卖课件",
+    "excludeDirs": ["项目", "账号改造"],
+    "excludeGlobs": ["参考/爆款库/*/*"],
+    "maxFileMB": 8
+  }]
+}
+```
+
+### 同步规则（为什么仓库只有 1.6MB）
+
+**默认只挡二进制大资产**，代码 / 文档 / JSON 数据全部保留，目标是换台机器 clone 下来就能继续干：
+
+| 类别 | 例子 | 处理 |
+|---|---|---|
+| 图片 / 视频 / 音频 | `*.jpg/png/webp/mp4` | 跳过（`项目/*/img`、爆款库抓图都在这类） |
+| Office / 交付物 | `*.pptx/pdf/docx` | 跳过（`模板/*.pptx` 40MB、交付包 PDF） |
+| 压缩包 / 安装包 / 编译产物 | `*.zip/apk/dll/so/exe` | 跳过 |
+| 目录 | `__pycache__`、`node_modules`、`dist`、`build`、`out`、`logs`、`选题` | 跳过 |
+| 单文件超 `maxFileMB` | 默认 8MB | 跳过并记进 `_mirror.json` |
+
+`excludeDirs` 按**相对路径**匹配（`项目`、`创意内容/成品`），`excludeGlobs` 是 fnmatch（`参考/爆款库/*/*`）。
+
+### 两个坑
+
+1. **`_mirror.json` 的 `synced_at` 会制造空提交**：每轮都写时间戳 → 每次都有 diff。
+   → 只在「真的有文件增删」时才重写；实测现在第二次跑就是 `RESULT no-change`。
+2. **临时目录名叫 `选题`**：`--mode pick` 会把浏览器 profile 建在 `选题/.pick_profile`，
+   已在默认排除里；真要入库的数据是 `选题结果.json`（小 JSON，保留）。
+
+共用 `~/.pi/agent/skills-sync.lock`：与 skills / apks 同步互斥，不会并发提交。
+目前**没接自动触发**——改完项目手动跑一次；要无人值守就挂计划任务（同 `install-autostart.ps1` 的做法）。
 
 ## 镜像规则（重要）
 
