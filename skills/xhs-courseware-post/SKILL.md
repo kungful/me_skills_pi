@@ -397,6 +397,12 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 
 ## 踩过的坑（改脚本前先看）
 
+- **手机端（adb）三个致命坑**，踩一次浪费半小时：
+  1. `adb shell input text` 输中文必挂（`NullPointerException: length of null array`）→ 装 ADBKeyboard，用 `ADB_INPUT_B64` 广播 base64。
+  2. 输入框首次聚焦是「未提交」态：界面显示字、计数器仍 `0/20`、确认报「不能为空」。→ **先 `input keyevent 7` 让计数变 1**，再 `ADB_CLEAR_TEXT` + 提交。
+  3. 小红书创建/编辑表单里**千万别按 `keyevent 4`**（想收键盘）→ 直接退回列表并丢掉整张表单。点页面上的 `完成` 或空白处。
+- **点偏位不靠截图估算**：手机截图缩略图换算误差可以到 40px 以上（在「发笔记」按钮下方空点 3 次毫无反应）。一律 `uiautomator dump` 拿 `bounds` 取中心点；小红的控件普遍 `clickable=false`，按 text 的 bounds 点就行。
+- **推手机相册的图必须写 EXIF 时间**（`Image.Exif()[36867]`），否则相册按拍摄时间排序会把新图摆到末尾，选图时找不到；`adb push` 路径要加 `MSYS_NO_PATHCONV=1`，文件名用 ASCII。
 - **发布耗时 1~2 分钟**，是 HTTP 长请求，别设短超时、别中途 Ctrl-C。
 - **`/api/v1/login/status` 要 15~25 秒**（它会拉起浏览器校验），超时小于 30 秒会误报"没登录"。这个耗时**每次都不一样**，偶发超 30 秒内部死线返回 500 —— 所以发布脚本的登录检查失败时**先重试 2~3 次**，不要立刻去挪 cookies。
 - 排查这类问题的最小实验（比读源码快）：用指纹版 Chrome 自己拉一个页面，看加载要几秒。
@@ -424,6 +430,18 @@ python .../replies.py stats                                     # 粉丝/赞藏/
   而且平铺水印压在纯色带上特别显眼 → **一上手就该换掉**：从成品图**居中裁 3:4**（`1272x1696` 这种），
   满幅、不留色带。改完同步 `post.json` 的 `images` + `_prep.image_md5`，否则台账按 md5 去重会漏记。
   细节图本身裁成 3:4，不触发二次裁切。
+- **自动选图会把非成品图当封面**（实测：正片是 `范画成品`，`prep_post.py` 却选了 `素材_学生手持成品`）。
+  发之前必打开 `upload/<slug>/01_cover.jpg` 看一眼；不对就用下面这段覆盖（裁切 + 补打水印，两步都不能省）：
+  ```python
+  import sys; sys.path.insert(0, r'C:\Users\hua\.pi\agent\skills\xhs-courseware-post\scripts')
+  from watermark import mark_file
+  from PIL import Image
+  im = Image.open('项目/<课题>/img/范画成品.png').convert('RGB'); w, h = im.size
+  tw = int(h*3/4); x0 = int((w-tw)*0.55)          # 0.55 微偏右，保留“波点爬出画框”那一侧
+  im.crop((x0,0,x0+tw,h)).resize((1080,1440), Image.LANCZOS).save('01_cover.jpg', quality=95, subsampling=0)
+  mark_file('01_cover.jpg', '绘课工坊 · 原创课件', sub_text='小红书 49788519703', opacity=0.10)
+  ```
+  然后手动改 `post.json` 的 `images` 列表，把 01/02 两张按顺序写进去。
 - Windows 控制台是 GBK，脚本里打印 emoji 会 `UnicodeEncodeError` —— 脚本已做 `utf-8` 重定向，自己加打印时注意。
 - `.ps1` 存成 UTF-8 **带 BOM**；`.cmd` 存成纯 ASCII **不带 BOM**（带 BOM 的 cmd 会执行失败）。
 - 解析课件数据时注意：`images[]` 里是 **`slot`** 字段（没有 id/filename），实际路径规则是 `img_sell/<slot>.jpg` 优先、其次 `img/<slot>.png`，跟 `工厂/project.py` 一致。
