@@ -1,6 +1,6 @@
 ---
 name: xhs-courseware-post
-description: 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 默认「成品流」：只发成品+成品细节，不发步骤图；文案固定带购买引导（课件 / 做课件的工具），正文不写 AI 生成声明。用于：把课件发小红书/发笔记/上架；给课件写小红书文案、起标题、配话题标签；挑图、补封面、去重图；发出去以后核实、看通知、回评论。要做课件本身（做课件/改课件/导 PDF）用 courseware-factory。
+description: 把课件工厂产出的课件一条龙发到小红书（选图 → 补 3:4 封面 → 生成文案 → 发布 → 核实 → 回评论）。**作用域仅限「已有课件的发布与运营」，不做课件本身。** 默认「成品流」：只发成品+成品细节，不发步骤图；文案固定带购买引导（课件 / 做课件的工具），正文不写 AI 生成声明。用于：把课件发小红书/发笔记/上架；给课件写小红书文案、起标题、配话题标签；挑图、补封面、去重图；发出去以后核实、看通知、回评论；在手机 App 上架「个人售卖」商品（网盘自动发货）并发布带商品卡的笔记（adb 驱动，见 references/phone-publish.md）。要做课件本身（做课件/改课件/导 PDF）用 courseware-factory。
 ---
 
 # 小红书发课件 · 一条龙
@@ -8,6 +8,8 @@ description: 把课件工厂产出的课件一条龙发到小红书（选图 →
 把 `courseware-factory` 产出的 `project.json` 变成一条真发出去的小红书图文笔记，并负责发完之后的核实与回评论。
 
 **一句话流程**：`published.py --list`（查台账，已发的课题不能发）→ **`netdisk_publish.py` 先把交付链接做好**（没链接别发笔记）→ `prep_post.py`（选图+补封面+打水印+生成文案）→ **人工/agent 改两处文案** → `publish_post.py`（发布+核实+登记台账）→ `replies.py`（回评论+成交后发链接）。
+
+**要挂商品卡的笔记走另一条路**：手机 App `个人售卖 → 我发布的 → 该商品「发笔记」`（MCP 接口没有挂商品的字段），完事 `published.py --sync` 补台账。全流程与坑见 [references/phone-publish.md](references/phone-publish.md)。
 
 ## 发布策略（2026-11 起，改策略先看这段）
 
@@ -25,6 +27,19 @@ description: 把课件工厂产出的课件一条龙发到小红书（选图 →
 - 本 skill **只负责"把已经做好的课件发出去"**，不生产课件内容，不改课件版式。
 - 要做课件 / 改课件图 / 重出 PPTX·PDF → 用 `courseware-factory`，做完再回来发。
 - 只想生成一张普通图片 → `grsai-image-2-5`。
+
+## 手机端：上架「个人售卖」+ 发带商品卡的笔记（2026-11 打通）
+
+要卖东西（商品卡挂到笔记底部、买家下单后自动收网盘链接）时走这条，**MCP 发不了商品卡**。
+
+1. `我` → `个人售卖` →`去创建`：名称 ≤20 字 / 成品 3:4 图 / 价格 / **发货方式=无需邮寄** / **可售数量=不限**→ 确认
+2. `我发布的` → 该商品「…」→ **设置自动发货** → 开关 ON → 发货说明贴「网盘链接 + 提取码」（链接来自 `netdisk_publish.py`，一课题一链接）
+3. `我发布的` → 该商品 **「发笔记」**（别用底部「+」）→ 选图 → 填标题/正文/话题 → 核对 `公开可见` + **`已添加个人售卖`** → 发笔记
+4. 核实两条：笔记底部有 `个人售卖 · 商品名 · ¥9.9` 卡片；商品行出现 `已关联笔记`
+5. `published.py --sync` 登记台账
+
+内容（标题/正文/话题）**直接取 `prep_post.py` 的 post.json**，别现场手写。
+中文输入、坐标、相册排序、表单被清空等全部实操细节 → [references/phone-publish.md](references/phone-publish.md)。
 
 ## 前置：MCP 服务必须在跑并已登录
 
@@ -373,6 +388,10 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 | 回评论通知 | `python .../scripts/replies.py reply --id <id> --text "..."` |
 | 看笔记评论 | `python .../scripts/replies.py note-comments <feed_id>` |
 | 看账号数据 | `python .../scripts/replies.py stats` |
+| 手机输中文（需 ADBKeyboard） | `adb shell am broadcast -a ADB_INPUT_B64 --es msg <base64(utf8)>` |
+| 手机清空输入框 | `adb shell am broadcast -a ADB_CLEAR_TEXT` |
+| 拿控件坐标（别靠截图估） | `adb shell uiautomator dump /sdcard/ui.xml` + `adb pull` |
+| 还原手机输入法 | `adb shell ime set com.sohu.inputmethod.sogou.vivo/.SogouIME` |
 
 （`...` = `C:/Users/hua/.pi/agent/skills/xhs-courseware-post`）
 
@@ -425,6 +444,8 @@ python .../replies.py stats                                     # 粉丝/赞藏/
 ```text
 C:/Users/hua/.pi/agent/skills/xhs-courseware-post/
 ├── SKILL.md
+├── references/
+│   └── phone-publish.md 手机端：个人售卖上架 + 自动发货 + 发带商品卡的笔记（adb 实操）
 └── scripts/
     ├── xhs.py             HTTP 封装 + 标题字数算法（镜像服务端 Go 实现）+ 规则校验
     ├── published.py       发布台账：课题去重 / 图片 md5 去重 / --sync / --list
